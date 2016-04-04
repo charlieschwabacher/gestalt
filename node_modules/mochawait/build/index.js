@@ -1,0 +1,4 @@
+'use strict';
+
+require('./lib/mochawait');
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImluZGV4LmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7O1FBQU8saUJBQWlCIiwiZmlsZSI6ImluZGV4LmpzIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0ICcuL2xpYi9tb2NoYXdhaXQnO1xuIl19

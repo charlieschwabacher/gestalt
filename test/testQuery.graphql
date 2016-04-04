@@ -1,0 +1,10 @@
+query Q {
+  session {
+    currentUser {
+      firstName
+      likes {
+        title
+      }
+    }
+  }
+}

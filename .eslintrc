@@ -1,0 +1,41 @@
+{
+  "parser": "babel-eslint",
+  "rules": {
+    "babel/arrow-parens": 2, ["as-needed"],
+    "babel/object-shorthand": [2, "properties"],
+    "arrow-spacing": 2,
+    "brace-style": [2, "1tbs", {"allowSingleLine": true}],
+    "camelcase": [2, {"properties": "always"}],
+    "classes/name": [2, "class", "method"],
+    "classes/space": 2,
+    "comma-spacing": [2, {"before": false, "after": true}],
+    "comma-style": [2, "last"],
+    "constructor-super": 2,
+    "curly": 2,
+    "dot-location": [2, "property"],
+    "dot-notation": [2, {"allowKeywords": true}],
+    "eqeqeq": [1, "allow-null"],
+    "indent": [2, 2, {"SwitchCase": 1}],
+    "keyword-spacing": 2,
+    "no-const-assign": 2,
+    "no-dupe-keys": 2,
+    "no-extra-semi": 2,
+    "no-irregular-whitespace": 2,
+    "no-multi-spaces": 2,
+    "no-trailing-spaces": 2,
+    "no-unreachable": 2,
+    "no-var": 2,
+    "object-shorthand": [2, "properties"],
+    "prefer-arrow-callback": 2,
+    "prefer-const": 2,
+    "prefer-template": 2,
+    "quotes": [2, "single"],
+    "semi": [2, "always"],
+    "strict": [2, "never"],
+    "yoda": 2
+  },
+  "plugins": [
+    "babel",
+    "classes"
+  ]
+}

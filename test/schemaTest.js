@@ -1,0 +1,39 @@
+import 'babel-polyfill';
+import 'mochawait';
+
+import assert from 'assert';
+import path from 'path';
+import fs from 'fs';
+import {graphql} from 'graphql';
+import schema from './support/testSchema';
+import resetDB from './support/resetDB';
+
+import Gestalt from '../src/Gestalt';
+import neo4jResolve from '../src/neo4j/resolve'
+
+const queryFilePath = path.resolve(__dirname, 'testQuery.graphql');
+const query = fs.readFileSync(queryFilePath, 'utf8');
+
+
+
+before(resetDB);
+Gestalt.use(neo4jResolve);
+
+describe('schema', () => {
+
+  it('resolves a maximal query', async (done) => {
+    const session = {currentUserId: 'testuser'};
+
+    try {
+      const result = await graphql(schema, query, session);
+      console.log('\n\ngot query result:\n', JSON.stringify(result, null, 2));
+
+      assert(result.errors === undefined, 'does not have errors');
+    } catch (e) {
+      console.log('error', e);
+      assert(false);
+    }
+
+    done();
+  });
+});

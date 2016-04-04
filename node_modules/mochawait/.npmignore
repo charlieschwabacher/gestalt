@@ -1,0 +1,5 @@
+node_modules
+*.log
+_vimrc_local.vim
+*.un~
+*.swp

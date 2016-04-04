@@ -1,0 +1,30 @@
+query Q {
+  session {
+    currentUser {
+      firstName
+      lastName
+      email
+      likes {
+        title
+      }
+      followers {
+        fullName
+      }
+      followedUsers {
+        fullName
+      }
+      posts {
+        title
+        text
+        createdAt
+        comments {
+          text
+          createdAt
+          author {
+            fullName
+          }
+        }
+      }
+    }
+  }
+}
