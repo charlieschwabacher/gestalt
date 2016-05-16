@@ -1,0 +1,44 @@
+type Session {
+  currentUser: User
+}
+
+type User implements Node
+@description(text: "A registered user of our app")
+{
+  id: ID!
+  email: String! @hidden
+  passwordHash: String! @hidden
+  createdAt: Date!
+  firstName: String
+  lastName: String
+  fullName: String @computed
+  followedUsers: User @edge(path: "=FOLLOWED=>")
+  followers: User @edge(path: "<=FOLLOWED=")
+  posts: Post @edge(path: "=AUTHORED=>")
+    @description(text: "Posts authored by this user")
+  comments: Comment @edge(path: "=AUTHORED=>")
+    @description(text: "Comments authored by this user")
+  feed: Post @edge(path: "=FOLLOWED=>User=AUTHORED=>")
+    @description(text: "All Posts authored by followed users")
+}
+
+type Post implements Node
+@description(text: "Posts written by users")
+{
+  id: ID!
+  title: String!
+  text: Text!
+  createdAt: Date!
+  author: User @edge(path: "<-AUTHORED-")
+  comments: Comment @edge(path: "<=COMMENT_ON=")
+}
+
+type Comment implements Node
+@description(text: "Comments on posts")
+{
+  id: ID!
+  text: Text!
+  createdAt: Date!
+  author: User @edge(path: "<-AUTHORED-")
+  subject: Post @edge(path: "-COMMENT_ON->")
+}

@@ -1,10 +1,10 @@
 CREATE TABLE users (
   id uuid PRIMARY KEY,
-  email varchar(255) NOT NULL,
-  passwordHash varchar(255) NOT NULL,
   firstName varchar(255),
   lastName varchar(255),
+  email varchar(255) NOT NULL,
   createdAt timestamp NOT NULL,
+  passwordHash varchar(255) NOT NULL,
 );
 CREATE INDEX ON users (id);
 

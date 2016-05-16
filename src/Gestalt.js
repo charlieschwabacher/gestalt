@@ -1,19 +1,18 @@
 // @flow
 
 import invariant from './util/invariant';
-import ObjectType from './ObjectType';
-import Mutation from './Mutation';
+import ObjectType, {ObjectTypeConfig} from './ObjectType';
+import Mutation, {MutationConfig} from './Mutation';
 
 export default {
   objectTypes: {},
   mutations: {},
-  _resolve: null,
 
   registerObjectType(
     type: ObjectType,
-    config: {name: string, edges: [any]}
+    config: ObjectTypeConfig,
   ): void {
-    const {name, edges} = config;
+    const {name} = config;
 
     // ensure type has a unique name
     invariant(name, 'Type must be named.');
@@ -24,7 +23,7 @@ export default {
 
   registerMutation(
     mutation: Mutation,
-    config: {name: string}
+    config: MutationConfig,
   ): void {
     const {name} = config;
 
