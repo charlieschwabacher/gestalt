@@ -1,7 +1,7 @@
 {
   "parser": "babel-eslint",
   "rules": {
-    "babel/arrow-parens": 2, ["as-needed"],
+    "babel/arrow-parens": [2, "as-needed"],
     "babel/object-shorthand": [2, "properties"],
     "arrow-spacing": 2,
     "brace-style": [2, "1tbs", {"allowSingleLine": true}],

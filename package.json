@@ -5,14 +5,15 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "reset-db": "$(npm bin)/babel-node ./test/support/resetDB.js"
+    "flow": "flow; test $? -eq 0 -o $? -eq 2"
   },
   "author": "charlie schwabacher",
   "license": "ISC",
   "dependencies": {
-    "graphql": "file:///Users/charlieschwabacher/Code/graphql-js/dist",
-    "graphql-relay": "*",
-    "neo4j": "^2.0.0-RC2"
+    "dataloader": "^1.1.0",
+    "graphql": "",
+    "graphql-relay": "",
+    "pg": "^4.5.2"
   },
   "devDependencies": {
     "babel-cli": "^6.6.5",
@@ -26,6 +27,8 @@
     "eslint-plugin-babel": "^3.1.0",
     "eslint-plugin-classes": "^0.1.1",
     "eslint-plugin-react": "^4.2.0",
+    "flow-bin": "^0.24.2",
+    "jison": "^0.4.17",
     "mocha": "^2.4.5",
     "mochawait": "^2.0.1"
   }

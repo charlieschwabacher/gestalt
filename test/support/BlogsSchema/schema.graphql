@@ -1,0 +1,121 @@
+# These types are auto-generated for every schema
+
+schema {
+  mutation: MutationRoot
+  query: QueryRoot
+}
+
+type MutationRoot {
+  # mutations...
+}
+
+# mutation input and payload types...
+
+type QueryRoot {
+  node(id: ID!): Node
+  session: Session
+}
+
+interface Node {
+  id: ID!
+}
+
+scalar Date
+
+# These types are defined by the user through the extended IDL
+
+type Session {
+  # Values defined on session are set through mutations.  Nodes are stored by
+  # by ID, scalars and non node object types are serialized and stored directly.
+
+  # Node IDs are random in a large enough range so as not to be guessable. This
+  # lets us avoid any extra checking when querying nodes directly from the query
+  # root. Security is achieved by avoiding making any private information
+  # reachable from the Session type.
+
+  currentUser: User
+}
+
+
+# Types implementing the Node interface become database tables.  Non node types
+# are stored directly as JSON in columns on Nodes.
+
+type User implements Node {
+
+  # scalar types are defined using the normal GraphQL IDL - these create both
+  # columns in the database and fields in the GraphQL schema
+
+  firstName: String
+  lastName: String
+  email: String!
+  createdAt: Date
+
+
+  # It would be nice to be able to define computed fields that become part of
+  # the GraphQL schema, but not the database schema - for example `fullName`
+  # here can be computed from the firstName and lastName columns.  I'm not sure
+  # what the best way to do this is yet - it will require javascript code to be
+  # defined somewhere and matched to the type.
+
+  fullName: String
+
+
+  # fields beginning w/ underscore are 'private', meaning they will be part of
+  # the database schema and will be available to application code, but will not
+  # be part of the GraphQL schema
+
+  _passwordHash: String
+
+
+  # Relationships between nodes are defined w/ an arrow notation inspired by the
+  # Cypher query language from Neo4j.  Fat arrows `=>` are plural and result in
+  # Relay connections (with connection types generated automatically).  Thin
+  # arrows `->` are singular and refer to the object type directly.
+
+  # Relationships are matched to their inverses using their labels and arrow
+  # directions. This will let us automatically determine which on which table
+  # to put the foreign key, and how to index.  Combinations of label, direction,
+  # and related type cannot be repeated on a type.
+
+  # with this many to many relationship, we would end up w/ a join table
+  # user_followed_users.
+
+  followedUsers: =FOLLOWED=> User
+  followers: <=FOLLOWED= User
+
+  # the corresponding author fields on Posts and comments are singular, so for
+  # these connections we know to add user_authored_id on the posts and comments
+  # tables.
+
+  posts: =AUTHORED=> Post
+  comments: =AUTHORED=> Comment
+
+  # and again we have a many to many relationship resulting in a
+  # user_liked_posts join table
+
+  likes: =LIKED=> Post
+
+  # We can define fields that follow multiple relationships as shown.  This
+  # would result in multiple joins (to user_followed_users, users, and Posts).
+
+  feed: =FOLLOWED=> User =AUTHORED=> Post
+
+}
+
+type Post implements Node {
+  id: ID!
+  title: String
+  text: String
+  createdAt: Date
+  author: <-AUTHORED- User
+  comments: <=COMMENT_ON= Comment
+  likers: <=LIKED= User
+}
+
+type Comment implements Node {
+  id: ID!
+  text: String
+  createdAt: Date
+  author: <-AUTHORED- User
+  subject: -COMMENT_ON-> Post
+}

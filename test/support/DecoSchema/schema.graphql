@@ -1,0 +1,204 @@
+enum SpaceType {
+  SINGLE_FAMILY_HOME
+  TOWNHOUSE
+  APPARTMENT_OR_CONDO
+  OFFICE
+  RETAIL
+  RESTAURANT
+}
+
+enum CommentType {
+  MESSAGE
+  NOTE
+}
+
+eunum PaymentStatus {
+  PENDING
+  REJECTED
+  COMPLETE
+  REFUNDED
+}
+
+type Session {
+  currentUser: User
+}
+
+type User {
+  email: String
+  _passwordHash: String
+  isAdmin: Boolean
+  telphone: String
+  firstName: String
+  lastName: String
+
+  createdAt: Date
+  lastSignInAt: Date
+
+  designerProfile: -HAS-> DesignerProfile
+  profileImage: -HAS-> Image
+  spaces: =CREATED=> Space
+  designedSpaces: =DESIGNED=> Space
+  authoredComments: =AUTHORED=> Comment
+  uploadedImages: =UPLOADED=> Image
+  madePayments: =MADE=> Payment
+}
+
+type DesignerProfile {
+  user: <-HAS- User
+  spaces: =DESIGNED=> Space
+  coverImages: =HAS=> Image
+  reviews: =DESIGNED=> Space -HAS-> Review
+  payments: <=RECEIVED= Payment
+
+  slug: String
+  location: Address
+  minimumBudget: Money
+  aboutText: String
+  createdAt: Date
+  updatedAt: Date
+}
+
+type Space {
+  customer: <-CREATED- User
+  designer: <-DESIGNED- DesignerProfile
+  rooms: =HAS=> ROOM
+  existingItems: =HAS=> ExistingItem
+  suggestedItems: =HAS=> SuggestedItem
+  inspirations: =HAS=> Inspiration
+  needs: =HAS=> Need
+  beforeImages: =HAS=> Image
+  afterImages: =NOW_HAS=> Image
+  review: -HAS-> Review
+  payments: =HAS=> Payment
+
+  slug: String
+  type: SpaceType
+  name: String
+  description: String
+  buget: Money
+  location: Address
+  createdAt: Date
+  updatedAt: Date
+  completedAt: Date
+}
+
+type Room {
+  existingItems: =HAS=> ExistingItem
+  suggestedItems: =HAS=> SuggestedItem
+  needs: =HAS=> Need
+  beforeImages: =HAS=> Image
+  afterImages: =NOW_HAS=> Image
+  comments: =HAS=> Comment
+  space: <-HAS- Space
+
+  type: String
+  description: String
+  width: Int
+  length: Int
+  height: Int
+  createdAt: Date
+  updatedAt: Date
+}
+
+type ExistingItem {
+  room: <-HAS- Room
+  space: <-HAS- Space
+  images: =HAS=> Image
+  comments: =HAS=> Comment
+
+  type: String
+  description: String
+  replacable: Boolean
+  width: Int
+  height: Int
+  length: Int
+  createAt: Date
+  updatedAt: Date
+}
+
+type SuggestedItem {
+  images: =HAS=> Image
+  comments: =HAS=> Comment
+
+  type: String
+  name: String
+  seller: String
+  description: String
+  price: Money
+  discountedPrice: Money
+  tax: Money
+  shipping: Money
+  url: String
+  active: Boolean
+  width: Int
+  height: Int
+  length: Int
+  createdAt: Date
+  updatedAt: Date
+}
+
+type Inspiration {
+  space: <-HAS- Space
+  images: =HAS=> Image
+  comments: =HAS=> Comment
+
+  url: String
+  name: String
+  description: String
+  createdAt: Date
+  updatedAt: Date
+}
+
+type Need {
+  space: <-HAS- Space
+  room: <-HAS- Room
+  comments: =HAS=> Comment
+}
+
+type Address {
+  streetAddress: String
+  appartmentNumber: String
+  city: String
+  state: String
+  zipCode: String
+}
+
+type Image {
+  uploader: <-UPLOADED- User
+  subject: <-HAS- Node
+
+  url: String
+  width: Int
+  height: Int
+  createdAt: Date
+}
+
+type Comment {
+  author: <-AUTHORED- User
+  subject: <-HAS- Comment
+
+  text: String
+  createdAt: Date
+}
+
+type Payment {
+  from: <-MADE_PAYMENT- User
+  to: <-RECEIVED_PAYMENT- DesignerProfile
+  for: <-HAS- Space
+
+  amount: Money
+  status: PaymentStatus
+  createdAt: Date
+  updatedAt: Date
+  completedAt: Date
+  refundedAt: Date
+}
+
+type Review {
+  space: <-HAS- Space
+  author: <-HAS- Space <-CREATED- User
+
+  rating: Int
+  text: String
+  createdAt: Int
+}

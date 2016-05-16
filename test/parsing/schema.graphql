@@ -1,0 +1,49 @@
+scalar Date
+scalar Text
+
+enum Day {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+type Session {
+  currentUser: User
+}
+
+type User implements Node {
+  id: ID
+  email: String!
+  _passwordHash: String!
+  firstName: String
+  lastName: String
+  .fullName: String
+  createdAt: Date!
+
+  followedUsers: =FOLLOWED=> User
+  followers: <=FOLLOWED= User
+  posts: =AUTHORED=> Post
+  comments: =AUTHORED=> Comment
+  feed: =FOLLOWED=> User =AUTHORED=> Post
+}
+
+type Post implements Node {
+  id: ID!
+  title: String!
+  text: Text!
+  createdAt: Date!
+  author: <-AUTHORED- User!
+  comments: <=COMMENT_ON= Comment
+}
+
+type Comment implements Node {
+  id: ID!
+  text: Text!
+  createdAt: Date!
+  author: <-AUTHORED- User!
+  subject: -COMMENT_ON-> Post!
+}
