@@ -1,21 +1,22 @@
-"use strict";
+/*istanbul ignore next*/"use strict";
 
-var _interopRequireDefault = require("babel-runtime/helpers/interop-require-default")["default"];
+var /*istanbul ignore next*/_index = require("./index");
 
-var _index = require("./index");
-
+/*istanbul ignore next*/
 var _index2 = _interopRequireDefault(_index);
 
-_index2["default"]("Noop", {
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/*istanbul ignore next*/(0, _index2.default)("Noop", {
   visitor: []
 });
 
-_index2["default"]("ParenthesizedExpression", {
+/*istanbul ignore next*/(0, _index2.default)("ParenthesizedExpression", {
   visitor: ["expression"],
   aliases: ["Expression", "ExpressionWrapper"],
   fields: {
     expression: {
-      validate: _index.assertNodeType("Expression")
+      validate: /*istanbul ignore next*/(0, _index.assertNodeType)("Expression")
     }
   }
 });

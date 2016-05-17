@@ -3,11 +3,7 @@ var guppy = require('./')(gulp);
 var stylish = require('jshint-stylish');
 var $ = require('gulp-load-plugins')();
 
-gulp.task('verb', function () {
-  gulp.src('.verbrc.md')
-    .pipe($.verb({ dest: 'README.md' }))
-    .pipe(gulp.dest('./'));
-});
+gulp.task('test', ['lint', 'unit']);
 
 gulp.task('unit', function (cb) {
   gulp.src(['index.js', 'lib/*.js'])

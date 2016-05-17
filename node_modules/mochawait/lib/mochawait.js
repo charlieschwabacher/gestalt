@@ -6,9 +6,9 @@ let mochawait = {}
   , mochaAfterEach = GLOBAL.afterEach;
 
 mochawait.it = (desc, asyncFn) => {
-  mochaIt(desc, async (done) => {
+  mochaIt(desc, async function (done) {
     try {
-      await asyncFn();
+      await asyncFn.call(this);
       done();
     } catch (e) {
       done(e);
@@ -24,9 +24,9 @@ mochaHooks.set('afterEach', mochaAfterEach);
 
 for (let [name, hook] of mochaHooks) {
   GLOBAL[name] = (asyncFn) => {
-    hook(async (done) => {
+    hook(async function (done) {
       try {
-        await asyncFn();
+        await asyncFn.call(this);
         done();
       } catch (e) {
         done(e);

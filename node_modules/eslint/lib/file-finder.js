@@ -1,10 +1,8 @@
 /**
  * @fileoverview Util class to find config files.
  * @author Aliaksei Shytkin
- * @copyright 2014 Michael McLaughlin. All rights reserved.
- * @copyright 2014 Aliaksei Shytkin. All rights reserved.
- * See LICENSE in root directory for full license.
  */
+
 "use strict";
 
 //------------------------------------------------------------------------------
@@ -58,9 +56,11 @@ function FileFinder(files, cwd) {
  */
 function normalizeDirectoryEntries(entries, directory, supportedConfigs) {
     var fileHash = {};
+
     entries.forEach(function(entry) {
         if (supportedConfigs.indexOf(entry) >= 0) {
             var resolvedEntry = path.resolve(directory, entry);
+
             if (fs.statSync(resolvedEntry).isFile()) {
                 fileHash[entry] = resolvedEntry;
             }
@@ -103,6 +103,7 @@ FileFinder.prototype.findInDirectoryOrParents = function(directory) {
         while (directory !== child) {
             dirs[searched++] = directory;
             var filesMap = normalizeDirectoryEntries(getDirectoryEntries(directory), directory, names);
+
             if (Object.keys(filesMap).length) {
                 for (var k = 0; k < names.length; k++) {
                     if (filesMap[names[k]]) {

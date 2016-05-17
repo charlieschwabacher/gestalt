@@ -5,8 +5,6 @@
  * This has a fork list and manages it.
  *
  * @author Toru Nagashima
- * @copyright 2015 Toru Nagashima. All rights reserved.
- * See LICENSE file in root directory for full license.
  */
 
 "use strict";
@@ -47,6 +45,7 @@ function isReachable(segment) {
  */
 function makeSegments(context, begin, end, create) {
     var list = context.segmentsList;
+
     if (begin < 0) {
         begin = list.length + begin;
     }
@@ -55,6 +54,7 @@ function makeSegments(context, begin, end, create) {
     }
 
     var segments = [];
+
     for (var i = 0; i < context.count; ++i) {
         var allPrevSegments = [];
 
@@ -81,6 +81,7 @@ function makeSegments(context, begin, end, create) {
 function mergeExtraSegments(context, segments) {
     while (segments.length > context.count) {
         var merged = [];
+
         for (var i = 0, length = segments.length / 2 | 0; i < length; ++i) {
             merged.push(CodePathSegment.newNext(
                 context.idGenerator.next(),
@@ -120,6 +121,7 @@ ForkContext.prototype = {
      */
     get head() {
         var list = this.segmentsList;
+
         return list.length === 0 ? [] : list[list.length - 1];
     },
 
@@ -137,6 +139,7 @@ ForkContext.prototype = {
      */
     get reachable() {
         var segments = this.head;
+
         return segments.length > 0 && segments.some(isReachable);
     },
 
@@ -212,6 +215,7 @@ ForkContext.prototype = {
         assert(context.count === this.count);
 
         var source = context.segmentsList;
+
         for (var i = 0; i < source.length; ++i) {
             this.segmentsList.push(source[i]);
         }

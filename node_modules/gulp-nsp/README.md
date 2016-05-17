@@ -2,7 +2,7 @@
 
 # Installation
 
-To install the gulp-nsp plugin into your project simply run
+To install the gulp-nsp module into your project simply run
 
 ```bash
 npm install gulp-nsp --save

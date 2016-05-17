@@ -3,6 +3,7 @@
 
 import '../index';
 import 'should';
+import {Context} from 'mocha';
 
 async function sleep (ms) {
   let start = Date.now();
@@ -36,27 +37,35 @@ describe('mochawait tests', function () {
     , myStr = ''
     , testsRun = 0;
 
-  before(async () => {
+  before(async function () {
+    this.should.be.instanceOf(Context);
+    this.should.have.a.property('timeout');
     let start = Date.now();
     myStr.should.equal('');
     myStr = await slowConcat(myStr, 'foo');
     (Date.now() - start).should.be.above(19);
   });
 
-  beforeEach(async () => {
+  beforeEach(async function () {
+    this.should.be.instanceOf(Context);
+    this.should.have.a.property('timeout');
     let start = Date.now();
     myInt = await slowDouble(myInt);
     (Date.now() - start).should.be.above(9);
   });
 
-  after(async () => {
+  after(async function () {
+    this.should.be.instanceOf(Context);
+    this.should.have.a.property('timeout');
     let start = Date.now();
     myInt = await slowDouble(myInt);
     (Date.now() - start).should.be.above(9);
     myInt.should.equal(32);
   });
 
-  afterEach(async () => {
+  afterEach(async function () {
+    this.should.be.instanceOf(Context);
+    this.should.have.a.property('timeout');
     let start = Date.now();
     for (let i = 0; i < 5; i++) {
       await sleep(10);
@@ -69,7 +78,9 @@ describe('mochawait tests', function () {
     (Date.now() - start).should.be.above(49);
   });
 
-  it('should work like mocha', async () => {
+  it('should work like mocha', async function () {
+    this.should.be.instanceOf(Context);
+    this.should.have.a.property('timeout');
     myStr.should.equal('foo');
     myInt.should.equal(4);
     let start = Date.now();
@@ -81,7 +92,9 @@ describe('mochawait tests', function () {
     testsRun++;
   });
 
-  it('should work like mocha some more', async () => {
+  it('should work like mocha some more', async function () {
+    this.should.be.instanceOf(Context);
+    this.should.have.a.property('timeout');
     myStr.should.equal('foobar');
     myInt.should.equal(16);
     let start = Date.now();

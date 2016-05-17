@@ -41,7 +41,7 @@ return function assert(boolExpr, message) {
     if (typeof boolExpr === "string" &&
         boolExpr.charAt(0) === "%") {
         var nativeCallName = boolExpr;
-        var $_len = arguments.length;var args = new Array($_len - 2); for(var $_i = 2; $_i < $_len; ++$_i) {args[$_i - 2] = arguments[$_i];};
+        var $_len = arguments.length;var args = new Array(Math.max($_len - 2, 0)); for(var $_i = 2; $_i < $_len; ++$_i) {args[$_i - 2] = arguments[$_i];};
         if (nativeAssert(nativeCallName, args, message) === message) return;
         message = (nativeCallName + " !== " + message);
     }

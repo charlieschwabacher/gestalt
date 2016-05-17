@@ -1,7 +1,6 @@
 /**
  * @fileoverview Rule to flag wrapping non-iife in parens
  * @author Gyandeep Singh
- * @copyright 2015 Gyandeep Singh. All rights reserved.
  */
 
 "use strict";
@@ -30,6 +29,7 @@ function isIdentifier(node, name) {
  */
 function isArgumentOfMethodCall(node, index, object, property) {
     var parent = node.parent;
+
     return (
         parent.type === "CallExpression" &&
         parent.callee.type === "MemberExpression" &&
@@ -46,6 +46,7 @@ function isArgumentOfMethodCall(node, index, object, property) {
  * @returns {boolean} `true` if the node is a property descriptor.
  */
 function isPropertyDescriptor(node) {
+
     // Object.defineProperty(obj, "foo", {set: ...})
     if (isArgumentOfMethodCall(node, 2, "Object", "defineProperty") ||
         isArgumentOfMethodCall(node, 2, "Reflect", "defineProperty")
@@ -53,9 +54,12 @@ function isPropertyDescriptor(node) {
         return true;
     }
 
-    // Object.defineProperties(obj, {foo: {set: ...}})
-    // Object.create(proto, {foo: {set: ...}})
+    /*
+     * Object.defineProperties(obj, {foo: {set: ...}})
+     * Object.create(proto, {foo: {set: ...}})
+     */
     node = node.parent.parent;
+
     return node.type === "ObjectExpression" && (
         isArgumentOfMethodCall(node, 1, "Object", "create") ||
         isArgumentOfMethodCall(node, 1, "Object", "defineProperties")
@@ -74,16 +78,16 @@ module.exports = {
             recommended: false
         },
         schema: [{
-            "type": "object",
-            "properties": {
-                "getWithoutSet": {
-                    "type": "boolean"
+            type: "object",
+            properties: {
+                getWithoutSet: {
+                    type: "boolean"
                 },
-                "setWithoutGet": {
-                    "type": "boolean"
+                setWithoutGet: {
+                    type: "boolean"
                 }
             },
-            "additionalProperties": false
+            additionalProperties: false
         }]
     },
     create: function(context) {
@@ -106,6 +110,7 @@ module.exports = {
                 var property = node.properties[i];
 
                 var propToCheck = "";
+
                 if (property.kind === "init") {
                     if (isDescriptor && !property.computed) {
                         propToCheck = property.key.name;
@@ -124,6 +129,7 @@ module.exports = {
                         break;
 
                     default:
+
                         // Do nothing
                 }
 
@@ -140,7 +146,7 @@ module.exports = {
         }
 
         return {
-            "ObjectExpression": function(node) {
+            ObjectExpression: function(node) {
                 if (checkSetWithoutGet || checkGetWithoutSet) {
                     checkLonelySetGet(node);
                 }

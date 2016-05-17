@@ -38,8 +38,8 @@ var rsGulp = function (params, callback) {
 
     if (err) {
       if (params.stopOnError === false) {
-         GulpUtil.log(output);
-         return callback();
+        GulpUtil.log(output);
+        return callback();
       }
       return callback(pluginErr);
     }

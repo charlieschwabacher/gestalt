@@ -119,7 +119,7 @@ module.exports = function (mapper, opts) {
 
   stream.end = function (data) {
     if(ended) return
-    end()
+    end(data)
   }
 
   stream.destroy = function () {

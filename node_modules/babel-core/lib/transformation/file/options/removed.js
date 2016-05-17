@@ -1,6 +1,6 @@
-/* eslint max-len: 0 */
+/*istanbul ignore next*/"use strict";
 
-"use strict";
+/* eslint max-len: 0 */
 
 module.exports = {
   "auxiliaryComment": {

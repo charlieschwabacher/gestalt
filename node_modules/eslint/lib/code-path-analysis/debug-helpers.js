@@ -1,8 +1,6 @@
 /**
  * @fileoverview Helpers to debug for code path analysis.
  * @author Toru Nagashima
- * @copyright 2015 Toru Nagashima. All rights reserved.
- * See LICENSE file in root directory for full license.
  */
 
 "use strict";
@@ -32,6 +30,7 @@ function getId(segment) { // eslint-disable-line require-jsdoc
 //------------------------------------------------------------------------------
 
 module.exports = {
+
     /**
      * A flag that debug dumping is enabled or not.
      * @type {boolean}
@@ -57,6 +56,7 @@ module.exports = {
     dumpState: !debug.enabled ? debug : /* istanbul ignore next */ function(node, state, leaving) {
         for (var i = 0; i < state.currentSegments.length; ++i) {
             var segInternal = state.currentSegments[i].internal;
+
             if (leaving) {
                 segInternal.exitNodes.push(node);
             } else {
@@ -153,12 +153,14 @@ module.exports = {
             var item = stack.pop();
             var segment = item[0];
             var index = item[1];
+
             if (done[segment.id] && index === 0) {
                 continue;
             }
             done[segment.id] = segment;
 
             var nextSegment = segment.allNextSegments[index];
+
             if (!nextSegment) {
                 continue;
             }

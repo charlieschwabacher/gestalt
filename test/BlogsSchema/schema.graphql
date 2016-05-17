@@ -11,7 +11,7 @@ type User implements Node
   createdAt: Date!
   firstName: String
   lastName: String
-  fullName: String @computed
+  fullName: String @virtual
   followedUsers: User @edge(path: "=FOLLOWED=>")
   followers: User @edge(path: "<=FOLLOWED=")
   posts: Post @edge(path: "=AUTHORED=>")

@@ -209,9 +209,7 @@ Promise.setScheduler = function(fn) {
     if (typeof fn !== "function") {
         throw new TypeError("expecting a function but got " + util.classString(fn));
     }
-    var prev = async._schedule;
-    async._schedule = fn;
-    return prev;
+    return async.setScheduler(fn);
 };
 
 Promise.prototype._then = function (
@@ -320,6 +318,7 @@ Promise.prototype._setCancelled = function() {
 };
 
 Promise.prototype._setAsyncGuaranteed = function() {
+    if (async.hasCustomScheduler()) return;
     this._bitField = this._bitField | 134217728;
 };
 
@@ -725,20 +724,20 @@ require("./join")(
     Promise, PromiseArray, tryConvertToPromise, INTERNAL, debug);
 Promise.Promise = Promise;
 require('./map.js')(Promise, PromiseArray, apiRejection, tryConvertToPromise, INTERNAL, debug);
+require('./call_get.js')(Promise);
 require('./using.js')(Promise, apiRejection, tryConvertToPromise, createContext, INTERNAL, debug);
 require('./timers.js')(Promise, INTERNAL, debug);
 require('./generators.js')(Promise, apiRejection, INTERNAL, tryConvertToPromise, Proxyable, debug);
 require('./nodeify.js')(Promise);
-require('./call_get.js')(Promise);
+require('./promisify.js')(Promise, INTERNAL);
 require('./props.js')(Promise, PromiseArray, tryConvertToPromise, apiRejection);
 require('./race.js')(Promise, INTERNAL, tryConvertToPromise, apiRejection);
 require('./reduce.js')(Promise, PromiseArray, apiRejection, tryConvertToPromise, INTERNAL, debug);
 require('./settle.js')(Promise, PromiseArray, debug);
 require('./some.js')(Promise, PromiseArray, apiRejection);
-require('./promisify.js')(Promise, INTERNAL);
-require('./any.js')(Promise);
-require('./each.js')(Promise, INTERNAL);
 require('./filter.js')(Promise, INTERNAL);
+require('./each.js')(Promise, INTERNAL);
+require('./any.js')(Promise);
                                                          
     util.toFastProperties(Promise);                                          
     util.toFastProperties(Promise.prototype);                                

@@ -1,8 +1,6 @@
 /**
  * @fileoverview Helpers to test EventGenerator interface.
  * @author Toru Nagashima
- * @copyright 2015 Toru Nagashima. All rights reserved.
- * See LICENSE file in root directory for full license.
  */
 "use strict";
 
@@ -19,6 +17,7 @@ var assert = require("assert");
 //------------------------------------------------------------------------------
 
 module.exports = {
+
     /**
      * Overrideable `describe` function to test.
      * @param {string} text - A description.

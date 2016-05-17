@@ -68,6 +68,7 @@ Sends a Growl notification. If an application wasn't registered beforehand with 
     - `.sticky` whether or not to sticky the notification (defaults to false.)
     - `.label` type of notification to use (defaults to the first registered notification type.)
     - `.priority` the priority of the notification from lowest (-2) to highest (2).
+    - `.coalescingId` replace/update the matching previous notification. May be ignored.
   - `callback` called when the user has closed/clicked the notification. The callback is passed an Error object `err` as the first argument when the notification fails; otherwise, the second argument `action` is a string that'll describe which action has been taken by the user (either 'closed' or 'clicked'.)
 
 An example:

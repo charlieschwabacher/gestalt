@@ -5,5 +5,5 @@ var home = osHomedir();
 
 module.exports = function (str) {
 	str = path.normalize(str) + path.sep;
-	return str.replace(home + path.sep, '~' + path.sep).slice(0, -1);
+	return (str.indexOf(home) === 0 ? str.replace(home + path.sep, '~' + path.sep) : str).slice(0, -1);
 };

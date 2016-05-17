@@ -44,6 +44,7 @@
     "kind": true,
     "lends": true,
     "license": true,
+    "listens": true,
     "member": true,
     "memberof": true,
     "method": true,

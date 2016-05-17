@@ -1,31 +1,35 @@
-/* global BabelFileResult, BabelFileMetadata */
-"use strict";
-
-var _classCallCheck = require("babel-runtime/helpers/class-call-check")["default"];
-
-var _interopRequireDefault = require("babel-runtime/helpers/interop-require-default")["default"];
+/*istanbul ignore next*/"use strict";
 
 exports.__esModule = true;
 
-var _helpersNormalizeAst = require("../helpers/normalize-ast");
+var _classCallCheck2 = require("babel-runtime/helpers/classCallCheck");
 
-var _helpersNormalizeAst2 = _interopRequireDefault(_helpersNormalizeAst);
+var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 
-var _plugin = require("./plugin");
+var /*istanbul ignore next*/_normalizeAst = require("../helpers/normalize-ast");
 
+/*istanbul ignore next*/
+var _normalizeAst2 = _interopRequireDefault(_normalizeAst);
+
+var /*istanbul ignore next*/_plugin = require("./plugin");
+
+/*istanbul ignore next*/
 var _plugin2 = _interopRequireDefault(_plugin);
 
-var _file = require("./file");
+var /*istanbul ignore next*/_file = require("./file");
 
+/*istanbul ignore next*/
 var _file2 = _interopRequireDefault(_file);
 
-var Pipeline = (function () {
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var Pipeline = function () {
   function Pipeline() {
-    _classCallCheck(this, Pipeline);
+    (0, _classCallCheck3.default)(this, Pipeline);
   }
 
   Pipeline.prototype.lint = function lint(code) {
-    var opts = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+    /*istanbul ignore next*/var opts = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
     opts.code = false;
     opts.mode = "lint";
@@ -33,7 +37,7 @@ var Pipeline = (function () {
   };
 
   Pipeline.prototype.pretransform = function pretransform(code, opts) {
-    var file = new _file2["default"](opts, this);
+    var file = new /*istanbul ignore next*/_file2.default(opts, this);
     return file.wrap(code, function () {
       file.addCode(code);
       file.parseCode(code);
@@ -42,7 +46,7 @@ var Pipeline = (function () {
   };
 
   Pipeline.prototype.transform = function transform(code, opts) {
-    var file = new _file2["default"](opts, this);
+    var file = new /*istanbul ignore next*/_file2.default(opts, this);
     return file.wrap(code, function () {
       file.addCode(code);
       file.parseCode(code);
@@ -50,21 +54,22 @@ var Pipeline = (function () {
     });
   };
 
-  Pipeline.prototype.analyse = function analyse(code, opts, visitor) {
-    if (opts === undefined) opts = {};
+  Pipeline.prototype.analyse = function analyse(code) {
+    /*istanbul ignore next*/var opts = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+    /*istanbul ignore next*/var visitor = arguments[2];
 
     opts.code = false;
     if (visitor) {
       opts.plugins = opts.plugins || [];
-      opts.plugins.push(new _plugin2["default"]({ visitor: visitor }));
+      opts.plugins.push(new /*istanbul ignore next*/_plugin2.default({ visitor: visitor }));
     }
     return this.transform(code, opts).metadata;
   };
 
   Pipeline.prototype.transformFromAst = function transformFromAst(ast, code, opts) {
-    ast = _helpersNormalizeAst2["default"](ast);
+    ast = /*istanbul ignore next*/(0, _normalizeAst2.default)(ast);
 
-    var file = new _file2["default"](opts, this);
+    var file = new /*istanbul ignore next*/_file2.default(opts, this);
     return file.wrap(code, function () {
       file.addCode(code);
       file.addAst(ast);
@@ -73,7 +78,8 @@ var Pipeline = (function () {
   };
 
   return Pipeline;
-})();
+}(); /* global BabelFileResult, BabelFileMetadata */
 
-exports["default"] = Pipeline;
-module.exports = exports["default"];
+
+/*istanbul ignore next*/exports.default = Pipeline;
+/*istanbul ignore next*/module.exports = exports["default"];

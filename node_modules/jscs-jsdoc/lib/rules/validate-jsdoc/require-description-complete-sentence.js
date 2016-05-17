@@ -56,6 +56,10 @@ function requireDescriptionCompleteSentence(node, err) {
         .replace(/(`)([^`]+)\1/, quotedSanitizer)
         .replace(/(')([^']+)\1/, quotedSanitizer)
         .replace(/(")([^"]+)\1/, quotedSanitizer)
+        // sanitize HTML tags which close
+        .replace(/<([^ >]+)[^>]*>[\s\S]*?.*?<\/\1>|<[^\/]+\/>/g, htmlSanitizer)
+        // sanitize self-closing HTML tags eg <br>
+        .replace(/<([^ >]+)[^>]*>/g, htmlSanitizer)
         .replace(/\{([^}]+)\}/, function(_, m) {
             return '{' + (new Array(m.length + 1)).join('*') + '}';
         })
@@ -178,4 +182,20 @@ function returnAllMatches(input, regex) {
 function quotedSanitizer(_, q, m) {
     var endsWithDot = /\.\s*$/.test(m);
     return q + (new Array(m.length + (endsWithDot ? 0 : 1))).join('*') + q + (endsWithDot ? '.' : '');
+}
+
+/**
+ * HTML part sanitizer.
+ * To prevent RE_NEW_LINE_START_WITH_UPPER_CASE
+ * return string will padded by 'x.'
+ *
+ * @private
+ * @param {string} _ - Full matched string
+ * @returns {string} - Sanitized string
+ */
+function htmlSanitizer(_) {
+  return _.split('').map(function(token, iterator) {
+    if (iterator === _.length - 1) { return 'x.'}
+    return token === '\n' ? '\n' : '*';
+  }).join('');
 }

@@ -1,6 +1,12 @@
 MochAwait
 =========
 
+# DEPRECATED
+
+Mocha supports this functionality natively now, so there's no need to use this package
+
+# Old README
+
 A [Mocha](https://github.com/visionmedia/mocha) wrapper that provides an
 interface for ES7 async/await. Now you can do async test blocks without
 having to worry about passing "done" everywhere!

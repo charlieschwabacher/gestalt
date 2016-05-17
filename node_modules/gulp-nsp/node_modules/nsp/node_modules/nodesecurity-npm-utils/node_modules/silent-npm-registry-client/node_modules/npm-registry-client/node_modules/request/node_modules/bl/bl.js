@@ -52,8 +52,19 @@ BufferList.prototype.append = function (buf) {
   var isBuffer = Buffer.isBuffer(buf) ||
                  buf instanceof BufferList
 
-  this._bufs.push(isBuffer ? buf : new Buffer(buf))
-  this.length += buf.length
+  // coerce number arguments to strings, since Buffer(number) does
+  // uninitialized memory allocation
+  if (typeof buf == 'number')
+    buf = buf.toString()
+
+  if (buf instanceof BufferList) {
+    this._bufs.push.apply(this._bufs, buf._bufs)
+    this.length += buf.length
+  } else {
+    this._bufs.push(isBuffer ? buf : new Buffer(buf))
+    this.length += buf.length
+  }
+
   return this
 }
 
@@ -157,7 +168,7 @@ BufferList.prototype.toString = function (encoding, start, end) {
 
 BufferList.prototype.consume = function (bytes) {
   while (this._bufs.length) {
-    if (bytes > this._bufs[0].length) {
+    if (bytes >= this._bufs[0].length) {
       bytes -= this._bufs[0].length
       this.length -= this._bufs[0].length
       this._bufs.shift()

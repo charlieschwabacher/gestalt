@@ -1,10 +1,10 @@
+// @flow
+
 import {
   GraphQLInterfaceType,
   GraphQLNonNull,
   GraphQLID
 } from 'graphql';
-
-import Gestalt from './Gestalt';
 
 export default new GraphQLInterfaceType({
   name: 'Node',
@@ -15,5 +15,5 @@ export default new GraphQLInterfaceType({
       description: 'The id of the object.',
     },
   }),
-  resolveType: o => Gestalt.objectTypes[o._type],
+  resolveType: v => v,
 });

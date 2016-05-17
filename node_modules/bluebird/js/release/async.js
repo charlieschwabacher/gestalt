@@ -6,6 +6,7 @@ var Queue = require("./queue");
 var util = require("./util");
 
 function Async() {
+    this._customScheduler = false;
     this._isTickUsed = false;
     this._lateQueue = new Queue(16);
     this._normalQueue = new Queue(16);
@@ -17,6 +18,17 @@ function Async() {
     };
     this._schedule = schedule;
 }
+
+Async.prototype.setScheduler = function(fn) {
+    var prev = this._schedule;
+    this._schedule = fn;
+    this._customScheduler = true;
+    return prev;
+};
+
+Async.prototype.hasCustomScheduler = function() {
+    return this._customScheduler;
+};
 
 Async.prototype.enableTrampoline = function() {
     this._trampolineEnabled = true;

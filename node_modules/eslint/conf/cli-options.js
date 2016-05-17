@@ -1,8 +1,6 @@
 /**
  * @fileoverview Default CLIEngineOptions.
  * @author Ian VanSchooten
- * @copyright 2016 Ian VanSchooten. All rights reserved.
- * See LICENSE in root directory for full license.
  */
 
 "use strict";
@@ -28,6 +26,5 @@ module.exports = {
     cacheLocation: "",
     cacheFile: ".eslintcache",
     fix: false,
-    allowInlineConfig: true,
-    cwd: process.cwd()
+    allowInlineConfig: true
 };

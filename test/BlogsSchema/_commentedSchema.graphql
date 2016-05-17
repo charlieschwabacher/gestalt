@@ -37,8 +37,10 @@ directive @computed on FIELD_DEFINITION
 directive @hidden on FIELD_DEFINITION
 directive @edge(path: String) on FIELD_DEFINITION
 
+
+
 # The folloing types are an example of what would defined by the user through
-# using the IDL.
+# the IDL.
 
 type Session {
   # Values defined on session are set through mutations.  Nodes are stored by

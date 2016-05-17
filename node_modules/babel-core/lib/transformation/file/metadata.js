@@ -1,18 +1,28 @@
-"use strict";
-
-var _interopRequireWildcard = require("babel-runtime/helpers/interop-require-wildcard")["default"];
+/*istanbul ignore next*/"use strict";
 
 exports.__esModule = true;
+exports.ImportDeclaration = exports.ModuleDeclaration = undefined;
+
+var _getIterator2 = require("babel-runtime/core-js/get-iterator");
+
+var _getIterator3 = _interopRequireDefault(_getIterator2);
+
 exports.ExportDeclaration = ExportDeclaration;
-exports.Scope = Scope;
+/*istanbul ignore next*/exports.Scope = Scope;
 
-var _babelTypes = require("babel-types");
+var /*istanbul ignore next*/_babelTypes = require("babel-types");
 
+/*istanbul ignore next*/
 var t = _interopRequireWildcard(_babelTypes);
 
-var ModuleDeclaration = {
+/*istanbul ignore next*/
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var ModuleDeclaration = /*istanbul ignore next*/exports.ModuleDeclaration = { /*istanbul ignore next*/
   enter: function enter(path, file) {
-    var node = path.node;
+    /*istanbul ignore next*/var node = path.node;
 
     if (node.source) {
       node.source.value = file.resolveModuleSource(node.source.value);
@@ -20,10 +30,10 @@ var ModuleDeclaration = {
   }
 };
 
-exports.ModuleDeclaration = ModuleDeclaration;
-var ImportDeclaration = {
+var ImportDeclaration = /*istanbul ignore next*/exports.ImportDeclaration = { /*istanbul ignore next*/
   exit: function exit(path, file) {
-    var node = path.node;
+    /*istanbul ignore next*/var node = path.node;
+
 
     var specifiers = [];
     var imported = [];
@@ -33,10 +43,21 @@ var ImportDeclaration = {
       specifiers: specifiers
     });
 
-    var _arr = path.get("specifiers");
+    for ( /*istanbul ignore next*/var _iterator = path.get("specifiers"), _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : (0, _getIterator3.default)(_iterator);;) {
+      /*istanbul ignore next*/
+      var _ref;
 
-    for (var _i = 0; _i < _arr.length; _i++) {
-      var specifier = _arr[_i];
+      if (_isArray) {
+        if (_i >= _iterator.length) break;
+        _ref = _iterator[_i++];
+      } else {
+        _i = _iterator.next();
+        if (_i.done) break;
+        _ref = _i.value;
+      }
+
+      var specifier = _ref;
+
       var local = specifier.node.local.name;
 
       if (specifier.isImportDefaultSpecifier()) {
@@ -69,10 +90,9 @@ var ImportDeclaration = {
   }
 };
 
-exports.ImportDeclaration = ImportDeclaration;
-
 function ExportDeclaration(path, file) {
-  var node = path.node;
+  /*istanbul ignore next*/var node = path.node;
+
 
   var source = node.source ? node.source.value : null;
   var exports = file.metadata.modules.exports;
@@ -83,21 +103,32 @@ function ExportDeclaration(path, file) {
   if (declar.isStatement()) {
     var bindings = declar.getBindingIdentifiers();
 
-    for (var _name in bindings) {
-      exports.exported.push(_name);
+    for (var name in bindings) {
+      exports.exported.push(name);
       exports.specifiers.push({
         kind: "local",
-        local: _name,
-        exported: path.isExportDefaultDeclaration() ? "default" : _name
+        local: name,
+        exported: path.isExportDefaultDeclaration() ? "default" : name
       });
     }
   }
 
   if (path.isExportNamedDeclaration() && node.specifiers) {
-    var _arr2 = node.specifiers;
+    for ( /*istanbul ignore next*/var _iterator2 = node.specifiers, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : (0, _getIterator3.default)(_iterator2);;) {
+      /*istanbul ignore next*/
+      var _ref2;
 
-    for (var _i2 = 0; _i2 < _arr2.length; _i2++) {
-      var specifier = _arr2[_i2];
+      if (_isArray2) {
+        if (_i2 >= _iterator2.length) break;
+        _ref2 = _iterator2[_i2++];
+      } else {
+        _i2 = _iterator2.next();
+        if (_i2.done) break;
+        _ref2 = _i2.value;
+      }
+
+      var specifier = _ref2;
+
       var exported = specifier.exported.name;
       exports.exported.push(exported);
 

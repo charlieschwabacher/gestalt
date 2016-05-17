@@ -1,44 +1,50 @@
-/* eslint max-len: 0 */
-// This file contains methods responsible for replacing a node with another.
-
-"use strict";
-
-var _interopRequireDefault = require("babel-runtime/helpers/interop-require-default")["default"];
-
-var _interopRequireWildcard = require("babel-runtime/helpers/interop-require-wildcard")["default"];
+/*istanbul ignore next*/"use strict";
 
 exports.__esModule = true;
+
+var _getIterator2 = require("babel-runtime/core-js/get-iterator");
+
+var _getIterator3 = _interopRequireDefault(_getIterator2);
+
 exports.replaceWithMultiple = replaceWithMultiple;
-exports.replaceWithSourceString = replaceWithSourceString;
-exports.replaceWith = replaceWith;
-exports._replaceWith = _replaceWith;
-exports.replaceExpressionWithStatements = replaceExpressionWithStatements;
-exports.replaceInline = replaceInline;
+/*istanbul ignore next*/exports.replaceWithSourceString = replaceWithSourceString;
+/*istanbul ignore next*/exports.replaceWith = replaceWith;
+/*istanbul ignore next*/exports._replaceWith = _replaceWith;
+/*istanbul ignore next*/exports.replaceExpressionWithStatements = replaceExpressionWithStatements;
+/*istanbul ignore next*/exports.replaceInline = replaceInline;
 
-var _babelCodeFrame = require("babel-code-frame");
+var /*istanbul ignore next*/_babelCodeFrame = require("babel-code-frame");
 
+/*istanbul ignore next*/
 var _babelCodeFrame2 = _interopRequireDefault(_babelCodeFrame);
 
-var _index = require("../index");
+var /*istanbul ignore next*/_index = require("../index");
 
+/*istanbul ignore next*/
 var _index2 = _interopRequireDefault(_index);
 
-var _index3 = require("./index");
+var /*istanbul ignore next*/_index3 = require("./index");
 
+/*istanbul ignore next*/
 var _index4 = _interopRequireDefault(_index3);
 
-var _babylon = require("babylon");
+var /*istanbul ignore next*/_babylon = require("babylon");
 
-var _babelTypes = require("babel-types");
+var /*istanbul ignore next*/_babelTypes = require("babel-types");
 
+/*istanbul ignore next*/
 var t = _interopRequireWildcard(_babelTypes);
 
-var hoistVariablesVisitor = {
+/*istanbul ignore next*/
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var hoistVariablesVisitor = { /*istanbul ignore next*/
   Function: function Function(path) {
     path.skip();
   },
-
-  VariableDeclaration: function VariableDeclaration(path) {
+  /*istanbul ignore next*/VariableDeclaration: function VariableDeclaration(path) {
     if (path.node.kind !== "var") return;
 
     var bindings = path.getBindingIdentifiers();
@@ -48,9 +54,21 @@ var hoistVariablesVisitor = {
 
     var exprs = [];
 
-    var _arr = path.node.declarations;
-    for (var _i = 0; _i < _arr.length; _i++) {
-      var declar = _arr[_i];
+    for ( /*istanbul ignore next*/var _iterator = path.node.declarations, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : (0, _getIterator3.default)(_iterator);;) {
+      /*istanbul ignore next*/
+      var _ref;
+
+      if (_isArray) {
+        if (_i >= _iterator.length) break;
+        _ref = _iterator[_i++];
+      } else {
+        _i = _iterator.next();
+        if (_i.done) break;
+        _ref = _i.value;
+      }
+
+      var declar = _ref;
+
       if (declar.init) {
         exprs.push(t.expressionStatement(t.assignmentExpression("=", declar.id, declar.init)));
       }
@@ -67,6 +85,9 @@ var hoistVariablesVisitor = {
  *  - Insert the provided nodes after the current node.
  *  - Remove the current node.
  */
+
+/* eslint max-len: 0 */
+// This file contains methods responsible for replacing a node with another.
 
 function replaceWithMultiple(nodes) {
   this.resync();
@@ -96,19 +117,19 @@ function replaceWithSourceString(replacement) {
   this.resync();
 
   try {
-    replacement = "(" + replacement + ")";
-    replacement = _babylon.parse(replacement);
+    replacement = /*istanbul ignore next*/"(" + replacement + ")";
+    replacement = /*istanbul ignore next*/(0, _babylon.parse)(replacement);
   } catch (err) {
     var loc = err.loc;
     if (loc) {
       err.message += " - make sure this is an expression.";
-      err.message += "\n" + _babelCodeFrame2["default"](replacement, loc.line, loc.column + 1);
+      err.message += "\n" + /*istanbul ignore next*/(0, _babelCodeFrame2.default)(replacement, loc.line, loc.column + 1);
     }
     throw err;
   }
 
   replacement = replacement.program.body[0].expression;
-  _index2["default"].removeProperties(replacement);
+  /*istanbul ignore next*/_index2.default.removeProperties(replacement);
   return this.replaceWith(replacement);
 }
 
@@ -123,7 +144,7 @@ function replaceWith(replacement) {
     throw new Error("You can't replace this node, we've already removed it");
   }
 
-  if (replacement instanceof _index4["default"]) {
+  if (replacement instanceof /*istanbul ignore next*/_index4.default) {
     replacement = replacement.node;
   }
 
@@ -193,7 +214,7 @@ function _replaceWith(node) {
     t.validate(this.parent, this.key, node);
   }
 
-  this.debug(function () {
+  this.debug(function () /*istanbul ignore next*/{
     return "Replace with " + (node && node.type);
   });
 
@@ -235,11 +256,24 @@ function replaceExpressionWithStatements(nodes) {
 
     // add implicit returns to all ending expression statements
     var completionRecords = this.get("callee").getCompletionRecords();
-    for (var _i2 = 0; _i2 < completionRecords.length; _i2++) {
-      var path = completionRecords[_i2];
+    for ( /*istanbul ignore next*/var _iterator2 = completionRecords, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : (0, _getIterator3.default)(_iterator2);;) {
+      /*istanbul ignore next*/
+      var _ref2;
+
+      if (_isArray2) {
+        if (_i2 >= _iterator2.length) break;
+        _ref2 = _iterator2[_i2++];
+      } else {
+        _i2 = _iterator2.next();
+        if (_i2.done) break;
+        _ref2 = _i2.value;
+      }
+
+      var path = _ref2;
+
       if (!path.isExpressionStatement()) continue;
 
-      var loop = path.findParent(function (path) {
+      var loop = path.findParent(function (path) /*istanbul ignore next*/{
         return path.isLoop();
       });
       if (loop) {

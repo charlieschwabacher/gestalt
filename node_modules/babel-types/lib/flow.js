@@ -1,15 +1,17 @@
-"use strict";
-
-var _interopRequireWildcard = require("babel-runtime/helpers/interop-require-wildcard")["default"];
+/*istanbul ignore next*/"use strict";
 
 exports.__esModule = true;
 exports.createUnionTypeAnnotation = createUnionTypeAnnotation;
-exports.removeTypeDuplicates = removeTypeDuplicates;
-exports.createTypeAnnotationBasedOnTypeof = createTypeAnnotationBasedOnTypeof;
+/*istanbul ignore next*/exports.removeTypeDuplicates = removeTypeDuplicates;
+/*istanbul ignore next*/exports.createTypeAnnotationBasedOnTypeof = createTypeAnnotationBasedOnTypeof;
 
-var _index = require("./index");
+var /*istanbul ignore next*/_index = require("./index");
 
+/*istanbul ignore next*/
 var t = _interopRequireWildcard(_index);
+
+/*istanbul ignore next*/
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 /**
  * Takes an array of `types` and flattens them, removing duplicates and
@@ -70,10 +72,10 @@ function removeTypeDuplicates(nodes) {
 
     // find a matching generic type and merge and deduplicate the type parameters
     if (t.isGenericTypeAnnotation(node)) {
-      var _name = node.id.name;
+      var name = node.id.name;
 
-      if (generics[_name]) {
-        var existing = generics[_name];
+      if (generics[name]) {
+        var existing = generics[name];
         if (existing.typeParameters) {
           if (node.typeParameters) {
             existing.typeParameters.params = removeTypeDuplicates(existing.typeParameters.params.concat(node.typeParameters.params));
@@ -82,7 +84,7 @@ function removeTypeDuplicates(nodes) {
           existing = node.typeParameters;
         }
       } else {
-        generics[_name] = node;
+        generics[name] = node;
       }
 
       continue;
@@ -97,8 +99,8 @@ function removeTypeDuplicates(nodes) {
   }
 
   // add back in generics
-  for (var _name2 in generics) {
-    types.push(generics[_name2]);
+  for (var _name in generics) {
+    types.push(generics[_name]);
   }
 
   return types;

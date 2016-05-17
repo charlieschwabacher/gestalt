@@ -41,7 +41,7 @@ function nodebackForPromise(promise, multiArgs) {
         } else if (!multiArgs) {
             promise._fulfill(value);
         } else {
-            var $_len = arguments.length;var args = new Array($_len - 1); for(var $_i = 1; $_i < $_len; ++$_i) {args[$_i - 1] = arguments[$_i];};
+            var $_len = arguments.length;var args = new Array(Math.max($_len - 1, 0)); for(var $_i = 1; $_i < $_len; ++$_i) {args[$_i - 1] = arguments[$_i];};
             promise._fulfill(args);
         }
         promise = null;

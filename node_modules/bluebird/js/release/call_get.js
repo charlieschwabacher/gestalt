@@ -83,7 +83,7 @@ function caller(obj) {
     return fn.apply(obj, this);
 }
 Promise.prototype.call = function (methodName) {
-    var $_len = arguments.length;var args = new Array($_len - 1); for(var $_i = 1; $_i < $_len; ++$_i) {args[$_i - 1] = arguments[$_i];};
+    var $_len = arguments.length;var args = new Array(Math.max($_len - 1, 0)); for(var $_i = 1; $_i < $_len; ++$_i) {args[$_i - 1] = arguments[$_i];};
     if (!false) {
         if (canEvaluate) {
             var maybeCaller = getMethodCaller(methodName);

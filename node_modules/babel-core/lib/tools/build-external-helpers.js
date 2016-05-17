@@ -1,38 +1,72 @@
-/* eslint max-len: 0 */
-
-"use strict";
-
-var _interopRequireWildcard = require("babel-runtime/helpers/interop-require-wildcard")["default"];
-
-var _interopRequireDefault = require("babel-runtime/helpers/interop-require-default")["default"];
+/*istanbul ignore next*/"use strict";
 
 exports.__esModule = true;
 
-var _babelHelpers = require("babel-helpers");
+exports.default = function (whitelist) {
+  /*istanbul ignore next*/var outputType = arguments.length <= 1 || arguments[1] === undefined ? "global" : arguments[1];
 
+  var namespace = t.identifier("babelHelpers");
+
+  var builder = function builder(body) {
+    return buildHelpers(body, namespace, whitelist);
+  };
+
+  var tree = /*istanbul ignore next*/void 0;
+
+  var build = {
+    global: buildGlobal,
+    umd: buildUmd,
+    var: buildVar
+  }[outputType];
+
+  if (build) {
+    tree = build(namespace, builder);
+  } else {
+    throw new Error(messages.get("unsupportedOutputType", outputType));
+  }
+
+  return (/*istanbul ignore next*/(0, _babelGenerator2.default)(tree).code
+  );
+};
+
+var /*istanbul ignore next*/_babelHelpers = require("babel-helpers");
+
+/*istanbul ignore next*/
 var helpers = _interopRequireWildcard(_babelHelpers);
 
-var _babelGenerator = require("babel-generator");
+var /*istanbul ignore next*/_babelGenerator = require("babel-generator");
 
+/*istanbul ignore next*/
 var _babelGenerator2 = _interopRequireDefault(_babelGenerator);
 
-var _babelMessages = require("babel-messages");
+var /*istanbul ignore next*/_babelMessages = require("babel-messages");
 
+/*istanbul ignore next*/
 var messages = _interopRequireWildcard(_babelMessages);
 
-var _babelTemplate = require("babel-template");
+var /*istanbul ignore next*/_babelTemplate = require("babel-template");
 
+/*istanbul ignore next*/
 var _babelTemplate2 = _interopRequireDefault(_babelTemplate);
 
-var _lodashCollectionEach = require("lodash/collection/each");
+var /*istanbul ignore next*/_each = require("lodash/collection/each");
 
-var _lodashCollectionEach2 = _interopRequireDefault(_lodashCollectionEach);
+/*istanbul ignore next*/
+var _each2 = _interopRequireDefault(_each);
 
-var _babelTypes = require("babel-types");
+var /*istanbul ignore next*/_babelTypes = require("babel-types");
 
+/*istanbul ignore next*/
 var t = _interopRequireWildcard(_babelTypes);
 
-var buildUmdWrapper = _babelTemplate2["default"]("\n  (function (root, factory) {\n    if (typeof define === \"function\" && define.amd) {\n      define(AMD_ARGUMENTS, factory);\n    } else if (typeof exports === \"object\") {\n      factory(COMMON_ARGUMENTS);\n    } else {\n      factory(BROWSER_ARGUMENTS);\n    }\n  })(UMD_ROOT, function (FACTORY_PARAMETERS) {\n    FACTORY_BODY\n  });\n");
+/*istanbul ignore next*/
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+/* eslint max-len: 0 */
+
+var buildUmdWrapper = /*istanbul ignore next*/(0, _babelTemplate2.default)( /*istanbul ignore next*/"\n  (function (root, factory) {\n    if (typeof define === \"function\" && define.amd) {\n      define(AMD_ARGUMENTS, factory);\n    } else if (typeof exports === \"object\") {\n      factory(COMMON_ARGUMENTS);\n    } else {\n      factory(BROWSER_ARGUMENTS);\n    }\n  })(UMD_ROOT, function (FACTORY_PARAMETERS) {\n    FACTORY_BODY\n  });\n");
 
 function buildGlobal(namespace, builder) {
   var body = [];
@@ -71,38 +105,11 @@ function buildVar(namespace, builder) {
 }
 
 function buildHelpers(body, namespace, whitelist) {
-  _lodashCollectionEach2["default"](helpers.list, function (name) {
+  /*istanbul ignore next*/(0, _each2.default)(helpers.list, function (name) {
     if (whitelist && whitelist.indexOf(name) < 0) return;
 
     var key = t.identifier(name);
     body.push(t.expressionStatement(t.assignmentExpression("=", t.memberExpression(namespace, key), helpers.get(name))));
   });
 }
-
-exports["default"] = function (whitelist) {
-  var outputType = arguments.length <= 1 || arguments[1] === undefined ? "global" : arguments[1];
-
-  var namespace = t.identifier("babelHelpers");
-
-  var builder = function builder(body) {
-    return buildHelpers(body, namespace, whitelist);
-  };
-
-  var tree = undefined;
-
-  var build = ({
-    global: buildGlobal,
-    umd: buildUmd,
-    "var": buildVar
-  })[outputType];
-
-  if (build) {
-    tree = build(namespace, builder);
-  } else {
-    throw new Error(messages.get("unsupportedOutputType", outputType));
-  }
-
-  return _babelGenerator2["default"](tree).code;
-};
-
-module.exports = exports["default"];
+/*istanbul ignore next*/module.exports = exports["default"];

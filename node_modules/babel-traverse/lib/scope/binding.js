@@ -1,4 +1,12 @@
+/*istanbul ignore next*/"use strict";
 
+exports.__esModule = true;
+
+var _classCallCheck2 = require("babel-runtime/helpers/classCallCheck");
+
+var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
  * This class is responsible for a binding inside of a scope.
@@ -11,21 +19,14 @@
  *  * The kind of binding. (Is it a parameter, declaration etc)
  */
 
-"use strict";
-
-var _classCallCheck = require("babel-runtime/helpers/class-call-check")["default"];
-
-exports.__esModule = true;
-
-var Binding = (function () {
-  function Binding(_ref) {
-    var existing = _ref.existing;
-    var identifier = _ref.identifier;
-    var scope = _ref.scope;
-    var path = _ref.path;
-    var kind = _ref.kind;
-
-    _classCallCheck(this, Binding);
+var Binding = function () {
+  function /*istanbul ignore next*/Binding(_ref) {
+    /*istanbul ignore next*/var existing = _ref.existing;
+    /*istanbul ignore next*/var identifier = _ref.identifier;
+    /*istanbul ignore next*/var scope = _ref.scope;
+    /*istanbul ignore next*/var path = _ref.path;
+    /*istanbul ignore next*/var kind = _ref.kind;
+    /*istanbul ignore next*/(0, _classCallCheck3.default)(this, Binding);
 
     this.identifier = identifier;
     this.scope = scope;
@@ -95,7 +96,7 @@ var Binding = (function () {
   };
 
   return Binding;
-})();
+}();
 
-exports["default"] = Binding;
-module.exports = exports["default"];
+/*istanbul ignore next*/exports.default = Binding;
+/*istanbul ignore next*/module.exports = exports["default"];
