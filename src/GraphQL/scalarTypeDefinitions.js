@@ -1,0 +1,22 @@
+export default {
+  Date: {
+    serialize: v => v,
+    parseValue: v => v,
+    parseLiteral: ast => ast.value,
+  },
+  Geo: {
+    serialize: v => v,
+    parseValue: v => v,
+    parseLiteral: ast => ast.value,
+  },
+  Money: {
+    serialize: v => v,
+    parseValue: v => v,
+    parseLiteral: ast => ast.value,
+  },
+  Text: {
+    serialize: v => v,
+    parseValue: v => v,
+    parseLiteral: ast => ast.value,
+  },
+};

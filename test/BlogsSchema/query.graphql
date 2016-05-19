@@ -1,0 +1,5 @@
+query Q {
+  session {
+    id
+  }
+}

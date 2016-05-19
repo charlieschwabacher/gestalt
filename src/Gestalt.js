@@ -1,14 +1,25 @@
 // @flow
+import {graphql, GraphQLSchema} from 'graphql';
+import {parse} from 'graphql/language/parser';
+import generateGraphQLSchema from './GraphQL/generateGraphQLSchema';
 
-import invariant from './util/invariant';
+export default class Gestalt {
+  schema: GraphQLSchema;
 
-export default {
-  objectTypes: {},
-  mutations: {},
+  constructor(definitionString: string) {
+    const ast = parse(definitionString);
+    this.schema = generateGraphQLSchema(ast, [], []);
+  }
 
-  registerObjectResolver(): void {
-  },
+  start(config: {port: number}): void {
+
+  }
+
+  registerObjectType(): void {
+
+  }
 
   registerMutation(): void {
-  },
-};
+
+  }
+}

@@ -45,37 +45,6 @@ const schema: DatabaseSchema = {
         },
       ]
     },
-    // {
-    //   name: 'user_followed_users',
-    //   columns: [
-    //     {
-    //       name: 'user_id',
-    //       type: 'uuid',
-    //       primaryKey: false,
-    //       nonNull: true,
-    //       references: {
-    //         table: 'users',
-    //         column: 'id',
-    //       }
-    //     },
-    //     {
-    //       name: 'followed_id',
-    //       type: 'uuid',
-    //       primaryKey: false,
-    //       nonNull: true,
-    //       references: {
-    //         table: 'users',
-    //         column: 'id',
-    //       }
-    //     }
-    //   ],
-    //   constraints: [
-    //     {
-    //       type: 'unique',
-    //       columns: ['user_id', 'followed_id']
-    //     }
-    //   ]
-    // },
     {
       name: 'posts',
       columns: [
@@ -103,16 +72,16 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           nonNull: true,
         },
-        // {
-        //   name: 'authored_id',
-        //   type: 'uuid',
-        //   primaryKey: false,
-        //   nonNull: true,
-        //   references: {
-        //     table: 'users',
-        //     column: 'id',
-        //   }
-        // },
+        {
+          name: 'authored_by_user_id',
+          type: 'uuid',
+          primaryKey: false,
+          nonNull: true,
+          references: {
+            table: 'users',
+            column: 'id',
+          }
+        },
       ],
     },
     {
@@ -136,27 +105,58 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           nonNull: true,
         },
-        // {
-        //   name: 'authored_id',
-        //   type: 'uuid',
-        //   primaryKey: false,
-        //   nonNull: true,
-        //   references: {
-        //     table: 'users',
-        //     column: 'id',
-        //   }
-        // },
-        // {
-        //   name: 'comment_on_id',
-        //   type: 'uuid',
-        //   primaryKey: false,
-        //   nonNull: true,
-        //   references: {
-        //     table: 'posts',
-        //     column: 'id',
-        //   }
-        // },
+        {
+          name: 'authored_by_user_id',
+          type: 'uuid',
+          primaryKey: false,
+          nonNull: false,
+          references: {
+            table: 'users',
+            column: 'id',
+          }
+        },
+        {
+          name: 'inspired_by_post_id',
+          type: 'uuid',
+          primaryKey: false,
+          nonNull: true,
+          references: {
+            table: 'posts',
+            column: 'id',
+          }
+        },
       ],
+    },
+    {
+      name: 'user_followed_users',
+      columns: [
+        {
+          name: 'user_id',
+          type: 'uuid',
+          primaryKey: false,
+          nonNull: true,
+          references: {
+            table: 'users',
+            column: 'id',
+          }
+        },
+        {
+          name: 'followed_user_id',
+          type: 'uuid',
+          primaryKey: false,
+          nonNull: true,
+          references: {
+            table: 'users',
+            column: 'id',
+          }
+        }
+      ],
+      constraints: [
+        {
+          type: 'unique',
+          columns: ['user_id', 'followed_user_id']
+        }
+      ]
     },
   ],
   indices: [
@@ -164,34 +164,34 @@ const schema: DatabaseSchema = {
       table: 'users',
       columns: ['id'],
     },
-    // {
-    //   table: 'user_followed_users',
-    //   columns: ['user_id'],
-    // },
-    // {
-    //   table: 'user_followed_users',
-    //   columns: ['followed_id'],
-    // },
     {
       table: 'posts',
       columns: ['id'],
     },
-    // {
-    //   table: 'posts',
-    //   columns: ['authored_id'],
-    // },
     {
       table: 'comments',
       columns: ['id'],
     },
-    // {
-    //   table: 'comments',
-    //   columns: ['authored_id'],
-    // },
-    // {
-    //   table: 'comments',
-    //   columns: ['comment_on_id'],
-    // },
+    {
+      table: 'user_followed_users',
+      columns: ['user_id'],
+    },
+    {
+      table: 'user_followed_users',
+      columns: ['followed_user_id'],
+    },
+    {
+      table: 'posts',
+      columns: ['authored_by_user_id'],
+    },
+    {
+      table: 'comments',
+      columns: ['authored_by_user_id'],
+    },
+    {
+      table: 'comments',
+      columns: ['inspired_by_post_id'],
+    },
   ],
 };
 

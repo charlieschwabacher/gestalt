@@ -1,28 +1,51 @@
 Name:
-  - gestalt (define as little as possible, blanks are autmatically filled in,
+  - gestalt (define as little as possible, blanks are automatically filled in,
     logo could be three circles w/ blanks in shape of vertices of triangle:
     image a here:
     https://upload.wikimedia.org/wikipedia/commons/6/63/Reification.jpg)
-  - sonora (DRY.. logo could be cactus in foreground here:
-    https://upload.wikimedia.org/wikipedia/commons/1/1f/Agfr_desert.jpg )
-
 
 View Permissions?
   - one straightforward way is to use the graph, anything reachable is viewable
-  - use interface types to allow only certain fields (need a new PrivacyInterface
-    that is checked in resolve function)
-  - dont expose ids of things that are private
-
-Updates?
-  - validation `update(model: Object, changes: Object): Promise`
-  - keep history in graph w/ immutable chain storing all changed values w/
-    timestamps and code versions?
+  - don't expose ids of things that are private
 
 Scaffolds?
   - `gestalt create project` generate a new project
-  - `gestalt g user` generates a user w/ auth
-  - `gestalt g type Post` generates a post type
 
-Scalability?
-  - pluggable backends for neo4j, orientdb, postgres, mysql
-  - easy to swap for something distrubuted like titan as scale grows?
+
+User=FOLLOWED=>User
+User<=FOLLOWED=User
+  - add join table user_followed_user
+
+User=AUTHORED=>Post
+Post<-AUTHORED-User
+  - add authored_user_id column to posts
+
+Post<=COMMENT_ON=Comment
+Comment-COMMENT_ON->Post
+  - add comment_on_post_id column to comments
+
+User=AUTHORED=>Comment
+Comment<-AUTHORED-User
+  - add authored_user_id column to posts
+
+possible combos:
+  plural + plural
+    - create join table from_label_to
+  missing + plural
+    - create join table from_label_to
+  singular + plural
+    - add foreign key on singular side
+  singular + singular
+    - add foreign key on the to side
+  missing + singular
+    - add foreign key
+
+if target is a Union type, add type column in addition to id.
+if union contains any non node types, raise an error.
+
+
+algorithm to go from edges to table additions:
+- get flat list of edge segments
+- make pairs
+  - match segments w/ the same types and label and opposite directions
+  - ignore duplicate segments

@@ -1,47 +1,49 @@
-import 'babel-polyfill';
-
+import 'colors';
 import {assert} from 'chai';
 import path from 'path';
 import fs from 'fs';
+import {graphql} from 'graphql';
 import {parse} from 'graphql/language/parser';
-import generateDatabaseSchema, {edgeFromPathString}
-from '../src/PostgreSQL/generateDatabaseSchema';
+import generateGraphQLSchema from '../src/GraphQL/generateGraphQLSchema';
+import generateDatabaseSchema from '../src/PostgreSQL/generateDatabaseSchema';
+import generateDatabaseSchemaMigration from
+  '../src/PostgreSQL/generateDatabaseSchemaMigration';
 import expectedDatabaseSchema from './BlogsSchema/expectedDatabaseSchema';
 
 const definitionPath = path.resolve(__dirname, 'BlogsSchema/schema.graphql');
-const ast = parse(fs.readFileSync(definitionPath, 'utf8'));
+const definitionAST = parse(fs.readFileSync(definitionPath, 'utf8'));
+
+const sqlSchemaPath = path.resolve(__dirname, 'BlogsSchema/schema.sql');
+const expectedSQLSchema = fs.readFileSync(sqlSchemaPath, 'utf8');
+
+const graphQLQueryPath = path.resolve(__dirname, 'BlogsSchema/query.graphql');
+const graphQLQuery = fs.readFileSync(graphQLQueryPath, 'utf8');
+
 
 describe('schema definition', () => {
-  it('defines a database schema', () => {
-    assert.deepEqual(expectedDatabaseSchema, generateDatabaseSchema(ast));
-  });
 
-  it('defines a graphql schema', () => {
-
-  });
-});
-
-describe('parsing path strings', () => {
-  it('parses a long edge', () => {
+  it('generates a database schema definition from a GraphQL IDL AST', () => {
     assert.deepEqual(
-      edgeFromPathString('User', 'Post', '=FOLLOWED=>User=FOLLOWED=>User=AUTHORED=>'),
-      {
-        path: [
-          {fromType: 'User', toType: 'User', label: 'FOLLOWED', cardinality: 'plural', direction: 'out'},
-          {fromType: 'User', toType: 'User', label: 'FOLLOWED', cardinality: 'plural', direction: 'out'},
-          {fromType: 'User', toType: 'Post', label: 'AUTHORED', cardinality: 'plural', direction: 'out'},
-        ]
-      }
+      expectedDatabaseSchema,
+      generateDatabaseSchema(definitionAST)
     );
   });
-  it('parses a short edge', () => {
-    assert.deepEqual(
-      edgeFromPathString('Post', 'User', '<-AUTHORED-'),
-      {
-        path: [
-          {fromType: 'Post', toType: 'User', label: 'AUTHORED', direction: 'in', cardinality: 'singular'},
-        ]
-      }
+
+  it('generates SQL from a database schema definition', () => {
+    assert.equal(
+      expectedSQLSchema,
+      generateDatabaseSchemaMigration(expectedDatabaseSchema)
     );
   });
+
+  it('generates a graphql schema from a GraphQL IDL AST', done => {
+    const schema = generateGraphQLSchema(definitionAST, [], []);
+    graphql(schema, graphQLQuery).then(result => {
+      console.log(result);
+      done();
+    }).catch(e => {
+      throw e;
+    });
+  });
+
 });

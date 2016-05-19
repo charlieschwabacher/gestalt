@@ -2,10 +2,10 @@
 // type, and relationship information.
 // @flow
 
+import type {Edge} from '../types';
+
 export default function generateEdgeResolver(
-  from: Object,
-  to: Object,
-  path: Object,
+  edge: Edge
 ): () => Promise<Object> {
   return () => (new Promise(r => r({})));
 }

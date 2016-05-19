@@ -4,7 +4,7 @@ import type {
   GraphQLFieldConfig,
   InputObjectConfigFieldMap,
   GraphQLFieldConfigMap,
-  GraphQLResolveInfo
+  GraphQLResolveInfo,
 } from 'graphql';
 
 type mutationFn =
