@@ -1,5 +1,23 @@
 // @flow
 
+import type {GraphQLFieldResolveFn} from 'graphql/type/definition';
+
+export type {GraphQLSchema, GraphQLObjectType} from 'graphql';
+
+export type {GraphQLFieldResolveFn, GraphQLResolveInfo, GraphQLFieldConfig}
+  from 'graphql/type/definition';
+
+export type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
+  Type, NamedType} from 'graphql/language/ast';
+
+
+export type DatabaseInterface = {
+  schema: DatabaseSchema,
+  edges: Edge[],
+  resolveNode: GraphQLFieldResolveFn,
+  generateEdgeResolver: (edge: Edge) => GraphQLFieldResolveFn,
+}
+
 export type DatabaseSchema = {
   tables: Table[],
   indices: Index[],
@@ -36,6 +54,7 @@ export type ColumnType = 'uuid' | 'jsonb' | 'varchar(255)' | 'timestamp' |
   'text' | 'integer' | 'double precision' | 'money'
 
 export type Edge = {
+  fieldName: string,
   path: EdgeSegment[],
 }
 
@@ -53,6 +72,18 @@ export type EdgeSegmentPair = {
   out?: EdgeSegment,
 }
 
+export type EdgeSegmentDescription = {
+  type: 'join',
+  signature: string,
+  pair: EdgeSegmentPair,
+  storage: JoinTableDescription,
+} | {
+  type: 'foreignKey',
+  signature: string,
+  pair: EdgeSegmentPair,
+  storage: ForeignKeyDescription,
+}
+
 export type JoinTableDescription = {
   name: string,
   leftTableName: string,
@@ -67,3 +98,10 @@ export type ForeignKeyDescription = {
   column: string,
   nonNull: boolean,
 }
+
+// represents custom field resolution definitions for graphql object types
+// defined using the IDL
+export type ObjectTypeFieldResolutionDefinition = {
+  name: string,
+  fields: {[key: string]: GraphQLFieldResolveFn}
+};

@@ -2,10 +2,11 @@
 // type, and relationship information.
 // @flow
 
-import type {Edge} from '../types';
+import type {Edge, EdgeSegmentDescription} from '../types';
 
 export default function generateEdgeResolver(
-  edge: Edge
+  segmentDescriptionsBySignature: {[key: string]: EdgeSegmentDescription},
+  edge: Edge,
 ): () => Promise<Object> {
   return () => (new Promise(r => r({})));
 }

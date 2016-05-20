@@ -1,6 +1,6 @@
 // @flow
 
-import type {DatabaseSchema} from '../../src/PostgreSQL/types';
+import type {DatabaseSchema} from '../../src/types';
 
 const schema: DatabaseSchema = {
   tables: [

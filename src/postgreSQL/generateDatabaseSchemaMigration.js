@@ -2,7 +2,7 @@
 // generates a migration in SQL to make the necessary updates.
 // @flow
 
-import type {DatabaseSchema, Table, Column, Index} from './types';
+import type {DatabaseSchema, Table, Column, Index} from '../types';
 
 
 export default function generateDatabaseSchemaMigration(

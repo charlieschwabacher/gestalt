@@ -2,7 +2,7 @@
 // @flow
 
 import {find} from './db';
-import type GraphQLResolveInfo from 'graphql/type/definition';
+import type {GraphQLResolveInfo} from '../types';
 
 export default function resolveNode(
   source: Object,

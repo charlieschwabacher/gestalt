@@ -5,7 +5,7 @@ import fs from 'fs';
 import {graphql} from 'graphql';
 import {parse} from 'graphql/language/parser';
 import generateGraphQLSchema from '../src/GraphQL/generateGraphQLSchema';
-import generateDatabaseSchema from '../src/PostgreSQL/generateDatabaseSchema';
+import generateDatabaseInterface from '../src/PostgreSQL';
 import generateDatabaseSchemaMigration from
   '../src/PostgreSQL/generateDatabaseSchemaMigration';
 import expectedDatabaseSchema from './BlogsSchema/expectedDatabaseSchema';
@@ -25,7 +25,7 @@ describe('schema definition', () => {
   it('generates a database schema definition from a GraphQL IDL AST', () => {
     assert.deepEqual(
       expectedDatabaseSchema,
-      generateDatabaseSchema(definitionAST)
+      generateDatabaseInterface(definitionAST).schema
     );
   });
 
