@@ -6,12 +6,11 @@ import fs from 'fs';
 import type {Document, GraphQLSchema, ObjectTypeDefinition,
   GraphQLFieldResolveFn, GraphQLFieldConfig, DatabaseInterface,
   ObjectTypeFieldResolutionDefinition} from '../types';
-import {parse} from 'graphql/language';
-import {buildASTSchema, concatAST, printSchema} from 'graphql/utilities';
+import {parse, buildASTSchema, concatAST, printSchema} from 'graphql';
 import {insertConnectionTypes, removeHiddenNodes} from './ASTTransforms';
 import scalarTypeDefinitions from './scalarTypeDefinitions';
-import resolveSession from '../server/resolveSession';
 import generateDatabaseInterface from '../PostgreSQL';
+import resolveSession from '../server/resolveSession';
 import {isDatabaseType, baseType} from
   '../PostgreSQL/generateDatabaseInterface';
 
@@ -28,19 +27,23 @@ export default function generateGraphQLSchema(
 ): GraphQLSchema {
   const database = generateDatabaseInterface(ast);
 
+  // preprocess the parsed AST to remove hidden types and insert implied types
   const modifiedAST = concatAST([baseAST, ast]);
   removeHiddenNodes(modifiedAST);
   insertConnectionTypes(modifiedAST);
 
+  // generate a GraphQLSchema instance from the GraphQL IDL AST
   const schema = buildASTSchema(modifiedAST);
 
+  // add aditional definitions and attach resolution functions
   defineScalarTypes(schema);
   defineBaseSchemaResolution(schema, database);
   defineConnectionResolution(schema, database);
   attachObjectTypeFieldResolution(schema, objectTypes);
   defineMutations(schema, mutations);
 
-  console.log(printSchema(schema));
+  // log generated schema
+  // console.log(printSchema(schema));
 
   return schema;
 }
@@ -63,19 +66,6 @@ function defineBaseSchemaResolution(
   defineFieldResolve(schema, 'QueryRoot', 'session', resolveSession);
 }
 
-// attach user defined field resolution
-function attachObjectTypeFieldResolution(
-  schema: GraphQLSchema,
-  objectTypes: ObjectTypeFieldResolutionDefinition[]
-): void {
-  objectTypes.forEach(objectType => {
-    const typeName = objectType.name;
-    Object.entries(objectType.fields).forEach(([fieldName, resolve]) => {
-      defineFieldResolve(schema, typeName, fieldName, resolve);
-    });
-  });
-}
-
 // generate resolve functions for connection fields
 function defineConnectionResolution(
   schema: GraphQLSchema,
@@ -91,9 +81,22 @@ function defineConnectionResolution(
   });
 }
 
+// attach user defined field resolution
+function attachObjectTypeFieldResolution(
+  schema: GraphQLSchema,
+  objectTypes: ObjectTypeFieldResolutionDefinition[],
+): void {
+  objectTypes.forEach(objectType => {
+    const typeName = objectType.name;
+    Object.entries(objectType.fields).forEach(([fieldName, resolve]) => {
+      defineFieldResolve(schema, typeName, fieldName, resolve);
+    });
+  });
+}
+
 function defineMutations(
   schema: GraphQLSchema,
-  mutations: GraphQLFieldConfig
+  mutations: GraphQLFieldConfig,
 ): void {
 
 }
@@ -102,7 +105,7 @@ export function defineFieldResolve(
   schema: GraphQLSchema,
   typeName: string,
   fieldName: string,
-  resolve: GraphQLFieldResolveFn
+  resolve: GraphQLFieldResolveFn,
 ): void {
   const type = schema.getType(typeName);
   const field = type.getFields()[fieldName];
@@ -111,7 +114,7 @@ export function defineFieldResolve(
 
 function hasDirective(
   directiveName: string,
-  expected: boolean = true
+  expected: boolean = true,
 ): (node: Node) => boolean {
   return (node: Node) =>
     (

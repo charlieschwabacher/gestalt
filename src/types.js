@@ -3,10 +3,8 @@
 import type {GraphQLFieldResolveFn} from 'graphql/type/definition';
 
 export type {GraphQLSchema, GraphQLObjectType} from 'graphql';
-
 export type {GraphQLFieldResolveFn, GraphQLResolveInfo, GraphQLFieldConfig}
   from 'graphql/type/definition';
-
 export type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
   Type, NamedType} from 'graphql/language/ast';
 
@@ -65,6 +63,7 @@ export type EdgeSegment = {
   direction: 'in' | 'out',
   cardinality: 'singular' | 'plural',
   nonNull: boolean,
+  signature: string,
 }
 
 export type EdgeSegmentPair = {
@@ -93,11 +92,15 @@ export type JoinTableDescription = {
 }
 
 export type ForeignKeyDescription = {
+  direction: 'in' | 'out',
   table: string,
   referencedTable: string,
   column: string,
   nonNull: boolean,
 }
+
+export type EdgeSegmentDescriptionMap = {[key: string]: EdgeSegmentDescription}
+
 
 // represents custom field resolution definitions for graphql object types
 // defined using the IDL

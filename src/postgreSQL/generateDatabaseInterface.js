@@ -37,7 +37,6 @@ export default function generateDatabaseInterface(
   // having looked at each type and recorded their edges, we create normalized
   // descriptions of their relationships
   const segmentDescriptions = segmentDescriptionsFromEdges(edges);
-
   const segmentDescriptionsBySignature = keyMap(
     segmentDescriptions,
     segment => segment.signature
@@ -59,15 +58,14 @@ export default function generateDatabaseInterface(
   });
 
   return {
-    resolveNode,
-    generateEdgeResolver:
-      edge => generateEdgeResolver(segmentDescriptionsBySignature, edge),
     schema: {
       tables,
       indices,
     },
     edges,
-    db,
+    resolveNode,
+    generateEdgeResolver:
+      edge => generateEdgeResolver(segmentDescriptionsBySignature, edge),
   };
 }
 
@@ -104,7 +102,7 @@ export function isListType(type: Type): boolean {
 export function tableFromObjectTypeDefinition(
   definition: ObjectTypeDefinition,
 ): Table {
-  const name = snake(plural(definition.name.value));
+  const name = tableNameFromTypeName(definition.name.value);
   const columns = [];
 
   definition.fields.forEach(field => {
@@ -154,7 +152,7 @@ export function idIndexFromObjectTypeDefinition(
   definition: ObjectTypeDefinition,
 ): Index {
   return {
-    table: snake(plural(definition.name.value)),
+    table: tableNameFromTypeName(definition.name.value),
     columns: ['id'],
   };
 }
@@ -334,9 +332,9 @@ export function joinTableDescriptionFromEdgeSegmentPair(
   const label = (pair.out && pair.out.label) || (pair.in && pair.in.label);
 
   return {
-    name: snake(plural(`${left}_${label}_${right}`)),
-    leftTableName: snake(plural(left)),
-    rightTableName: snake(plural(right)),
+    name: tableNameFromTypeName(`${left}_${label}_${right}`),
+    leftTableName: tableNameFromTypeName(left),
+    rightTableName: tableNameFromTypeName(right),
     leftColumnName: snake(`${left}_id`),
     rightColumnName: snake(`${label}_${right}_id`),
   };
@@ -405,9 +403,9 @@ export function joinTableIndicesFromDescription(
 
 // missing + singular:
 //   - add the column to the fromType of the existing segment
-// singular + plural
+// singular + plural:
 //   - add the column to the fromType of the singular segment
-// singular + singular
+// singular + singular:
 //   - if one segment is non null, add the column to its fromType, otherwise
 //     add it to the toType of the out segment.
 
@@ -417,8 +415,10 @@ export function foreignKeyDescriptionFromEdgeSegmentPair(
   const normalType = (
     (pair.in == null || pair.out == null)
     ? pair.in || pair.out
-    : (pair.in.cardinality === 'plural' || pair.out.cardinality === 'plural')
-    ? (pair.in.cardinality === 'plural') ? pair.out : pair.in
+    : (pair.in.cardinality === 'plural')
+    ? pair.out
+    : (pair.out.cardinality === 'plural')
+    ? pair.in
     : (pair.in.nonNull && !pair.out.nonNull)
     ? pair.in
     : pair.out
@@ -429,8 +429,9 @@ export function foreignKeyDescriptionFromEdgeSegmentPair(
 
   return {
     nonNull,
-    table: snake(plural(fromType)),
-    referencedTable: snake(plural(toType)),
+    direction,
+    table: tableNameFromTypeName(fromType),
+    referencedTable: tableNameFromTypeName(toType),
     column: snake(
       (direction === 'in')
       ? `${label}_by_${toType}_id`
@@ -461,4 +462,8 @@ export function columnFromForeignKeyDescription(
       column: 'id'
     },
   };
+}
+
+export function tableNameFromTypeName(typeName: string): string {
+  return snake(plural(typeName));
 }

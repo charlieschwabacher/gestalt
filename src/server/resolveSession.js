@@ -8,5 +8,7 @@ export default function resolveSession(
   context: mixed,
   info: GraphQLResolveInfo,
 ): Object {
-  return {};
+  return {
+    id: '!'
+  };
 }
