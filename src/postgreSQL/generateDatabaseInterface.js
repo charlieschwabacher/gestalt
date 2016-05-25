@@ -412,25 +412,25 @@ export function joinTableIndicesFromDescription(
 export function foreignKeyDescriptionFromEdgeSegmentPair(
   pair: EdgeSegmentPair
 ): ForeignKeyDescription {
-  let normalType;
-  if (pair.in == null || pair.out == null) {
-    normalType = pair.in || pair.out;
-  } else if (pair.in.cardinality === 'plural') {
-    normalType = pair.out;
-  } else if (pair.out.cardinality === 'plurla') {
-    normalType = pair.in;
-  } else if (pair.in.nonNull && !pair.out.nonNull) {
-    normalType = pair.in;
-  } else {
-    normalType = pair.out;
-  }
+  const normalType = (
+    pair.in && (
+      (pair.out == null) ||
+      (pair.in.cardinality === 'plural') ||
+      (pair.out.nonNull && !pair.in.nonNull)
+    )
+    ? pair.in
+    : pair.out
+  );
 
   invariant(normalType, 'input pair does not require a foreign key');
-  const {label, fromType, toType, direction, nonNull} = normalType;
+  const {label, fromType, toType, direction} = normalType;
 
   return {
-    nonNull,
     direction,
+    nonNull: (
+      (pair.out != null && pair.out.nonNull) ||
+      (pair.in != null && pair.in.nonNull)
+    ),
     table: tableNameFromTypeName(toType),
     referencedTable: tableNameFromTypeName(fromType),
     column: snake(
