@@ -412,17 +412,18 @@ export function joinTableIndicesFromDescription(
 export function foreignKeyDescriptionFromEdgeSegmentPair(
   pair: EdgeSegmentPair
 ): ForeignKeyDescription {
-  const normalType = (
-    (pair.in == null || pair.out == null)
-    ? pair.in || pair.out
-    : (pair.in.cardinality === 'plural')
-    ? pair.out
-    : (pair.out.cardinality === 'plural')
-    ? pair.in
-    : (pair.in.nonNull && !pair.out.nonNull)
-    ? pair.in
-    : pair.out
-  );
+  let normalType;
+  if (pair.in == null || pair.out == null) {
+    normalType = pair.in || pair.out;
+  } else if (pair.in.cardinality === 'plural') {
+    normalType = pair.out;
+  } else if (pair.out.cardinality === 'plurla') {
+    normalType = pair.in;
+  } else if (pair.in.nonNull && !pair.out.nonNull) {
+    normalType = pair.in;
+  } else {
+    normalType = pair.out;
+  }
 
   invariant(normalType, 'input pair does not require a foreign key');
   const {label, fromType, toType, direction, nonNull} = normalType;
@@ -430,12 +431,12 @@ export function foreignKeyDescriptionFromEdgeSegmentPair(
   return {
     nonNull,
     direction,
-    table: tableNameFromTypeName(fromType),
-    referencedTable: tableNameFromTypeName(toType),
+    table: tableNameFromTypeName(toType),
+    referencedTable: tableNameFromTypeName(fromType),
     column: snake(
       (direction === 'in')
-      ? `${label}_by_${toType}_id`
-      : `${label}_${toType}_id`
+      ? `${label}_${fromType}_id`
+      : `${label}_by_${fromType}_id`
     ),
   };
 }
