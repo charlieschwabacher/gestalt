@@ -402,7 +402,7 @@ export function joinTableIndicesFromDescription(
 // foreign key using the following rules:
 
 // missing + singular:
-//   - add the column to the fromType of the existing segment
+//   - add the column to the out type of the existing segment
 // singular + plural:
 //   - add the column to the fromType of the singular segment
 // singular + singular:

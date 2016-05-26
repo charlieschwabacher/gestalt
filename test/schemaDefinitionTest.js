@@ -42,23 +42,23 @@ describe('schema definition', () => {
     },
   );
 
-  // it('generates SQL queries to resolve edges', () => {
-  //   const edges = generateDatabaseInterface(definitionAST).edges;
-  //   const segmentDescriptionsBySignature = keyMap(
-  //     segmentDescriptionsFromEdges(edges),
-  //     segment => segment.signature,
-  //   );
-  //   const sqlQueries = edges.map(
-  //     edge => sqlQueryFromEdge(segmentDescriptionsBySignature, edge)
-  //   );
-  //   assert.deepEqual(
-  //     sqlQueries,
-  //     expectedSQLQueries
-  //       .replace(/\n$/, '')
-  //       .split('\n\n')
-  //       .map(s => s.replace(/\n/g, ' ')),
-  //   );
-  // });
+  it('generates SQL queries to resolve edges', () => {
+    const edges = generateDatabaseInterface(definitionAST).edges;
+    const segmentDescriptionsBySignature = keyMap(
+      segmentDescriptionsFromEdges(edges),
+      segment => segment.signature,
+    );
+    const sqlQueries = edges.map(
+      edge => sqlQueryFromEdge(segmentDescriptionsBySignature, edge)
+    );
+    assert.deepEqual(
+      sqlQueries,
+      expectedSQLQueries
+        .replace(/\n$/, '')
+        .split('\n\n')
+        .map(s => s.replace(/\n/g, ' ')),
+    );
+  });
 
   it('generates a graphql schema from a GraphQL IDL AST', done => {
     const schema = generateGraphQLSchema(definitionAST, [], []);

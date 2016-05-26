@@ -31,3 +31,4 @@ todo:
   - handle singular relationship to same table
   - AST validation for helpful error messages (notes in stub files in
     ./src/validation)
+  - query generation: handle skipping joins to join tables when unnecessary

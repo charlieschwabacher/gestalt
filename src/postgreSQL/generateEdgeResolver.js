@@ -58,18 +58,18 @@ function whereClauseFromInitialSegment(
   if (description.type === 'foreignKey') {
     const {table, referencedTable, column, direction} = description.storage;
     if (segment.direction === direction) {
-      return ` WHERE ${table}.${column} = ?`;
+      return ` WHERE ${table}.${column} = ?;`;
     } else {
-      return ` WHERE ${referencedTable}.id = ?`;
+      return ` WHERE ${referencedTable}.id = ?;`;
     }
   } else {
     const {name, leftTableName, rightTableName, leftColumnName,
       rightColumnName} = description.storage;
 
     if (segment.direction === 'in') {
-      return ` JOIN ${name} ON ${name}.${leftColumnName} = ${leftTableName}.id WHERE ${name}.${rightColumnName} = ?`;
+      return ` JOIN ${name} ON ${name}.${leftColumnName} = ${leftTableName}.id WHERE ${name}.${rightColumnName} = ?;`;
     } else {
-      return ` JOIN ${name} ON ${name}.${rightColumnName} = ${rightTableName}.id WHERE ${name}.${leftColumnName} = ?`;
+      return ` JOIN ${name} ON ${name}.${rightColumnName} = ${rightTableName}.id WHERE ${name}.${leftColumnName} = ?;`;
     }
   }
 }
@@ -85,10 +85,11 @@ function joinClauseFromIntermediateSegments(
     const toTableName = tableNameFromTypeName(segment.toType);
 
     if (description.type === 'foreignKey') {
-      if (toTableName === storage.table) {
-        return ''; //` JOIN ${toTableName} ON ${toTableName}.${storage.column} = `;
+      const {direction, table, referencedTable, column} = description.storage;
+      if (segment.direction === direction) {
+        return ` JOIN ${referencedTable} ON ${referencedTable}.id = ${table}.${column}`;
       } else {
-        return ''; //` JOIN ${toTableName}.id = ?`;
+        return ` JOIN ${table} ON ${table}.${column} = ${referencedTable}.id`;
       }
     } else {
       if (toTableName === storage.leftTableName) {
@@ -98,5 +99,5 @@ function joinClauseFromIntermediateSegments(
         return ` JOIN ${storage.name} ON ${storage.name}.${storage.rightColumnName} = ${toTableName}.id JOIN ${storage.leftTableName} ON ${storage.leftTableName}.id = ${storage.name}.${storage.leftColumnName}`;
       }
     }
-  }).join(' ');
+  }).join('');
 }
