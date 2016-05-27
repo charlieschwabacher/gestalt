@@ -10,10 +10,10 @@ import {query, find} from './db';
 
 
 export default function generateEdgeResolver(
-  segmentDescriptionsBySignature: EdgeSegmentDescriptionMap,
+  segmentDescriptionMap: EdgeSegmentDescriptionMap,
   edge: Edge,
 ): () => Promise<Object> {
-  const sql = sqlQueryFromEdge(segmentDescriptionsBySignature, edge);
+  const sql = sqlQueryFromEdge(segmentDescriptionMap, edge);
 
   return async () => {
     const results = query(sql);
@@ -31,78 +31,210 @@ export default function generateEdgeResolver(
 
 
 // Work backwards along the path applying joins, stopping before the first
-// segment.  We won't need any if the path has only one segment.
-// Then look at first segment to apply condition based on id.
+// segment.
+
 export function sqlQueryFromEdge(
-  segmentDescriptionsBySignature: EdgeSegmentDescriptionMap,
+  segmentDescriptionMap: EdgeSegmentDescriptionMap,
   edge: Edge,
 ): string {
-  return (
-    selectClauseFromFinalSegment(edge.path[edge.path.length - 1]) +
-    joinClauseFromIntermediateSegments(segmentDescriptionsBySignature, edge.path.slice(1)) +
-    whereClauseFromInitialSegment(segmentDescriptionsBySignature, edge.path[0])
+  return sqlStringFromQuery(
+    queryFromEdge(segmentDescriptionMap, edge)
   );
 }
 
-function selectClauseFromFinalSegment(segment: EdgeSegment): string {
-  const finalTableName = tableNameFromTypeName(segment.toType);
-  return `SELECT ${finalTableName}.* FROM ${finalTableName}`;
+export function queryFromEdge(
+  segmentDescriptionMap: EdgeSegmentDescriptionMap,
+  edge: Edge,
+): Query {
+  const initialSegment = edge.path[0];
+  const finalSegment = edge.path[edge.path.length - 1];
+
+  return {
+    table: tableNameFromTypeName(finalSegment.toType),
+    joins: compactJoins(joinsFromPath(segmentDescriptionMap, edge.path)),
+    condition: conditionFromSegment(segmentDescriptionMap, initialSegment),
+  };
 }
 
-function whereClauseFromInitialSegment(
-  segmentDescriptionsBySignature: EdgeSegmentDescriptionMap,
-  segment: EdgeSegment,
-): string {
+export function conditionFromSegment(
+  segmentDescriptionMap: EdgeSegmentDescriptionMap,
+  segment: EdgeSegment
+): Condition {
   const signature = pairingSignatureFromEdgeSegment(segment);
-  const description = segmentDescriptionsBySignature[signature];
+  const description = segmentDescriptionMap[signature];
 
   if (description.type === 'foreignKey') {
     const {table, referencedTable, column, direction} = description.storage;
     if (segment.direction === direction) {
-      return ` WHERE ${table}.${column} = ?;`;
+      return {table, column, value: '?'};
     } else {
-      return ` WHERE ${referencedTable}.id = ?;`;
+      return {table: referencedTable, column: 'id'};
     }
   } else {
     const {name, leftTableName, rightTableName, leftColumnName,
       rightColumnName} = description.storage;
-
     if (segment.direction === 'in') {
-      return ` JOIN ${name} ON ${name}.${leftColumnName} = ${leftTableName}.id WHERE ${name}.${rightColumnName} = ?;`;
+      return {table: name, column: rightColumnName};
     } else {
-      return ` JOIN ${name} ON ${name}.${rightColumnName} = ${rightTableName}.id WHERE ${name}.${leftColumnName} = ?;`;
+      return {table: name, column: leftColumnName};
     }
   }
 }
 
-function joinClauseFromIntermediateSegments(
-  segmentDescriptionsBySignature: EdgeSegmentDescriptionMap,
-  segments: EdgeSegment[],
-): string {
-  return segments.reverse().map(segment => {
+export function joinsFromPath(
+  segmentDescriptionMap: EdgeSegmentDescriptionMap,
+  segments: EdgeSegment[]
+): Join[] {
+  return joinsFromSegments(segmentDescriptionMap, segments.slice(1))
+    .concat(joinsFromInitialSegment(segmentDescriptionMap, segments[0]));
+}
+
+export function joinsFromSegments(
+  segmentDescriptionMap: EdgeSegmentDescriptionMap,
+  segments: EdgeSegment[]
+): Join[] {
+  const joins = [];
+
+  for (let i = segments.length - 1; i >= 0; i--) {
+    const segment = segments[i];
     const signature = pairingSignatureFromEdgeSegment(segment);
-    const description = segmentDescriptionsBySignature[signature];
+    const description = segmentDescriptionMap[signature];
     const {storage} = description;
     const toTableName = tableNameFromTypeName(segment.toType);
 
     if (description.type === 'foreignKey') {
-      const {direction, table, referencedTable, column} = description.storage;
+      const {direction, table, referencedTable, column} = storage;
       if (segment.direction === direction) {
-        return ` JOIN ${referencedTable} ON ${referencedTable}.id = ${table}.${column}`;
+        joins.push({
+          table: referencedTable,
+          condition: {
+            left: {table: referencedTable, column: 'id'},
+            right: {table, column},
+          },
+        });
       } else {
-        return ` JOIN ${table} ON ${table}.${column} = ${referencedTable}.id`;
+        joins.push({
+          table,
+          condition: {
+            left: {table, column},
+            right: {table: referencedTable, column: 'id'},
+          },
+        });
       }
     } else {
-      if (toTableName === storage.leftTableName) {
-        return ` JOIN ${storage.name} ON ${storage.name}.${storage.leftColumnName} = ${toTableName}.id JOIN ${storage.rightTableName} ON ${storage.rightTableName}.id = ${storage.name}.${storage.rightColumnName}`;
+      const {name, leftTableName, leftColumnName, rightTableName,
+        rightColumnName} = storage;
+      if (toTableName === leftTableName) {
+        joins.push(
+          {
+            table: name,
+            condition: {
+              left: {table: name, column: leftColumnName},
+              right: {table: leftTableName, column: 'id'},
+            },
+          },
+          {
+            table: rightTableName,
+            condition: {
+              left: {table: rightTableName, column: 'id'},
+              right: {table: name, column: rightColumnName},
+            },
+          },
+        );
       } else {
-        // JOIN user_authored_posts ON user_authored_posts.authored_post_id = posts.id JOIN users ON users.id = user_authored_posts.user_id
-        return ` JOIN ${storage.name} ON ${storage.name}.${storage.rightColumnName} = ${toTableName}.id JOIN ${storage.leftTableName} ON ${storage.leftTableName}.id = ${storage.name}.${storage.leftColumnName}`;
+        joins.push(
+          {
+            table: name,
+            condition: {
+              left: {table: name, column: rightColumnName},
+              right: {table: toTableName, column: 'id'},
+            },
+          },
+          {
+            table: leftTableName,
+            condition: {
+              left: {table: leftTableName, column: 'id'},
+              right: {table: name, column: leftColumnName},
+            },
+          },
+        );
       }
     }
-  }).join('');
+  }
+
+  return joins;
 }
 
-function sqlFromQuery(query: Query): string {
-  return '';
+export function joinsFromInitialSegment(
+  segmentDescriptionMap: EdgeSegmentDescriptionMap,
+  segment: EdgeSegment,
+): Join[] {
+  const signature = pairingSignatureFromEdgeSegment(segment);
+  const description = segmentDescriptionMap[signature];
+
+  if (description.type === 'join') {
+    const {name, leftTableName, rightTableName, leftColumnName,
+      rightColumnName} = description.storage;
+
+    if (segment.direction === 'in') {
+      return [{
+        table: name,
+        condition: {
+          left: {table: name, column: leftColumnName},
+          right: {table: leftTableName, column: 'id'},
+        },
+      }];
+    } else {
+      return [{
+        table: name,
+        condition: {
+          left: {table: name, column: rightColumnName},
+          right: {table: rightTableName, column: 'id'},
+        },
+      }];
+    }
+  } else {
+    return [];
+  }
+}
+
+export function compactJoins(joins: Join[]): Join[] {
+  const compactJoins = [];
+
+  for (let i = 0; i < joins.length; i++) {
+    const join = joins[i];
+    const next = joins[i + 1];
+    if (
+      next != null &&
+      join.condition.left.table === next.condition.right.table &&
+      join.condition.left.column === next.condition.right.column
+    ) {
+      compactJoins.push({
+        table: next.table,
+        condition: {
+          left: next.condition.left,
+          right: join.condition.right,
+        }
+      });
+      i += 1;
+    } else {
+      compactJoins.push(join);
+    }
+  }
+
+  return compactJoins;
+}
+
+function sqlStringFromQuery(query: Query): string {
+  const {table, joins, condition} = query;
+  return `SELECT ${table}.* FROM ${table}${
+    joins.map(join => {
+      const {table, condition} = join;
+      const {left, right} = condition;
+      return (
+        ` JOIN ${table} ON ${left.table}.${left.column} = ` +
+        `${right.table}.${right.column}`
+      );
+    }).join('')
+  } WHERE ${condition.table}.${condition.column} = ANY ($1);`;
 }

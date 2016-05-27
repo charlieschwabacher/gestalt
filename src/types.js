@@ -116,20 +116,20 @@ export type ObjectTypeFieldResolutionDefinition = {
 // intermediate representations used in SQL query generation
 
 export type Query = {
-  from: string,
+  table: string,
   joins: Join[],
-  where: Condition,
+  condition: Condition,
 }
 
 export type Join = {
-  fromTable: string,
-  toTable: string,
-  on: Condition,
+  table: string,
+  condition: {
+    left: {table: string, column: string},
+    right: {table: string, column: string},
+  },
 }
 
 export type Condition = {
-  leftTable: string,
-  leftColumn: string,
-  rightTable: string,
-  rightColumn: string,
+  table: string,
+  column: string,
 }

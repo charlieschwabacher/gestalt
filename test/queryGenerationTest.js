@@ -33,9 +33,9 @@ describe('query generation', () => {
         edge('posts', 'User', 'Post', false, '=AUTHORED=>'),
         edge('author', 'Post', 'User', false, '<-AUTHORED-'),
 
-        'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ?;',
+        'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1);',
 
-        'SELECT users.* FROM users WHERE users.id = ?;',
+        'SELECT users.* FROM users WHERE users.id = ANY ($1);',
       );
     });
   });
@@ -48,11 +48,11 @@ describe('query generation', () => {
 
         'SELECT posts.* FROM posts JOIN user_authored_posts ON ' +
         'user_authored_posts.authored_post_id = posts.id WHERE ' +
-        'user_authored_posts.user_id = ?;',
+        'user_authored_posts.user_id = ANY ($1);',
 
         'SELECT users.* FROM users JOIN user_authored_posts ON ' +
         'user_authored_posts.user_id = users.id WHERE ' +
-        'user_authored_posts.authored_post_id = ?;',
+        'user_authored_posts.authored_post_id = ANY ($1);',
       );
     });
   });
@@ -64,18 +64,15 @@ describe('query generation', () => {
         edge('audience', 'Post', 'User', false, '<=AUTHORED=User<=FOLLOWED='),
 
         'SELECT posts.* FROM posts JOIN user_authored_posts ON ' +
-        'user_authored_posts.authored_post_id = posts.id JOIN users ON ' +
-        'users.id = user_authored_posts.user_id JOIN user_followed_users ON ' +
-        'user_followed_users.followed_user_id = users.id WHERE ' +
-        'user_followed_users.user_id = ?;',
+        'user_authored_posts.authored_post_id = posts.id JOIN ' +
+        'user_followed_users ON user_followed_users.followed_user_id = ' +
+        'user_authored_posts.user_id WHERE user_followed_users.user_id = ANY ' +
+        '($1);',
 
-        // TODO: this query is not yet correct - it should name tables users_a,
-        // users_b, etc to resolve ambiguity but will get to that later...
         'SELECT users.* FROM users JOIN user_followed_users ON ' +
-        'user_followed_users.user_id = users.id JOIN users ON users.id = ' +
-        'user_followed_users.followed_user_id JOIN user_authored_posts ON ' +
-        'user_authored_posts.user_id = users.id WHERE ' +
-        'user_authored_posts.authored_post_id = ?;',
+        'user_followed_users.user_id = users.id JOIN user_authored_posts ON ' +
+        'user_authored_posts.user_id = user_followed_users.followed_user_id ' +
+        'WHERE user_authored_posts.authored_post_id = ANY ($1);',
       );
     });
   });
@@ -87,9 +84,9 @@ describe('query generation', () => {
         edge('user', 'Profile', 'User', true, '<-CREATED-'),
 
         'SELECT profiles.* FROM profiles WHERE profiles.created_by_user_id = ' +
-        '?;',
+        'ANY ($1);',
 
-        'SELECT users.* FROM users WHERE users.id = ?;',
+        'SELECT users.* FROM users WHERE users.id = ANY ($1);',
       );
     });
   });
@@ -102,11 +99,11 @@ describe('query generation', () => {
 
         'SELECT images.* FROM images JOIN profiles ON ' +
         'profiles.depicted_by_image_id = images.id WHERE ' +
-        'profiles.created_by_user_id = ?;',
+        'profiles.created_by_user_id = ANY ($1);',
 
         'SELECT users.* FROM users JOIN profiles ON ' +
         'profiles.created_by_user_id = users.id WHERE ' +
-        'profiles.depicted_by_image_id = ?;',
+        'profiles.depicted_by_image_id = ANY ($1);',
       );
     });
   });
@@ -118,10 +115,11 @@ describe('query generation', () => {
         edge('user', 'Theme', 'User', false, '<-SELECTED-Profile<-CREATED-'),
 
         'SELECT themes.* FROM themes JOIN profiles ON profiles.id = ' +
-        'themes.selected_by_profile_id WHERE profiles.created_by_user_id = ?;',
+        'themes.selected_by_profile_id WHERE profiles.created_by_user_id = ' +
+        'ANY ($1);',
 
         'SELECT users.* FROM users JOIN profiles ON ' +
-        'profiles.created_by_user_id = users.id WHERE profiles.id = ?;',
+        'profiles.created_by_user_id = users.id WHERE profiles.id = ANY ($1);',
       );
     });
   });
@@ -133,10 +131,11 @@ describe('query generation', () => {
         edge('owner', 'Image', 'User', false, '<-UPLOADED-PROFILE<-CREATED-'),
 
         'SELECT images.* FROM images JOIN profiles ON profiles.id = ' +
-        'images.uploaded_by_profile_id WHERE profiles.created_by_user_id = ?;',
+        'images.uploaded_by_profile_id WHERE profiles.created_by_user_id = ' +
+        'ANY ($1);',
 
         'SELECT users.* FROM users JOIN profiles ON ' +
-        'profiles.created_by_user_id = users.id WHERE profiles.id = ?;',
+        'profiles.created_by_user_id = users.id WHERE profiles.id = ANY ($1);',
       );
     });
   });
@@ -150,7 +149,7 @@ describe('query generation', () => {
 
         'SELECT posts.* FROM posts JOIN user_authored_posts ON ' +
         'user_authored_posts.authored_post_id = posts.id WHERE ' +
-        'user_authored_posts.user_id = ?;',
+        'user_authored_posts.user_id = ANY ($1);',
 
         null
       );
@@ -166,7 +165,7 @@ describe('query generation', () => {
 
         null,
 
-        'SELECT users.* FROM users WHERE users.authored_post_id = ?;'
+        'SELECT users.* FROM users WHERE users.authored_post_id = ANY ($1);'
       );
     });
   });
@@ -180,10 +179,10 @@ describe('query generation', () => {
         null,
 
         'SELECT posts.* FROM posts JOIN page_authored_posts ON ' +
-        'page_authored_posts.authored_post_id = posts.id JOIN pages ON ' +
-        'pages.id = page_authored_posts.page_id JOIN user_followed_pages ON ' +
-        'user_followed_pages.followed_page_id = pages.id WHERE ' +
-        'user_followed_pages.user_id = ?;',
+        'page_authored_posts.authored_post_id = posts.id JOIN ' +
+        'user_followed_pages ON user_followed_pages.followed_page_id = ' +
+        'page_authored_posts.page_id WHERE user_followed_pages.user_id = ANY ' +
+        '($1);',
 
         null
       );
@@ -210,15 +209,14 @@ describe('query generation', () => {
         ),
 
         'SELECT comments.* FROM comments JOIN posts ON posts.id = ' +
-        'comments.inspired_by_post_id JOIN pages ON pages.id = ' +
-        'posts.made_by_page_id JOIN user_followed_pages ON ' +
-        'user_followed_pages.followed_page_id = pages.id WHERE ' +
-        'user_followed_pages.user_id = ?;',
+        'comments.inspired_by_post_id JOIN user_followed_pages ON ' +
+        'user_followed_pages.followed_page_id = posts.made_by_page_id WHERE ' +
+        'user_followed_pages.user_id = ANY ($1);',
 
         'SELECT users.* FROM users JOIN user_followed_pages ON ' +
-        'user_followed_pages.user_id = users.id JOIN pages ON pages.id = ' +
-        'user_followed_pages.followed_page_id JOIN posts ON ' +
-        'posts.made_by_page_id = pages.id WHERE posts.id = ?;',
+        'user_followed_pages.user_id = users.id JOIN posts ON ' +
+        'posts.made_by_page_id = user_followed_pages.followed_page_id WHERE ' +
+        'posts.id = ANY ($1);',
       );
     });
   });

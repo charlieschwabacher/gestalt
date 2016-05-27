@@ -1,7 +1,7 @@
 // @flow
 
 import pg from 'pg';
-const DATABASE_URL = 'postgres://localhost/charlieschwabacher';
+const DATABASE_URL = 'postgres://localhost/postgres';
 
 // executes a SQL query and returns the result directly from pg
 export function exec(
