@@ -2,7 +2,8 @@
 // type, and relationship information.
 // @flow
 
-import type {Edge, EdgeSegmentDescriptionMap, EdgeSegment} from '../types';
+import type {Edge, EdgeSegmentDescriptionMap, EdgeSegment, Query, Join,
+  Condition} from '../types';
 import {pairingSignatureFromEdgeSegment, tableNameFromTypeName} from
   './generateDatabaseInterface';
 import {query, find} from './db';
@@ -100,4 +101,8 @@ function joinClauseFromIntermediateSegments(
       }
     }
   }).join('');
+}
+
+function sqlFromQuery(query: Query): string {
+  return '';
 }

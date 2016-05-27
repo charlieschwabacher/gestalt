@@ -9,6 +9,8 @@ export type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
   Type, NamedType} from 'graphql/language/ast';
 
 
+// represents the interface between the GraphQL schema and database backend
+
 export type DatabaseInterface = {
   schema: DatabaseSchema,
   edges: Edge[],
@@ -104,7 +106,30 @@ export type EdgeSegmentDescriptionMap = {[key: string]: EdgeSegmentDescription}
 
 // represents custom field resolution definitions for graphql object types
 // defined using the IDL
+
 export type ObjectTypeFieldResolutionDefinition = {
   name: string,
   fields: {[key: string]: GraphQLFieldResolveFn}
 };
+
+
+// intermediate representations used in SQL query generation
+
+export type Query = {
+  from: string,
+  joins: Join[],
+  where: Condition,
+}
+
+export type Join = {
+  fromTable: string,
+  toTable: string,
+  on: Condition,
+}
+
+export type Condition = {
+  leftTable: string,
+  leftColumn: string,
+  rightTable: string,
+  rightColumn: string,
+}
