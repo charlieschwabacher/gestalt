@@ -14,6 +14,7 @@ describe('parsing path strings', () => {
       ),
       {
         fieldName: 'posts',
+        cardinality: 'plural',
         path: [
           {
             fromType: 'User',
@@ -49,6 +50,7 @@ describe('parsing path strings', () => {
       edgeFromPathString('user', 'Post', 'User', true, '<-AUTHORED-'),
       {
         fieldName: 'user',
+        cardinality: 'singular',
         path: [
           {
             fromType: 'Post',

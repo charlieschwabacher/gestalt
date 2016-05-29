@@ -5,30 +5,26 @@ import path from 'path';
 import fs from 'fs';
 import type {Document, GraphQLSchema, ObjectTypeDefinition,
   GraphQLFieldResolveFn, GraphQLFieldConfig, DatabaseInterface,
-  ObjectTypeFieldResolutionDefinition} from '../types';
-import {parse, buildASTSchema, concatAST, printSchema} from 'graphql';
+  ObjectTypeFieldResolutionDefinition, GraphQLType} from '../types';
+import {buildASTSchema, concatAST, printSchema} from 'graphql';
 import {insertConnectionTypes, removeHiddenNodes} from './ASTTransforms';
 import scalarTypeDefinitions from './scalarTypeDefinitions';
 import generateDatabaseInterface from '../PostgreSQL';
-import resolveSession from '../server/resolveSession';
 import {isDatabaseType, baseType} from
   '../PostgreSQL/generateDatabaseInterface';
-
-const baseSchemaPath = path.resolve(__dirname, 'baseSchema.graphql');
-const baseAST = parse(fs.readFileSync(baseSchemaPath, 'utf8'));
-
+import baseSchema from './baseSchema';
 
 
 // generate a graphql schema given object types,
 export default function generateGraphQLSchema(
   ast: Document,
-  objectTypes: ObjectTypeFieldResolutionDefinition[],
+  objects: ObjectTypeFieldResolutionDefinition[],
   mutations: GraphQLFieldConfig[],
-): GraphQLSchema {
+): {schema: GraphQLSchema, database: DatabaseInterface} {
   const database = generateDatabaseInterface(ast);
 
   // preprocess the parsed AST to remove hidden types and insert implied types
-  const modifiedAST = concatAST([baseAST, ast]);
+  const modifiedAST = concatAST([baseSchema, ast]);
   removeHiddenNodes(modifiedAST);
   insertConnectionTypes(modifiedAST);
 
@@ -38,14 +34,15 @@ export default function generateGraphQLSchema(
   // add aditional definitions and attach resolution functions
   defineScalarTypes(schema);
   defineBaseSchemaResolution(schema, database);
-  defineConnectionResolution(schema, database);
-  attachObjectTypeFieldResolution(schema, objectTypes);
+  defineEdgeResolution(schema, database);
+  defineNodeIDResolution(schema);
+  attachObjectTypeFieldResolution(schema, objects);
   defineMutations(schema, mutations);
 
   // log generated schema
   // console.log(printSchema(schema));
 
-  return schema;
+  return {schema, database};
 }
 
 // attach serialization and parsing functions to scalar types defined by
@@ -67,7 +64,7 @@ function defineBaseSchemaResolution(
 }
 
 // generate resolve functions for connection fields
-function defineConnectionResolution(
+function defineEdgeResolution(
   schema: GraphQLSchema,
   database: DatabaseInterface,
 ): void {
@@ -81,12 +78,34 @@ function defineConnectionResolution(
   });
 }
 
+// we define id resolution to include both a type name and database uuid
+function defineNodeIDResolution(schema: GraphQLSchema): void {
+  const typeMap = schema.getTypeMap();
+  const nodeInterface = typeMap.Node;
+
+  nodeInterface.resolveType = obj => typeMap[obj._type];
+
+  Object.values(typeMap).forEach((type: GraphQLType): void => {
+    if (
+      type.getInterfaces &&
+      type.getInterfaces().includes(nodeInterface)
+    ) {
+      defineFieldResolve(
+        schema,
+        type.name,
+        'id',
+        obj => `${type.name}:${obj.id}`,
+      );
+    }
+  });
+}
+
 // attach user defined field resolution
 function attachObjectTypeFieldResolution(
   schema: GraphQLSchema,
-  objectTypes: ObjectTypeFieldResolutionDefinition[],
+  objects: ObjectTypeFieldResolutionDefinition[],
 ): void {
-  objectTypes.forEach(objectType => {
+  objects.forEach(objectType => {
     const typeName = objectType.name;
     Object.entries(objectType.fields).forEach(([fieldName, resolve]) => {
       defineFieldResolve(schema, typeName, fieldName, resolve);
@@ -101,7 +120,7 @@ function defineMutations(
 
 }
 
-export function defineFieldResolve(
+function defineFieldResolve(
   schema: GraphQLSchema,
   typeName: string,
   fieldName: string,
@@ -123,4 +142,12 @@ function hasDirective(
         directive => (directive.name.value === directiveName)
       )
     ) === expected;
+}
+
+function resolveSession(
+  object: Object,
+  args: Object,
+  context: Object
+): Object {
+  return context.session;
 }

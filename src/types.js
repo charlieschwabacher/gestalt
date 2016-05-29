@@ -1,13 +1,13 @@
 // @flow
 
 import type {GraphQLFieldResolveFn} from 'graphql/type/definition';
+import type DataLoader from 'dataloader';
 
 export type {GraphQLSchema, GraphQLObjectType} from 'graphql';
-export type {GraphQLFieldResolveFn, GraphQLResolveInfo, GraphQLFieldConfig}
-  from 'graphql/type/definition';
+export type {GraphQLFieldResolveFn, GraphQLResolveInfo, GraphQLFieldConfig,
+  GraphQLType} from 'graphql/type/definition';
 export type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
   Type, NamedType} from 'graphql/language/ast';
-
 
 // represents the interface between the GraphQL schema and database backend
 
@@ -16,6 +16,7 @@ export type DatabaseInterface = {
   edges: Edge[],
   resolveNode: GraphQLFieldResolveFn,
   generateEdgeResolver: (edge: Edge) => GraphQLFieldResolveFn,
+  generateEdgeLoader: (edge: Edge) => DataLoader,
 }
 
 export type DatabaseSchema = {
@@ -55,6 +56,7 @@ export type ColumnType = 'uuid' | 'jsonb' | 'varchar(255)' | 'timestamp' |
 
 export type Edge = {
   fieldName: string,
+  cardinality: 'singular' | 'plural',
   path: EdgeSegment[],
 }
 

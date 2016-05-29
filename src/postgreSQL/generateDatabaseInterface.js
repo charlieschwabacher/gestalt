@@ -9,10 +9,9 @@ import type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
 import {plural} from 'pluralize';
 import {snake} from 'change-case';
 import resolveNode from './resolveNode';
-import generateEdgeResolver from './generateEdgeResolver';
+import {generateEdgeResolver, generateEdgeLoaders} from
+  './generateEdgeResolver';
 import {invariant, keyMap, baseType} from '../util';
-import * as db from './db';
-
 
 export default function generateDatabaseInterface(
   ast: Document
@@ -64,8 +63,9 @@ export default function generateDatabaseInterface(
     },
     edges,
     resolveNode,
-    generateEdgeResolver:
-      edge => generateEdgeResolver(segmentDescriptionsBySignature, edge),
+    generateEdgeResolver: generateEdgeResolver(segmentDescriptionsBySignature),
+    generateEdgeLoaders:
+      generateEdgeLoaders(segmentDescriptionsBySignature, edges),
   };
 }
 
@@ -228,7 +228,17 @@ export function edgeFromPathString(
     'Only singular edges with one segment can be non null'
   );
 
-  return {fieldName, path};
+  const cardinality = (
+    path.some(segment => segment.cardinality === 'plural')
+    ? 'plural'
+    : 'singular'
+  );
+
+  return {
+    fieldName,
+    path,
+    cardinality,
+  };
 }
 
 const ARROWS = {

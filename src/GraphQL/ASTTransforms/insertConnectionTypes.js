@@ -1,6 +1,7 @@
 // @flow
 
-import type {Document, ObjectTypeDefinition, FieldDefinition} from '../../types';
+import type {Document, ObjectTypeDefinition, FieldDefinition} from
+  '../../types';
 import {baseType} from '../../util';
 import {plural} from 'pluralize';
 
@@ -10,7 +11,7 @@ export default function insertConnectionTypes(ast: Document): void {
 
   ast.definitions.forEach(definition => {
     definition.fields && definition.fields.forEach(field => {
-      if (isEdge(field)) {
+      if (isPluralEdge(field)) {
         const rootType = baseType(field.type);
         const typeName = rootType.name.value;
         const connectionTypeName = `${plural(typeName)}Connection`;
@@ -35,10 +36,15 @@ export default function insertConnectionTypes(ast: Document): void {
   ast.definitions.push(...newDefinitions);
 }
 
-function isEdge(field: FieldDefinition): boolean {
-  return field.directives && field.directives.some(
-    directive => directive.name.value === 'edge'
+function isPluralEdge(field: FieldDefinition): boolean {
+  const edgeDirective = field.directives && field.directives.find(
+     directive => directive.name.value === 'edge'
   );
+  const pathArgument = edgeDirective && edgeDirective.arguments.find(
+    argument => argument.name.value === 'path'
+  );
+
+  return pathArgument && pathArgument.value.value.match(/=[A-Za-z]+=/);
 }
 
 export function generateConnectionTypeDefintions(

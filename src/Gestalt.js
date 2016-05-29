@@ -1,25 +1,49 @@
 // @flow
-import {graphql, GraphQLSchema} from 'graphql';
+import fs from 'fs';
+import session from 'express-session';
+import graphqlHTTP from 'express-graphql';
+import {compose} from 'compose-middleware';
 import {parse} from 'graphql/language/parser';
-import generateGraphQLSchema from './GraphQL/generateGraphQLSchema';
+import generateGraphQLSchema from './GraphQL';
 
-export default class Gestalt {
-  schema: GraphQLSchema;
+import type {ObjectTypeFieldResolutionDefinition, GraphQLFieldConfig} from
+  './types';
+import type {Request, Response} from 'express';
 
-  constructor(definitionString: string) {
-    const ast = parse(definitionString);
-    this.schema = generateGraphQLSchema(ast, [], []);
-  }
+const isProduction = process.env.NODE_ENV === 'production';
 
-  start(config: {port: number}): void {
 
-  }
+export default function gestalt(config: {
+  schemaPath: string,
+  objects: ObjectTypeFieldResolutionDefinition[],
+  mutations: GraphQLFieldConfig[],
+  secret: string,
+}): (request: Request, response: Response) => void {
+  const {schemaPath, objects, mutations, secret} = config;
+  const schemaAST = parse(fs.readFileSync(schemaPath));
+  const {schema, database} = generateGraphQLSchema(schemaAST, objects, mutations);
 
-  registerObjectType(): void {
+  return compose([
+    session({
+      secret,
+      resave: false,
+      saveUninitialized: false,
+    }),
+    graphqlHTTP(request => {
+      const context = {
+        session: request.session,
+        loaders: database.generateEdgeLoaders(),
+      };
 
-  }
-
-  registerMutation(): void {
-
-  }
+      return {
+        schema,
+        context,
+        graphiql: !isProduction,
+        formatError: error => ({
+          message: error.message,
+          details: isProduction ? null : error.stack
+        })
+      };
+    }),
+  ]);
 }

@@ -60,14 +60,14 @@ describe('schema definition', () => {
     );
   });
 
-  it('generates a graphql schema from a GraphQL IDL AST', done => {
-    const schema = generateGraphQLSchema(definitionAST, [], []);
-    graphql(schema, graphQLQuery).then(result => {
-      console.log(result);
-      done();
-    }).catch(e => {
-      throw e;
-    });
+  it('generates a graphql schema from a GraphQL IDL AST', async () => {
+    const {schema} = generateGraphQLSchema(definitionAST, [], []);
+    const context = {session: {id: '!'}};
+    const result = await graphql(schema, graphQLQuery, null, context);
+    assert(
+      !result.errors,
+      'should resolve query against generated schema without errors'
+    );
   });
 
 });

@@ -4,6 +4,7 @@
 
 import type {DatabaseSchema, Table, Column, Index} from '../types';
 
+const REQUIRED_EXTENSIONS = ['uuid-ossp'];
 
 export default function generateDatabaseSchemaMigration(
   expectedSchema: DatabaseSchema,
@@ -18,8 +19,11 @@ export default function generateDatabaseSchemaMigration(
 
 export function generateInitialMigration(schema: DatabaseSchema): string {
   const indicesByTableName = indicesByTableNameFromSchema(schema);
-  return schema.tables.map(table =>
-    createTable(table) + indicesByTableName[table.name].map(createIndex).join('')
+  return schema.tables.map(
+    table => (
+      createTable(table) +
+      indicesByTableName[table.name].map(createIndex).join('')
+    )
   ).join('\n');
 }
 
@@ -70,9 +74,9 @@ export function createTable(table: Table): string {
     `  UNIQUE (${constraint.columns.join(', ')})`
   );
 
-  const columnsAndConstraintsText = columnsRows.concat(constraintsRows).join(',\n');
+  const columnsAndConstraints = columnsRows.concat(constraintsRows).join(',\n');
 
-  return `CREATE TABLE ${name} (\n${columnsAndConstraintsText}\n);\n`;
+  return `CREATE TABLE ${name} (\n${columnsAndConstraints}\n);\n`;
 }
 
 export function dropTable(table: Table): string {
@@ -93,6 +97,10 @@ export function removeColumn(colum: Column): string {
 
 export function alterColumn(column: Column): string {
   return '';
+}
+
+export function createExtension(extension: string): string {
+  return `CREATE EXTENSION "${extension}";`;
 }
 
 export function createIndex(index: Index): string {

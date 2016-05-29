@@ -3,30 +3,133 @@
 // @flow
 
 import type {Edge, EdgeSegmentDescriptionMap, EdgeSegment, Query, Join,
-  Condition} from '../types';
+  Condition, GraphQLFieldResolveFn} from '../types';
 import {pairingSignatureFromEdgeSegment, tableNameFromTypeName} from
   './generateDatabaseInterface';
 import {query, find} from './db';
+import DataLoader from 'dataloader';
+import {camel} from 'change-case';
+import {keyMap, group} from '../util';
 
 
-export default function generateEdgeResolver(
+export function generateEdgeResolver(
   segmentDescriptionMap: EdgeSegmentDescriptionMap,
-  edge: Edge,
-): () => Promise<Object> {
-  const sql = sqlQueryFromEdge(segmentDescriptionMap, edge);
-
-  return async () => {
-    const results = query(sql);
-    return {
-      edges: [],
-      pageInfo: {
-        hasPreviousPage: false,
-        hasNextPage: false,
-      },
-      count: 0,
-      totalCount: 0,
+): (edge: Edge) => GraphQLFieldResolveFn {
+  return edge => {
+    const keyColumn = objectKeyColumnFromEdge(segmentDescriptionMap, edge);
+    return (object, args, context) => {
+      const loader = context.loaders.get(edge);
+      const key = object[keyColumn];
+      return loader.load(key);
     };
   };
+}
+
+export function generateEdgeLoaders(
+  segmentDescriptionMap: EdgeSegmentDescriptionMap,
+  edges: Edge[],
+): () => Map<Edge, DataLoader> {
+  // TODO: we should be able to pregenerate and store SQL queries so that they
+  // are only calculated once, not re-calcualted on every request.
+
+  return () => {
+    // TODO: instead of using a native map here - we should wrap in something
+    // that creates loaders lazily.  It's likely that a single request will only
+    // use some small subset of the available loaders so will be worthwile to
+    // avoid generating the rest
+
+    const edgeLoaderMap = new Map();
+
+    edges.forEach(edge => {
+      const keyColumn = resolvedKeyColumnFromEdge(segmentDescriptionMap, edge);
+      const sql = sqlQueryFromEdge(segmentDescriptionMap, edge);
+
+      if (edge.cardinality === 'singular') {
+        edgeLoaderMap.set(
+          edge,
+          generateSingularEdgeLoader(edge, keyColumn, sql)
+        );
+      } else {
+        edgeLoaderMap.set(
+          edge,
+          generatePluralEdgeLoader(edge, keyColumn, sql)
+        );
+      }
+    });
+
+    return edgeLoaderMap;
+  };
+}
+
+function generateSingularEdgeLoader(
+  edge: Edge,
+  keyColumn: string,
+  sql: string
+): DataLoader {
+  return new DataLoader(async keys => {
+    const results = await query(sql, [keys]);
+    const resultsByKey = keyMap(results, result => result[keyColumn]);
+    return keys.map(key => resultsByKey[key]);
+  });
+}
+
+// TODO: this needs to handle connection arguments
+function generatePluralEdgeLoader(
+  edge: Edge,
+  keyColumn: string,
+  sql: string
+): DataLoader {
+  return new DataLoader(keys => {
+    return Promise.all(keys.map(async key => {
+      const nodes = await query(sql, [[key]]);
+      const edges = nodes.map(node => ({node, cursor: node.id}));
+      return {
+        edges,
+        pageInfo: {
+          hasPreviousPage: false,
+          hasNextPage: false,
+        },
+        count: edges.length,
+        totalCount: edges.length,
+      };
+    }));
+  });
+}
+
+export function objectKeyColumnFromEdge(
+  segmentDescriptionMap: EdgeSegmentDescriptionMap,
+  edge: Edge
+): string {
+  const segment = edge.path[0];
+  const description = descriptionFromSegment(
+    segmentDescriptionMap,
+    edge.path[0]
+  );
+  const {type, storage} = description;
+
+  return (
+    type === 'foreignKey' && storage.direction !== segment.direction
+    ? camel(storage.column)
+    : 'id'
+  );
+}
+
+export function resolvedKeyColumnFromEdge(
+  segmentDescriptionMap: EdgeSegmentDescriptionMap,
+  edge: Edge
+): string {
+  const segment = edge.path[0];
+  const description = descriptionFromSegment(
+    segmentDescriptionMap,
+    edge.path[0]
+  );
+  const {type, storage} = description;
+
+  return (
+    type === 'foreignKey' && storage.direction === segment.direction
+    ? camel(storage.column)
+    : 'id'
+  );
 }
 
 
@@ -42,7 +145,7 @@ export function sqlQueryFromEdge(
   );
 }
 
-export function queryFromEdge(
+function queryFromEdge(
   segmentDescriptionMap: EdgeSegmentDescriptionMap,
   edge: Edge,
 ): Query {
@@ -56,12 +159,11 @@ export function queryFromEdge(
   };
 }
 
-export function conditionFromSegment(
+function conditionFromSegment(
   segmentDescriptionMap: EdgeSegmentDescriptionMap,
   segment: EdgeSegment
 ): Condition {
-  const signature = pairingSignatureFromEdgeSegment(segment);
-  const description = segmentDescriptionMap[signature];
+  const description = descriptionFromSegment(segmentDescriptionMap, segment);
 
   if (description.type === 'foreignKey') {
     const {table, referencedTable, column, direction} = description.storage;
@@ -81,7 +183,7 @@ export function conditionFromSegment(
   }
 }
 
-export function joinsFromPath(
+function joinsFromPath(
   segmentDescriptionMap: EdgeSegmentDescriptionMap,
   segments: EdgeSegment[]
 ): Join[] {
@@ -89,7 +191,7 @@ export function joinsFromPath(
     .concat(joinsFromInitialSegment(segmentDescriptionMap, segments[0]));
 }
 
-export function joinsFromSegments(
+function joinsFromSegments(
   segmentDescriptionMap: EdgeSegmentDescriptionMap,
   segments: EdgeSegment[]
 ): Join[] {
@@ -97,8 +199,7 @@ export function joinsFromSegments(
 
   for (let i = segments.length - 1; i >= 0; i--) {
     const segment = segments[i];
-    const signature = pairingSignatureFromEdgeSegment(segment);
-    const description = segmentDescriptionMap[signature];
+    const description = descriptionFromSegment(segmentDescriptionMap, segment);
     const {storage} = description;
     const toTableName = tableNameFromTypeName(segment.toType);
 
@@ -165,12 +266,11 @@ export function joinsFromSegments(
   return joins;
 }
 
-export function joinsFromInitialSegment(
+function joinsFromInitialSegment(
   segmentDescriptionMap: EdgeSegmentDescriptionMap,
   segment: EdgeSegment,
 ): Join[] {
-  const signature = pairingSignatureFromEdgeSegment(segment);
-  const description = segmentDescriptionMap[signature];
+  const description = descriptionFromSegment(segmentDescriptionMap, segment);
 
   if (description.type === 'join') {
     const {name, leftTableName, rightTableName, leftColumnName,
@@ -198,7 +298,7 @@ export function joinsFromInitialSegment(
   }
 }
 
-export function compactJoins(joins: Join[]): Join[] {
+function compactJoins(joins: Join[]): Join[] {
   const compactJoins = [];
 
   for (let i = 0; i < joins.length; i++) {
@@ -223,6 +323,14 @@ export function compactJoins(joins: Join[]): Join[] {
   }
 
   return compactJoins;
+}
+
+function descriptionFromSegment(
+  segmentDescriptionMap: EdgeSegmentDescriptionMap,
+  segment: EdgeSegment
+): EdgeSegmentDescription {
+  const signature = pairingSignatureFromEdgeSegment(segment);
+  return segmentDescriptionMap[signature];
 }
 
 function sqlStringFromQuery(query: Query): string {

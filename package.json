@@ -2,18 +2,26 @@
   "name": "gestalt",
   "version": "0.0.1",
   "description": "graphql schema defined server framework",
-  "main": "index.js",
+  "main": "dist/gestalt.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/charlieschwabacher/gestalt.git"
+  },
   "scripts": {
     "test": "mocha",
-    "flow": "flow; test $? -eq 0 -o $? -eq 2"
+    "flow": "flow; test $? -eq 0 -o $? -eq 2",
+    "build": "babel src --ignore types.js --out-dir dist/"
   },
   "author": "charlie schwabacher",
   "license": "ISC",
   "dependencies": {
     "change-case": "^2.3.1",
+    "compose-middleware": "^2.1.0",
     "dataloader": "^1.2.0",
+    "express-graphql": "^0.5.3",
+    "express-session": "^1.13.0",
     "graphql": "^0.6.0",
-    "graphql-relay": "^0.4.1",
+    "graphql-relay": "^0.4.2",
     "pg": "^4.5.5",
     "pluralize": "^2.0.0"
   },
@@ -34,5 +42,8 @@
     "flow-bin": "^0.24.2",
     "mocha": "^2.4.5",
     "mochawait": "^2.0.1"
+  },
+  "peerDependencies": {
+    "express": "^4.13.4"
   }
 }

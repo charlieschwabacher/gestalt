@@ -1,7 +1,8 @@
 // @flow
 
 import pg from 'pg';
-const DATABASE_URL = 'postgres://localhost/postgres';
+import {camelizeKeys, invariant} from '../util';
+const DATABASE_URL = 'postgres://localhost/gestalt';
 
 // executes a SQL query and returns the result directly from pg
 export function exec(
@@ -31,8 +32,8 @@ export async function find(
   escapes: ?string[]
 ): Promise<Object> {
   const result = await exec(query, escapes);
-  console.log(result);
-  return {};
+  invariant(result.rows.length === 1, 'find should select a single row');
+  return camelizeKeys(result.rows[0]);
 }
 
 // executes a query expecting to find many rows - it returns an array of objects
@@ -41,8 +42,7 @@ export async function query(
   escapes?: string[]
 ): Promise<Object[]> {
   const result = await exec(query, escapes);
-  console.log(result);
-  return [{}];
+  return result.rows.map(camelizeKeys);
 }
 
 export async function reset(): Promise<true> {

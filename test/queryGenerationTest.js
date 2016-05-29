@@ -3,7 +3,8 @@ import {assert} from 'chai';
 import {edgeFromPathString as edge, segmentDescriptionsFromEdges} from
   '../src/PostgreSQL/generateDatabaseInterface';
 import {keyMap} from '../src/util';
-import {sqlQueryFromEdge} from '../src/PostgreSQL/generateEdgeResolver';
+import {sqlQueryFromEdge, keyColumnFromEdge} from
+  '../src/PostgreSQL/generateEdgeResolver';
 import type {Edge, EdgeSegmentDescriptionMap} from '../src/types';
 
 declare function describe(a: string, b: () => any): void;
@@ -14,7 +15,7 @@ function testRelationship(
   outEdge: ?Edge,
   inEdge: ?Edge,
   outSQL: ?string,
-  inSQL: ?string
+  inSQL: ?string,
 ): void {
   const descriptions = keyMap(
     segmentDescriptionsFromEdges([inEdge, outEdge].filter(edge => edge)),
@@ -24,7 +25,6 @@ function testRelationship(
   inEdge && assert.equal(inSQL, sqlQueryFromEdge(descriptions, inEdge));
 }
 
-
 describe('query generation', () => {
 
   describe('plural one segment foreign key relationship', () => {
@@ -32,9 +32,7 @@ describe('query generation', () => {
       testRelationship(
         edge('posts', 'User', 'Post', false, '=AUTHORED=>'),
         edge('author', 'Post', 'User', false, '<-AUTHORED-'),
-
         'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1);',
-
         'SELECT users.* FROM users WHERE users.id = ANY ($1);',
       );
     });
@@ -220,5 +218,40 @@ describe('query generation', () => {
       );
     });
   });
+});
 
+
+function testKeyColumns(
+  inEdge: Edge,
+  outEdge: Edge,
+  inKeyColumn: string,
+  outKeyColumn: string
+): void {
+  const descriptions = keyMap(
+    segmentDescriptionsFromEdges([inEdge, outEdge]),
+    segment => segment.signature,
+  );
+  assert.equal(keyColumnFromEdge(descriptions, inEdge), inKeyColumn);
+  assert.equal(keyColumnFromEdge(descriptions, outEdge), outKeyColumn);
+}
+
+
+describe('key column generation', () => {
+  it('one segment foreign key relationship', () => {
+    testKeyColumns(
+      edge('posts', 'User', 'Post', false, '=AUTHORED=>'),
+      edge('author', 'Post', 'User', false, '<-AUTHORED-'),
+      'id',
+      'authored_by_user_id',
+    );
+  });
+
+  it('two segment join table relationship', () => {
+    testKeyColumns(
+      edge('posts', 'User', 'Post', false, '=AUTHORED=>'),
+      edge('author', 'Post', 'User', false, '<=AUTHORED='),
+      'id',
+      'id',
+    );
+  });
 });

@@ -1,3 +1,9 @@
+// exports the AST of a base schema
+// @flow
+
+import {parse} from 'graphql';
+
+export default parse(`
 directive @virtual on FIELD_DEFINITION
 directive @hidden on OBJECT | FIELD_DEFINITION
 directive @edge(path: String) on FIELD_DEFINITION
@@ -26,3 +32,4 @@ type PageInfo {
   startCursor: String
   endCursor: String
 }
+`);
