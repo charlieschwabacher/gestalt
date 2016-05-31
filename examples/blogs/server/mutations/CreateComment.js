@@ -10,9 +10,10 @@ export default types => ({
     post: types.Post,
   },
   mutateAndGetPayload: async (input, context, info) => {
-    const {text, inspiredByPostID} = input;
+    const {text} = input;
     const {db, session} = context;
     const {currentUserId} = session;
+    const inspiredByPostID = input.inspiredByPostID.split(':')[1];
 
     assert(currentUserId, 'must be signed in to create comment');
     assert(text.length > 0, 'comment must have text');
@@ -22,7 +23,7 @@ export default types => ({
     const comment = await db.insert('comments', {
       createdAt: new Date(),
       authoredByUserId: currentUserId,
-      inspiredByPostID: inspiredByPostID.split(':')[1],
+      inspiredByPostID,
       text
     });
 
