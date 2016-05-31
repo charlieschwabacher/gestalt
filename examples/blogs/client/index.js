@@ -1,10 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Relay from 'react-relay';
+import Relay, {DefaultNetworkLayer} from 'react-relay';
 import {Router, browserHistory, applyRouterMiddleware} from 'react-router';
 import useRelay from 'react-router-relay';
 import routes from './routes';
 
+Relay.injectNetworkLayer(
+  new DefaultNetworkLayer('/graphql', {
+    credentials: 'include',
+  })
+);
 
 const container = document.createElement('div');
 document.body.appendChild(container);

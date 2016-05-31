@@ -1,6 +1,6 @@
 // @flow
 import fs from 'fs';
-import session from 'express-session';
+import session from 'cookie-session';
 import graphqlHTTP from 'express-graphql';
 import {compose} from 'compose-middleware';
 import {parse} from 'graphql/language/parser';
@@ -26,8 +26,9 @@ export default function gestalt(config: {
   return compose([
     session({
       secret,
-      resave: false,
-      saveUninitialized: true,
+      name: 'gestalt',
+      // resave: false,
+      // saveUninitialized: true,
     }),
     graphqlHTTP(request => {
       const context = {

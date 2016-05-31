@@ -1,3 +1,5 @@
+import assert from 'assert';
+
 export default types => ({
   name: 'CreatePost',
   inputFields: {

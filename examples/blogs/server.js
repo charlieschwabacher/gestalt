@@ -1,8 +1,8 @@
 import express from 'express';
-import requireAll from 'require-all';
-import gestalt from '../../src/gestalt';
 import webpack from 'webpack';
 import webpackMiddleware from 'webpack-dev-middleware';
+import requireAll from 'require-all';
+import gestalt from '../../src/gestalt';
 
 const app = express();
 
@@ -24,11 +24,11 @@ app.use(webpackMiddleware(webpack({
 
 app.use(express.static(`${__dirname}/static`));
 
-app.use(gestalt({
+app.use('/graphql', gestalt({
   objects: Object.values(requireAll(`${__dirname}/server/objects`)).map(o => o.default),
   mutations: Object.values(requireAll(`${__dirname}/server/mutations`)).map(m => m.default),
   schemaPath: `${__dirname}/schema.graphql`,
-  secret: 'keyboard cat',
+  secret: 'SOMETHING ELSE!',
 }));
 
 app.listen(3000);

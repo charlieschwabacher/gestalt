@@ -1,6 +1,7 @@
 // @flow
 import React from 'react';
 import Relay from 'react-relay';
+import {Link} from 'react-router';
 import {User} from './shared';
 import {SignOut} from '../mutations';
 
@@ -9,7 +10,9 @@ export default Relay.createContainer(
     <div>
       <header>
         <div className='container row'>
-          <div className='flex'>Gestalt Blogs Example</div>
+          <div className='flex'>
+            <Link to='/'>Gestalt Blogs Example</Link>
+          </div>
           {
             session.currentUser &&
             <div>

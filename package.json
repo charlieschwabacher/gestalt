@@ -17,9 +17,9 @@
   "dependencies": {
     "change-case": "^2.3.1",
     "compose-middleware": "^2.1.0",
+    "cookie-session": "^1.2.0",
     "dataloader": "^1.2.0",
     "express-graphql": "^0.5.3",
-    "express-session": "^1.13.0",
     "graphql": "^0.6.0",
     "graphql-relay": "^0.4.2",
     "pg": "^4.5.5",

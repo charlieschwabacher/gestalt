@@ -1,6 +1,6 @@
 import React from 'react';
 import Relay from 'react-relay';
-import {User, Comment} from '.';
+import {User, Comment, CreateCommentForm} from '.';
 
 export default Relay.createContainer(
   ({post}) =>
@@ -10,10 +10,11 @@ export default Relay.createContainer(
       <p>{post.text}</p>
       <div>
         {
-          node.comments.edges.map(({comment: node}) =>
-            <Comment comment={comment}/>
+          post.comments.edges.map(({node: comment}, i) =>
+            <Comment key={i} comment={comment}/>
           )
         }
+        <CreateCommentForm post={post}/>
       </div>
     </div>
   ,
@@ -21,6 +22,7 @@ export default Relay.createContainer(
     fragments: {
       post: () => Relay.QL`
         fragment on Post {
+          ${CreateCommentForm.getFragment('post')}
           title
           text
           author {

@@ -2,12 +2,12 @@ import React from 'react';
 import Relay from 'react-relay';
 
 export default Relay.createContainer(
-  ({post}) => (
+  ({node: post}) => (
     <div/>
   ),
   {
     fragments: {
-      post: () => Relay.QL`
+      node: () => Relay.QL`
         fragment on Post {
           id
         }

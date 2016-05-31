@@ -18,7 +18,7 @@ header {
   max-width: 600px;
 }
 
-input {
+input, textarea {
   display: block;
   width: 100%;
 }

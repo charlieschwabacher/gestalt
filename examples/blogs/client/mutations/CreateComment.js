@@ -29,6 +29,9 @@ export default class CreateComment extends Mutation {
   }
 
   getVariables() {
-    return { text: this.props.text };
+    return {
+      text: this.props.text,
+      inspiredByPostID: this.props.post.id,
+    };
   }
 }

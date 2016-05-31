@@ -1,3 +1,5 @@
+import assert from 'assert';
+
 export default types => ({
   name: 'CreateComment',
   inputFields: {
@@ -20,7 +22,7 @@ export default types => ({
     const comment = await db.insert('comments', {
       createdAt: new Date(),
       authoredByUserId: currentUserId,
-      inspiredByPostID,
+      inspiredByPostID: inspiredByPostID.split(':')[1],
       text
     });
 

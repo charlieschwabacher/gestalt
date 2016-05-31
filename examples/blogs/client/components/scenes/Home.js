@@ -1,13 +1,17 @@
 import React from 'react';
 import Relay from 'react-relay';
-import {Post, SignInForm, SignUpForm} from '../shared';
+import {Post, SignInForm, SignUpForm, CreatePostForm} from '../shared';
 
 const Feed = Relay.createContainer(
   ({user}) => (
     <div>
+      <h3>Feed:</h3>
       {
-        user.feed.edges.map(({post: node}) =>
-          <Post post={post}/>
+        user.feed.edges.map(({node: post}, i) =>
+          <div key={i}>
+            <Post post={post}/>
+            <hr/>
+          </div>
         )
       }
     </div>
@@ -36,7 +40,10 @@ export default Relay.createContainer(
       {
         session.currentUser
         ?
-          <Feed user={session.currentUser}/>
+          <div>
+            <CreatePostForm user={session.currentUser}/>
+            <Feed user={session.currentUser}/>
+          </div>
         :
           <div className='row mx-1'>
             <div className='flex p1'>
@@ -57,6 +64,7 @@ export default Relay.createContainer(
           ${SignUpForm.getFragment('session')}
           currentUser {
             ${Feed.getFragment('user')}
+            ${CreatePostForm.getFragment('user')}
           }
         }
       `
