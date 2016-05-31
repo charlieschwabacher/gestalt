@@ -2,12 +2,15 @@
 
 import pg from 'pg';
 import {camelizeKeys, invariant} from '../util';
+import {snake} from 'change-case';
+
 const DATABASE_URL = 'postgres://localhost/gestalt';
+
 
 // executes a SQL query and returns the result directly from pg
 export function exec(
   query: string,
-  escapes: ?string[]
+  escapes: ?any[]
 ): Promise<Object> {
   return new Promise((resolve, reject) => {
     pg.connect(DATABASE_URL, (err, client, done) => {
@@ -29,7 +32,7 @@ export function exec(
 // object, and raises if it receives more than one.
 export async function find(
   query: string,
-  escapes: ?string[]
+  escapes: ?any[]
 ): Promise<Object> {
   const result = await exec(query, escapes);
   invariant(result.rows.length === 1, 'find should select a single row');
@@ -39,10 +42,55 @@ export async function find(
 // executes a query expecting to find many rows - it returns an array of objects
 export async function query(
   query: string,
-  escapes?: string[]
+  escapes?: any[]
 ): Promise<Object[]> {
   const result = await exec(query, escapes);
   return result.rows.map(camelizeKeys);
+}
+
+// inserts into the db based on a table name and object
+export async function insert(
+  table: string,
+  object: Object,
+): Promise<Object> {
+  const escapes = Object.values(object);
+  const columns = Object.keys(object).map(snake);
+  const values = escapes.map((v, i) => `$${i + 1}`);
+  const result = await exec(
+    `INSERT INTO ${table} (id, ${columns}) VALUES (uuid_generate_v4(), ${values}) RETURNING *;`,
+    escapes
+  );
+  return camelizeKeys(result.rows[0]);
+}
+
+export function findBy(
+  table: string,
+  conditions: Object
+): Promise<Object> {
+  const [sql, escapes] = selectFromConditions(table, conditions);
+  return find(sql, escapes);
+}
+
+export function queryBy(
+  table: string,
+  conditions: Object
+) {
+  const [sql, escapes] = selectFromConditions(table, conditions);
+  return query(sql, escapes);
+}
+
+function selectFromConditions(
+  table: string,
+  conditions: Object
+): [string, any[]] {
+  const sql = `SELECT * FROM ${table} WHERE ${
+    Object.keys(conditions)
+      .map((key, i) => `${key} = $${i + 1}`)
+      .join(' AND ')
+  };`;
+  const escapes = Object.values(conditions);
+
+  return [sql, escapes];
 }
 
 export async function reset(): Promise<true> {

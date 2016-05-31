@@ -3,7 +3,7 @@ import {assert} from 'chai';
 import {edgeFromPathString as edge, segmentDescriptionsFromEdges} from
   '../src/PostgreSQL/generateDatabaseInterface';
 import {keyMap} from '../src/util';
-import {sqlQueryFromEdge, keyColumnFromEdge} from
+import {sqlQueryFromEdge, objectKeyColumnFromEdge} from
   '../src/PostgreSQL/generateEdgeResolver';
 import type {Edge, EdgeSegmentDescriptionMap} from '../src/types';
 
@@ -231,8 +231,8 @@ function testKeyColumns(
     segmentDescriptionsFromEdges([inEdge, outEdge]),
     segment => segment.signature,
   );
-  assert.equal(keyColumnFromEdge(descriptions, inEdge), inKeyColumn);
-  assert.equal(keyColumnFromEdge(descriptions, outEdge), outKeyColumn);
+  assert.equal(objectKeyColumnFromEdge(descriptions, inEdge), inKeyColumn);
+  assert.equal(objectKeyColumnFromEdge(descriptions, outEdge), outKeyColumn);
 }
 
 
@@ -242,7 +242,7 @@ describe('key column generation', () => {
       edge('posts', 'User', 'Post', false, '=AUTHORED=>'),
       edge('author', 'Post', 'User', false, '<-AUTHORED-'),
       'id',
-      'authored_by_user_id',
+      'authoredByUserId',
     );
   });
 

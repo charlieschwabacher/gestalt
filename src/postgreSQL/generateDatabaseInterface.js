@@ -12,6 +12,7 @@ import resolveNode from './resolveNode';
 import {generateEdgeResolver, generateEdgeLoaders} from
   './generateEdgeResolver';
 import {invariant, keyMap, baseType} from '../util';
+import * as db from '../PostgreSQL/db';
 
 export default function generateDatabaseInterface(
   ast: Document
@@ -57,6 +58,7 @@ export default function generateDatabaseInterface(
   });
 
   return {
+    db,
     schema: {
       tables,
       indices,

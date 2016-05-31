@@ -3,10 +3,14 @@
 
 import path from 'path';
 import fs from 'fs';
-import type {Document, GraphQLSchema, ObjectTypeDefinition,
-  GraphQLFieldResolveFn, GraphQLFieldConfig, DatabaseInterface,
-  ObjectTypeFieldResolutionDefinition, GraphQLType} from '../types';
-import {buildASTSchema, concatAST, printSchema} from 'graphql';
+import {camel} from 'change-case';
+import type {Document, GraphQLSchema, ObjectTypeDefinition, GraphQLField,
+  GraphQLFieldResolveFn, MutationDefinitionFn, MutationDefinition,
+  DatabaseInterface, ObjectTypeFieldResolutionDefinition, GraphQLType, TypeMap}
+  from '../types';
+import {buildASTSchema, concatAST, printSchema, GraphQLObjectType, getNamedType}
+  from 'graphql';
+import {mutationWithClientMutationId} from 'graphql-relay';
 import {insertConnectionTypes, removeHiddenNodes} from './ASTTransforms';
 import scalarTypeDefinitions from './scalarTypeDefinitions';
 import generateDatabaseInterface from '../PostgreSQL';
@@ -19,7 +23,7 @@ import baseSchema from './baseSchema';
 export default function generateGraphQLSchema(
   ast: Document,
   objects: ObjectTypeFieldResolutionDefinition[],
-  mutations: GraphQLFieldConfig[],
+  mutations: MutationDefinitionFn[],
 ): {schema: GraphQLSchema, database: DatabaseInterface} {
   const database = generateDatabaseInterface(ast);
 
@@ -113,11 +117,80 @@ function attachObjectTypeFieldResolution(
   });
 }
 
+// attach user defined mutations to schema
 function defineMutations(
   schema: GraphQLSchema,
-  mutations: GraphQLFieldConfig,
+  mutations: MutationDefinitionFn[],
 ): void {
+  if (mutations.length === 0) {
+    return;
+  }
 
+  const types = schema.getTypeMap();
+  const MutationRoot = new GraphQLObjectType({
+    name: 'MutationRoot',
+    fields: mutations.reduce((memo, mutationDefinition) => {
+      const definition = transformSimpleMutationDefinition(
+        mutationDefinition(types)
+      );
+      memo[camel(definition.name)] = mutationWithClientMutationId(definition);
+      return memo;
+    }, {}),
+  });
+
+  schema._mutationType = MutationRoot;
+  const newTypes = newTypesFromMutationType(MutationRoot);
+
+  extendTypeMap(types, newTypesFromMutationType(MutationRoot));
+}
+
+// allow GraphQLTypes to be provided in place of InputObjectFieldConfigs or
+// GraphQLFieldConfigs as part of the mutation config.  If a GraphQLType is
+// provided directly, it implies {type: GraphQLType} and leavs all other options
+// blank.
+function transformSimpleMutationDefinition(
+  definition: MutationDefinition,
+): MutationDefinition {
+  Object.entries(definition.inputFields).forEach(([key, field]) => {
+    if (field.type == null) {
+      definition.inputFields[key] = {type: field};
+    }
+  });
+  Object.entries(definition.outputFields).forEach(([key, field]) => {
+    if (field.type == null) {
+      definition.outputFields[key] = {type: field};
+    }
+  });
+  return definition;
+}
+
+function extendTypeMap(
+  typeMap: TypeMap,
+  types: GraphQLType[],
+): void {
+  types.forEach(type => {
+    if (typeMap[type.name]) {
+      if (typeMap[type.name] !== type) {
+        throw new Error(`Duplicate definition of '${type.name}'`);
+      }
+      return;
+    }
+
+    typeMap[type.name] = type;
+  });
+}
+
+function newTypesFromMutationType(
+  mutationType: GraphQLObjectType
+): GraphQLType[] {
+  const fields: GraphQLField[] = Object.values(mutationType.getFields());
+
+  return fields.reduce((memo, field) =>
+    memo.concat(
+      field.type,
+      getNamedType(field.args[0].type),
+    )
+  , [mutationType]);
 }
 
 function defineFieldResolve(

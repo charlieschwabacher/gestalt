@@ -15,18 +15,14 @@ Scaffolds?
   - how much is generated as part of scaffold vs is internal to the library
   - do we want anything beyond that  - types or mutations, etc..?
 
-  Project Structure
-    /someApp
-      /mutations
-      /objectResolutionDefinitions (need a better name)
-      server.js
-      schema.graphql
-
 todo:
   - connection arguments
   - rename @edge to @relationship
+  - add @index, @unique directives on object fields
   - handle union types (need type column in addition to foreign key, need to
     handle during query generation)
+  - handle non node object types as json
   - handle singular relationship to same table
+  - during database definition handle creating extensions for UUIDs, geo, etc..
   - AST validation for helpful error messages (notes in stub files in
     ./src/validation)

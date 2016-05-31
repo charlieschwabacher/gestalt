@@ -11,6 +11,7 @@ type User implements Node {
   firstName: String
   lastName: String
   fullName: String @virtual
+  profileImage(size: Int): String @virtual
   followedUsers: User @edge(path: "=FOLLOWED=>")
   followers: User @edge(path: "<=FOLLOWED=")
   posts: Post @edge(path: "=AUTHORED=>")

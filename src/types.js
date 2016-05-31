@@ -1,9 +1,12 @@
 // @flow
 
-import type {GraphQLFieldResolveFn} from 'graphql/type/definition';
+import type {GraphQLFieldResolveFn, GraphQLType, GraphQLNamedType} from
+  'graphql/type/definition';
+import type {GraphQLFieldConfigMap, InputObjectConfigFieldMap,
+  GraphQLResolveInfo} from 'graphql';
 import type DataLoader from 'dataloader';
 
-export type {GraphQLSchema, GraphQLObjectType} from 'graphql';
+export type {GraphQLSchema, GraphQLObjectType, GraphQLField} from 'graphql';
 export type {GraphQLFieldResolveFn, GraphQLResolveInfo, GraphQLFieldConfig,
   GraphQLType} from 'graphql/type/definition';
 export type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
@@ -105,6 +108,7 @@ export type ForeignKeyDescription = {
 
 export type EdgeSegmentDescriptionMap = {[key: string]: EdgeSegmentDescription}
 
+export type TypeMap = {[typeName: string]: GraphQLType};
 
 // represents custom field resolution definitions for graphql object types
 // defined using the IDL
@@ -112,6 +116,18 @@ export type EdgeSegmentDescriptionMap = {[key: string]: EdgeSegmentDescription}
 export type ObjectTypeFieldResolutionDefinition = {
   name: string,
   fields: {[key: string]: GraphQLFieldResolveFn}
+};
+
+export type MutationDefinitionFn = (types: {[key: string]: GraphQLType}) =>
+  MutationDefinition;
+
+export type MutationDefinition = {
+  name: string,
+  inputFields: InputObjectConfigFieldMap,
+  outputFields: GraphQLFieldConfigMap,
+  mutateAndGetPayload:
+    (object: Object, ctx: Object, info: GraphQLResolveInfo) => Object |
+    (object: Object, ctx: Object, info: GraphQLResolveInfo) => Promise<Object>
 };
 
 

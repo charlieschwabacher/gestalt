@@ -6,7 +6,7 @@ import {compose} from 'compose-middleware';
 import {parse} from 'graphql/language/parser';
 import generateGraphQLSchema from './GraphQL';
 
-import type {ObjectTypeFieldResolutionDefinition, GraphQLFieldConfig} from
+import type {ObjectTypeFieldResolutionDefinition, MutationDefinitionFn} from
   './types';
 import type {Request, Response} from 'express';
 
@@ -16,7 +16,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 export default function gestalt(config: {
   schemaPath: string,
   objects: ObjectTypeFieldResolutionDefinition[],
-  mutations: GraphQLFieldConfig[],
+  mutations: MutationDefinitionFn[],
   secret: string,
 }): (request: Request, response: Response) => void {
   const {schemaPath, objects, mutations, secret} = config;
@@ -27,12 +27,13 @@ export default function gestalt(config: {
     session({
       secret,
       resave: false,
-      saveUninitialized: false,
+      saveUninitialized: true,
     }),
     graphqlHTTP(request => {
       const context = {
         session: request.session,
         loaders: database.generateEdgeLoaders(),
+        db: database.db,
       };
 
       return {

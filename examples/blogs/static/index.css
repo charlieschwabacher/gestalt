@@ -1,0 +1,63 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  font-family: sans-serif;
+}
+
+header {
+  background-color: #999;
+  color: #fff;
+  padding: 10px;
+}
+
+.container {
+  margin: 0 auto;
+  max-width: 600px;
+}
+
+input {
+  display: block;
+  width: 100%;
+}
+
+input[type=submit] {
+  float: right;
+  width: auto;
+}
+
+hr {
+  border: 0;
+  border-bottom: solid 1px #ddd;
+  margin: 1em 0;
+}
+
+.row {
+  display: flex;
+  flex-flow: row nowrap;
+}
+
+.col {
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.flex {
+  flex: 1;
+}
+
+.mx-1 {
+  margin-left: -10px;
+  margin-right: -10px;
+}
+
+.my1 {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.p1 {
+  padding: 10px;
+}
