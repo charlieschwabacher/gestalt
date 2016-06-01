@@ -3,7 +3,7 @@ export default {
   fields: {
     id: () => '!',
     currentUser: (obj, args, context) =>
-      obj.currentUserId && context.db.findBy('users', {id: obj.currentUserId})
+      obj.currentUserID && context.db.findBy('users', {id: obj.currentUserID})
     ,
   },
 };

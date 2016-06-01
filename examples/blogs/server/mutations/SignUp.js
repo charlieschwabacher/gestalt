@@ -28,7 +28,7 @@ export default types => ({
       lastName
     });
 
-    session.currentUserId = user.id;
+    session.currentUserID = user.id;
     return {session};
   },
 });

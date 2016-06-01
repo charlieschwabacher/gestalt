@@ -19,6 +19,8 @@ export default function insertConnectionTypes(ast: Document): void {
 
         rootType.name.value = connectionTypeName;
 
+        addConnectionArgumentsToField(field);
+
         if (!definedConnections.has(typeName)) {
           definedConnections.add(typeName);
           newDefinitions.push(
@@ -45,6 +47,45 @@ function isPluralEdge(field: FieldDefinition): boolean {
   );
 
   return pathArgument && pathArgument.value.value.match(/=[A-Za-z]+=/);
+}
+
+export function addConnectionArgumentsToField(
+  field: FieldDefinition
+): void {
+  field.arguments.push(
+    {
+      kind: 'InputValueDefinition',
+      name: {kind: 'Name', value: 'first'},
+      type: {
+        kind: 'NamedType',
+        name: {kind: 'Name', value: 'Int'}
+      },
+    },
+    {
+      kind: 'InputValueDefinition',
+      name: {kind: 'Name', value: 'after'},
+      type: {
+        kind: 'NamedType',
+        name: {kind: 'Name', value: 'String'}
+      },
+    },
+    {
+      kind: 'InputValueDefinition',
+      name: {kind: 'Name', value: 'last'},
+      type: {
+        kind: 'NamedType',
+        name: {kind: 'Name', value: 'Int'}
+      },
+    },
+    {
+      kind: 'InputValueDefinition',
+      name: {kind: 'Name', value: 'before'},
+      type: {
+        kind: 'NamedType',
+        name: {kind: 'Name', value: 'String'}
+      },
+    },
+  );
 }
 
 export function generateConnectionTypeDefintions(
@@ -76,6 +117,15 @@ export function generateConnectionTypeDefintions(
           type: {
             kind: 'NamedType',
             name: {kind: 'Name', value: 'PageInfo'}
+          },
+        },
+        {
+          kind: 'FieldDefinition',
+          name: {kind: 'Name', value: 'totalCount'},
+          arguments: [],
+          type: {
+            kind: 'NamedType',
+            name: {kind: 'Name', value: 'Int'}
           },
         },
       ],

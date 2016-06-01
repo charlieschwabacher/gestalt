@@ -1,7 +1,7 @@
 import React from 'react';
 import {IndexRoute, Route} from 'react-router';
 import App from './components/App';
-import {Home, Post, UserProfile} from './components/scenes';
+import {Home, NotFound, Post, UserProfile} from './components/scenes';
 import {node, session} from './queries';
 
 export default (
@@ -23,6 +23,10 @@ export default (
       path="users/:id"
       component={UserProfile}
       queries={node}
+    />
+    <Route
+      path="*"
+      component={NotFound}
     />
   </Route>
 );

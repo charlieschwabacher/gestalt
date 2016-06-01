@@ -4,9 +4,9 @@ import {User} from '.';
 
 export default Relay.createContainer(
   ({comment}) =>
-    <div>
+    <div className='row my1'>
       <User user={comment.author}/>
-      <p>{comment.text}</p>
+      <div className='flex ml1'>{comment.text}</div>
     </div>
   ,
   {

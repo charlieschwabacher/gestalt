@@ -80,7 +80,7 @@ function generatePluralEdgeLoader(
   sql: string
 ): DataLoader {
   return new DataLoader(keys => {
-    return Promise.all(keys.map(async key => {
+    return Promise.all(keys.map(async ({key, args}) => {
       const nodes = await query(sql, [[key]]);
       const edges = nodes.map(node => ({node, cursor: node.id}));
       return {

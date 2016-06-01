@@ -17,7 +17,7 @@ export default types => ({
     const user = await db.findBy('users', {email});
     await bcrypt.compare(password, user.passwordHash);
 
-    session.currentUserId = user.id;
+    session.currentUserID = user.id;
     return {session};
   },
 });

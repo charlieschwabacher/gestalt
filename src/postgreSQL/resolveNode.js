@@ -1,7 +1,7 @@
 // Retreives a Node given its global ID
 // @flow
 
-import {find} from './db';
+import {findBy} from './db';
 import {tableNameFromTypeName} from './generateDatabaseInterface';
 import type {GraphQLResolveInfo} from '../types';
 
@@ -13,7 +13,7 @@ export default async function resolveNode(
 ): Promise<Object> {
   const [typeName, id] = args.id.split(':');
   const tableName = tableNameFromTypeName(typeName);
-  const result = await find('SELECT * FROM users WHERE id = $1', [id]);
+  const result = await findBy(tableName, {id});
   result._type = typeName;
   return result;
 }

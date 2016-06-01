@@ -2,29 +2,22 @@
 import React from 'react';
 import Relay from 'react-relay';
 import {Link} from 'react-router';
-import {User} from './shared';
-import {SignOut} from '../mutations';
+import {User, SignOutLink} from './shared';
 
 export default Relay.createContainer(
   ({session, children}) => (
     <div>
-      <header>
+      <header className='p1 light-bg'>
         <div className='container row'>
           <div className='flex'>
             <Link to='/'>Gestalt Blogs Example</Link>
           </div>
           {
             session.currentUser &&
-            <div>
+            <div className='row align-center'>
               <User user={session.currentUser}/>
-              {' | '}
-              <a
-                onClick={() => Relay.Store.commitUpdate(
-                  new SignOut({session})
-                )}
-              >
-                Sign Out
-              </a>
+              <div className='mx1'>|</div>
+              <SignOutLink session={session}/>
             </div>
           }
         </div>
@@ -39,7 +32,7 @@ export default Relay.createContainer(
       session: () => Relay.QL`
         fragment on Session {
           id
-          ${SignOut.getFragment('session')}
+          ${SignOutLink.getFragment('session')}
           currentUser {
             ${User.getFragment('user')}
           }

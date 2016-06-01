@@ -63,29 +63,35 @@ export async function insert(
   return camelizeKeys(result.rows[0]);
 }
 
+export function deleteBy(
+  table: string,
+  conditions: Object,
+): Promise<Object> {
+  const [sql, escapes] = whereFromConditions(conditions);
+  return exec(`DELETE FROM ${table} ${sql}`);
+}
+
 export function findBy(
   table: string,
   conditions: Object
 ): Promise<Object> {
-  const [sql, escapes] = selectFromConditions(table, conditions);
-  return find(sql, escapes);
+  const [sql, escapes] = whereFromConditions(conditions);
+  return find(`SELECT * FROM ${table} ${sql}`, escapes);
 }
 
 export function queryBy(
   table: string,
   conditions: Object
 ) {
-  const [sql, escapes] = selectFromConditions(table, conditions);
-  return query(sql, escapes);
+  const [sql, escapes] = whereFromConditions(conditions);
+  return query(`SELECT * FROM ${table} ${sql}`, escapes);
 }
 
-function selectFromConditions(
-  table: string,
-  conditions: Object
-): [string, any[]] {
-  const sql = `SELECT * FROM ${table} WHERE ${
+function whereFromConditions(conditions: Object): [string, any[]] {
+  const comparisonOperator = key => ' = ';
+  const sql = `WHERE ${
     Object.keys(conditions)
-      .map((key, i) => `${key} = $${i + 1}`)
+      .map((key, i) => `${key} ${comparisonOperator(key)} $${i + 1}`)
       .join(' AND ')
   };`;
   const escapes = Object.values(conditions);

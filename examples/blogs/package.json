@@ -4,7 +4,9 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "nodemon --exec babel-node --ignore ./client/ ./server.js",
+    "start": "npm run start-api & npm run start-webpack",
+    "start-api": "nodemon --exec babel-node --ignore ./client/ ./server.js",
+    "start-webpack": "babel-node ./webpackDevServer.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "NODE_ENV=production webpack --config ./webpack.config.js --progress --profile --colors"
   },
@@ -22,17 +24,17 @@
     "react-dom": "^15.1.0",
     "react-relay": "^0.9.0",
     "react-router": "^2.4.1",
-    "react-router-relay": "^0.13.2",
-    "webpack": "^1.13.1"
+    "react-router-relay": "^0.13.2"
   },
   "dependencies": {
     "babel-loader": "^6.2.4",
     "bcrypt-as-promised": "^1.1.0",
+    "cors": "^2.7.1",
     "express": "^4.13.4",
     "gestalt": "file:../..",
     "require-all": "^2.0.0",
-    "webpack-dev-middleware": "^1.6.1",
-    "webpack-hot-middleware": "^2.10.0"
+    "webpack": "^1.13.1",
+    "webpack-dev-middleware": "^1.6.1"
   },
   "metadata": {
     "graphql": {

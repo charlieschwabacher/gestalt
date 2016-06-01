@@ -17,6 +17,7 @@ export default Relay.createContainer(
           })
         );
       }}
+      className='col align-stretch'
     >
       <input name='email' type='email' placeholder='Email'/>
       <input name='password' type='password' placeholder='Password'/>

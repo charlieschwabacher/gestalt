@@ -4,10 +4,13 @@ import {Link} from 'react-router';
 
 export default Relay.createContainer(
   ({user}) =>
-    <span>
-      <img src={user.profileImage} style={{width: 40, height: 40}}/>
+    <div className='row align-center'>
+      <img
+        src={user.profileImage}
+        style={{width: 15, height: 15, marginRight: '0.5rem'}}
+      />
       <Link to={`/users/${user.id}`}>{user.fullName}</Link>
-    </span>
+    </div>
   ,
   {
     fragments: {
@@ -15,7 +18,7 @@ export default Relay.createContainer(
         fragment on User {
           id
           fullName
-          profileImage(size: 80)
+          profileImage(size: 30)
         }
       `
     }

@@ -15,6 +15,7 @@ export default Relay.createContainer(
           })
         );
       }}
+      className='col align-stretch'
     >
       <input name='title' type='text' placeholder='Title'/>
       <textarea name='text' placeholder='Text'/>

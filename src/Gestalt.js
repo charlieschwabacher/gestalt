@@ -2,7 +2,6 @@
 import fs from 'fs';
 import session from 'cookie-session';
 import graphqlHTTP from 'express-graphql';
-import {compose} from 'compose-middleware';
 import {parse} from 'graphql/language/parser';
 import generateGraphQLSchema from './GraphQL';
 
@@ -22,30 +21,29 @@ export default function gestalt(config: {
   const {schemaPath, objects, mutations, secret} = config;
   const schemaAST = parse(fs.readFileSync(schemaPath));
   const {schema, database} = generateGraphQLSchema(schemaAST, objects, mutations);
+  const {db} = database;
 
-  return compose([
-    session({
-      secret,
-      name: 'gestalt',
-      // resave: false,
-      // saveUninitialized: true,
-    }),
-    graphqlHTTP(request => {
-      const context = {
-        session: request.session,
-        loaders: database.generateEdgeLoaders(),
-        db: database.db,
-      };
+  return (req, res, next) => {
+    if (req.path !== '/graphql') {
+      return next();
+    }
 
-      return {
-        schema,
-        context,
-        graphiql: !isProduction,
-        formatError: error => ({
-          message: error.message,
-          details: isProduction ? null : error.stack
-        })
-      };
-    }),
-  ]);
+    session({secret, name: 'gestalt'})(req, res, () => {
+      graphqlHTTP(request => {
+        return {
+          schema,
+          context: {
+            db,
+            session: request.session,
+            loaders: database.generateEdgeLoaders(),
+          },
+          graphiql: !isProduction,
+          formatError: error => ({
+            message: error.message,
+            details: isProduction ? null : error.stack
+          })
+        };
+      })(req, res, next);
+    });
+  };
 }

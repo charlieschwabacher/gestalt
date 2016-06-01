@@ -24,5 +24,6 @@ todo:
   - handle non node object types as json
   - handle singular relationship to same table
   - during database definition handle creating extensions for UUIDs, geo, etc..
+  - make resolvers use prepared statements
   - AST validation for helpful error messages (notes in stub files in
     ./src/validation)

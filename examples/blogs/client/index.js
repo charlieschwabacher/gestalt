@@ -6,13 +6,10 @@ import useRelay from 'react-router-relay';
 import routes from './routes';
 
 Relay.injectNetworkLayer(
-  new DefaultNetworkLayer('/graphql', {
+  new DefaultNetworkLayer('//localhost:3001/graphql', {
     credentials: 'include',
   })
 );
-
-const container = document.createElement('div');
-document.body.appendChild(container);
 
 ReactDOM.render(
   <Router
@@ -21,5 +18,5 @@ ReactDOM.render(
     render={applyRouterMiddleware(useRelay)}
     environment={Relay.Store}
   />,
-  container
+  document.getElementById('root')
 );

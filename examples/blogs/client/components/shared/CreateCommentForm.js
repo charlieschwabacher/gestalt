@@ -14,9 +14,10 @@ export default Relay.createContainer(
           })
         );
       }}
+      className='row align-stretch my1'
     >
-      <textarea name='text' placeholder='Text'/>
-      <input type='submit' value='Create Comment'/>
+      <input type='text' name='text' placeholder='Text' className='flex'/>
+      <input type='submit' value='Comment'/>
     </form>
   ),
   {
