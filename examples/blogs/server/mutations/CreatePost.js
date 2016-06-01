@@ -12,16 +12,16 @@ export default types => ({
   mutateAndGetPayload: async (input, context, info) => {
     const {title, text} = input;
     const {db, session} = context;
-    const {currentUserId} = session;
+    const {currentUserID} = session;
 
     assert(title.length > 0, 'post must have title');
     assert(text.length > 0, 'post must have text');
 
-    const user = await db.findBy('users', {id: currentUserId});
+    const user = await db.findBy('users', {id: currentUserID});
 
     const post = await db.insert('posts', {
       createdAt: new Date(),
-      authoredByUserId: currentUserId,
+      authoredByUserID: currentUserID,
       title,
       text,
     });

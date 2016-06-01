@@ -22,7 +22,7 @@ export default types => ({
 
     const comment = await db.insert('comments', {
       createdAt: new Date(),
-      authoredByUserId: currentUserID,
+      authoredByUserID: currentUserID,
       inspiredByPostID,
       text
     });

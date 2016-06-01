@@ -6,7 +6,7 @@ export default types => ({
   },
   mutateAndGetPayload: (input, context, info) => {
     const {session} = context;
-    session.currentUserId = null;
+    session.currentUserID = null;
     return {session};
   },
 });
