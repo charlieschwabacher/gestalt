@@ -86,21 +86,21 @@ function generatePluralRelationshipLoader(
   keyColumn: string,
   sql: string
 ): DataLoader {
-  return new DataLoader(keys => {
-    return Promise.all(keys.map(async ({key, args}) => {
+  return new DataLoader(keys =>
+    Promise.all(keys.map(async key => {
       const nodes = await query(sql, [[key]]);
-      const relationships = nodes.map(node => ({node, cursor: node.id}));
+      const edges = nodes.map(node => ({node, cursor: node.id}));
       return {
-        relationships,
+        edges,
         pageInfo: {
           hasPreviousPage: false,
           hasNextPage: false,
         },
-        count: relationships.length,
-        totalCount: relationships.length,
+        count: edges.length,
+        totalCount: edges.length,
       };
-    }));
-  });
+    }))
+  );
 }
 
 export function objectKeyColumnFromRelationship(

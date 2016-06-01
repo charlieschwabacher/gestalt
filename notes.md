@@ -16,13 +16,12 @@ Scaffolds?
   - do we want anything beyond that  - types or mutations, etc..?
 
 todo:
-  - connection arguments
-  - rename @edge to @relationship
-  - add @index, @unique directives on object fields
+  - respect connection arguments
+  - handle singular relationship to same table
   - handle union types (need type column in addition to foreign key, need to
     handle during query generation)
   - handle non node object types as json
-  - handle singular relationship to same table
+  - add @index, @unique directives on object fields
   - during database definition handle creating extensions for UUIDs, geo, etc..
   - make resolvers use prepared statements
   - AST validation for helpful error messages (notes in stub files in
