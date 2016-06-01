@@ -1,11 +1,12 @@
 import {assert} from 'chai';
-import {edgeFromPathString} from '../src/PostgreSQL/generateDatabaseInterface';
+import {relationshipFromPathString} from
+  '../src/PostgreSQL/generateDatabaseInterface';
 
 describe('parsing path strings', () => {
 
-  it('parses a long edge', () => {
+  it('parses a long relationship', () => {
     assert.deepEqual(
-      edgeFromPathString(
+      relationshipFromPathString(
         'posts',
         'User',
         'Post',
@@ -45,9 +46,9 @@ describe('parsing path strings', () => {
     );
   });
 
-  it('parses a short edge', () => {
+  it('parses a short relationship', () => {
     assert.deepEqual(
-      edgeFromPathString('user', 'Post', 'User', true, '<-AUTHORED-'),
+      relationshipFromPathString('user', 'Post', 'User', true, '<-AUTHORED-'),
       {
         fieldName: 'user',
         cardinality: 'singular',

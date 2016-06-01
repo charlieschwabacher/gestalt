@@ -6,7 +6,7 @@ import {parse} from 'graphql';
 export default parse(`
 directive @virtual on FIELD_DEFINITION
 directive @hidden on OBJECT | FIELD_DEFINITION
-directive @edge(path: String) on FIELD_DEFINITION
+directive @relationship(path: String) on FIELD_DEFINITION
 
 scalar Date
 scalar Money

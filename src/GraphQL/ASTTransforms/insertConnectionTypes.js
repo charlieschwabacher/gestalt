@@ -11,7 +11,7 @@ export default function insertConnectionTypes(ast: Document): void {
 
   ast.definitions.forEach(definition => {
     definition.fields && definition.fields.forEach(field => {
-      if (isPluralEdge(field)) {
+      if (isPluralRelationship(field)) {
         const rootType = baseType(field.type);
         const typeName = rootType.name.value;
         const connectionTypeName = `${plural(typeName)}Connection`;
@@ -38,15 +38,16 @@ export default function insertConnectionTypes(ast: Document): void {
   ast.definitions.push(...newDefinitions);
 }
 
-function isPluralEdge(field: FieldDefinition): boolean {
-  const edgeDirective = field.directives && field.directives.find(
-     directive => directive.name.value === 'edge'
+function isPluralRelationship(field: FieldDefinition): boolean {
+  const directive = field.directives && field.directives.find(
+     directive => directive.name.value === 'relationship'
   );
-  const pathArgument = edgeDirective && edgeDirective.arguments.find(
+  const argument = directive && directive.arguments.find(
     argument => argument.name.value === 'path'
   );
 
-  return pathArgument && pathArgument.value.value.match(/=[A-Za-z]+=/);
+  // relationships with any plural segments in their paths are plural
+  return argument && argument.value.value.match(/=[A-Za-z]+=/);
 }
 
 export function addConnectionArgumentsToField(

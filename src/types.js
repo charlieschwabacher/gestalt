@@ -16,10 +16,11 @@ export type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
 
 export type DatabaseInterface = {
   schema: DatabaseSchema,
-  edges: Edge[],
+  relationships: Relationship[],
   resolveNode: GraphQLFieldResolveFn,
-  generateEdgeResolver: (edge: Edge) => GraphQLFieldResolveFn,
-  generateEdgeLoader: (edge: Edge) => DataLoader,
+  generateRelationshipResolver: (relationship: Relationship) =>
+    GraphQLFieldResolveFn,
+  generateRelationshipLoader: (relationship: Relationship) => DataLoader,
 }
 
 export type DatabaseSchema = {
@@ -57,13 +58,13 @@ type Constraint = {
 export type ColumnType = 'uuid' | 'jsonb' | 'varchar(255)' | 'timestamp' |
   'text' | 'integer' | 'double precision' | 'money'
 
-export type Edge = {
+export type Relationship = {
   fieldName: string,
   cardinality: 'singular' | 'plural',
-  path: EdgeSegment[],
+  path: RelationshipSegment[],
 }
 
-export type EdgeSegment = {
+export type RelationshipSegment = {
   fromType: string,
   toType: string,
   label: string,
@@ -73,20 +74,20 @@ export type EdgeSegment = {
   signature: string,
 }
 
-export type EdgeSegmentPair = {
-  in?: EdgeSegment,
-  out?: EdgeSegment,
+export type RelationshipSegmentPair = {
+  in?: RelationshipSegment,
+  out?: RelationshipSegment,
 }
 
-export type EdgeSegmentDescription = {
+export type RelationshipSegmentDescription = {
   type: 'join',
   signature: string,
-  pair: EdgeSegmentPair,
+  pair: RelationshipSegmentPair,
   storage: JoinTableDescription,
 } | {
   type: 'foreignKey',
   signature: string,
-  pair: EdgeSegmentPair,
+  pair: RelationshipSegmentPair,
   storage: ForeignKeyDescription,
 }
 
@@ -106,7 +107,8 @@ export type ForeignKeyDescription = {
   nonNull: boolean,
 }
 
-export type EdgeSegmentDescriptionMap = {[key: string]: EdgeSegmentDescription}
+export type RelationshipSegmentDescriptionMap =
+  {[key: string]: RelationshipSegmentDescription};
 
 export type TypeMap = {[typeName: string]: GraphQLType};
 

@@ -2,9 +2,10 @@
 // type, and relationship information.
 // @flow
 
-import type {Edge, EdgeSegmentDescriptionMap, EdgeSegment, Query, Join,
-  Condition, GraphQLFieldResolveFn} from '../types';
-import {pairingSignatureFromEdgeSegment, tableNameFromTypeName} from
+import type {Relationship, RelationshipSegmentDescriptionMap,
+  RelationshipSegmentDescription, RelationshipSegment, Query, Join, Condition,
+  GraphQLFieldResolveFn} from '../types';
+import {pairingSignatureFromRelationshipSegment, tableNameFromTypeName} from
   './generateDatabaseInterface';
 import {query, find} from './db';
 import DataLoader from 'dataloader';
@@ -12,23 +13,26 @@ import {camel} from 'change-case';
 import {keyMap, group} from '../util';
 
 
-export function generateEdgeResolver(
-  segmentDescriptionMap: EdgeSegmentDescriptionMap,
-): (edge: Edge) => GraphQLFieldResolveFn {
-  return edge => {
-    const keyColumn = objectKeyColumnFromEdge(segmentDescriptionMap, edge);
+export function generateRelationshipResolver(
+  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
+): (relationship: Relationship) => GraphQLFieldResolveFn {
+  return relationship => {
+    const keyColumn = objectKeyColumnFromRelationship(
+      segmentDescriptionMap,
+      relationship
+    );
     return (object, args, context) => {
-      const loader = context.loaders.get(edge);
+      const loader = context.loaders.get(relationship);
       const key = object[keyColumn];
       return loader.load(key);
     };
   };
 }
 
-export function generateEdgeLoaders(
-  segmentDescriptionMap: EdgeSegmentDescriptionMap,
-  edges: Edge[],
-): () => Map<Edge, DataLoader> {
+export function generateRelationshipLoaders(
+  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
+  relationships: Relationship[],
+): () => Map<Relationship, DataLoader> {
   // TODO: we should be able to pregenerate and store SQL queries so that they
   // are only calculated once, not re-calcualted on every request.
 
@@ -38,31 +42,34 @@ export function generateEdgeLoaders(
     // use some small subset of the available loaders so will be worthwile to
     // avoid generating the rest
 
-    const edgeLoaderMap = new Map();
+    const relationshipLoaderMap = new Map();
 
-    edges.forEach(edge => {
-      const keyColumn = resolvedKeyColumnFromEdge(segmentDescriptionMap, edge);
-      const sql = sqlQueryFromEdge(segmentDescriptionMap, edge);
+    relationships.forEach(relationship => {
+      const keyColumn = resolvedKeyColumnFromRelationship(
+        segmentDescriptionMap,
+        relationship
+      );
+      const sql = sqlQueryFromRelationship(segmentDescriptionMap, relationship);
 
-      if (edge.cardinality === 'singular') {
-        edgeLoaderMap.set(
-          edge,
-          generateSingularEdgeLoader(edge, keyColumn, sql)
+      if (relationship.cardinality === 'singular') {
+        relationshipLoaderMap.set(
+          relationship,
+          generateSingularRelationshipLoader(relationship, keyColumn, sql)
         );
       } else {
-        edgeLoaderMap.set(
-          edge,
-          generatePluralEdgeLoader(edge, keyColumn, sql)
+        relationshipLoaderMap.set(
+          relationship,
+          generatePluralRelationshipLoader(relationship, keyColumn, sql)
         );
       }
     });
 
-    return edgeLoaderMap;
+    return relationshipLoaderMap;
   };
 }
 
-function generateSingularEdgeLoader(
-  edge: Edge,
+function generateSingularRelationshipLoader(
+  relationship: Relationship,
   keyColumn: string,
   sql: string
 ): DataLoader {
@@ -74,36 +81,36 @@ function generateSingularEdgeLoader(
 }
 
 // TODO: this needs to handle connection arguments
-function generatePluralEdgeLoader(
-  edge: Edge,
+function generatePluralRelationshipLoader(
+  relationship: Relationship,
   keyColumn: string,
   sql: string
 ): DataLoader {
   return new DataLoader(keys => {
     return Promise.all(keys.map(async ({key, args}) => {
       const nodes = await query(sql, [[key]]);
-      const edges = nodes.map(node => ({node, cursor: node.id}));
+      const relationships = nodes.map(node => ({node, cursor: node.id}));
       return {
-        edges,
+        relationships,
         pageInfo: {
           hasPreviousPage: false,
           hasNextPage: false,
         },
-        count: edges.length,
-        totalCount: edges.length,
+        count: relationships.length,
+        totalCount: relationships.length,
       };
     }));
   });
 }
 
-export function objectKeyColumnFromEdge(
-  segmentDescriptionMap: EdgeSegmentDescriptionMap,
-  edge: Edge
+export function objectKeyColumnFromRelationship(
+  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
+  relationship: Relationship
 ): string {
-  const segment = edge.path[0];
+  const segment = relationship.path[0];
   const description = descriptionFromSegment(
     segmentDescriptionMap,
-    edge.path[0]
+    relationship.path[0]
   );
   const {type, storage} = description;
 
@@ -114,14 +121,14 @@ export function objectKeyColumnFromEdge(
   );
 }
 
-export function resolvedKeyColumnFromEdge(
-  segmentDescriptionMap: EdgeSegmentDescriptionMap,
-  edge: Edge
+export function resolvedKeyColumnFromRelationship(
+  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
+  relationship: Relationship
 ): string {
-  const segment = edge.path[0];
+  const segment = relationship.path[0];
   const description = descriptionFromSegment(
     segmentDescriptionMap,
-    edge.path[0]
+    relationship.path[0]
   );
   const {type, storage} = description;
 
@@ -136,32 +143,34 @@ export function resolvedKeyColumnFromEdge(
 // Work backwards along the path applying joins, stopping before the first
 // segment.
 
-export function sqlQueryFromEdge(
-  segmentDescriptionMap: EdgeSegmentDescriptionMap,
-  edge: Edge,
+export function sqlQueryFromRelationship(
+  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
+  relationship: Relationship,
 ): string {
   return sqlStringFromQuery(
-    queryFromEdge(segmentDescriptionMap, edge)
+    queryFromRelationship(segmentDescriptionMap, relationship)
   );
 }
 
-function queryFromEdge(
-  segmentDescriptionMap: EdgeSegmentDescriptionMap,
-  edge: Edge,
+function queryFromRelationship(
+  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
+  relationship: Relationship,
 ): Query {
-  const initialSegment = edge.path[0];
-  const finalSegment = edge.path[edge.path.length - 1];
+  const initialSegment = relationship.path[0];
+  const finalSegment = relationship.path[relationship.path.length - 1];
 
   return {
     table: tableNameFromTypeName(finalSegment.toType),
-    joins: compactJoins(joinsFromPath(segmentDescriptionMap, edge.path)),
+    joins: compactJoins(
+      joinsFromPath(segmentDescriptionMap, relationship.path)
+    ),
     condition: conditionFromSegment(segmentDescriptionMap, initialSegment),
   };
 }
 
 function conditionFromSegment(
-  segmentDescriptionMap: EdgeSegmentDescriptionMap,
-  segment: EdgeSegment
+  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
+  segment: RelationshipSegment
 ): Condition {
   const description = descriptionFromSegment(segmentDescriptionMap, segment);
 
@@ -184,16 +193,16 @@ function conditionFromSegment(
 }
 
 function joinsFromPath(
-  segmentDescriptionMap: EdgeSegmentDescriptionMap,
-  segments: EdgeSegment[]
+  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
+  segments: RelationshipSegment[]
 ): Join[] {
   return joinsFromSegments(segmentDescriptionMap, segments.slice(1))
     .concat(joinsFromInitialSegment(segmentDescriptionMap, segments[0]));
 }
 
 function joinsFromSegments(
-  segmentDescriptionMap: EdgeSegmentDescriptionMap,
-  segments: EdgeSegment[]
+  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
+  segments: RelationshipSegment[]
 ): Join[] {
   const joins = [];
 
@@ -267,8 +276,8 @@ function joinsFromSegments(
 }
 
 function joinsFromInitialSegment(
-  segmentDescriptionMap: EdgeSegmentDescriptionMap,
-  segment: EdgeSegment,
+  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
+  segment: RelationshipSegment,
 ): Join[] {
   const description = descriptionFromSegment(segmentDescriptionMap, segment);
 
@@ -326,10 +335,10 @@ function compactJoins(joins: Join[]): Join[] {
 }
 
 function descriptionFromSegment(
-  segmentDescriptionMap: EdgeSegmentDescriptionMap,
-  segment: EdgeSegment
-): EdgeSegmentDescription {
-  const signature = pairingSignatureFromEdgeSegment(segment);
+  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
+  segment: RelationshipSegment
+): RelationshipSegmentDescription {
+  const signature = pairingSignatureFromRelationshipSegment(segment);
   return segmentDescriptionMap[signature];
 }
 

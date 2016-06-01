@@ -7,9 +7,9 @@ import generateGraphQLSchema from '../src/GraphQL/generateGraphQLSchema';
 import generateDatabaseInterface from '../src/PostgreSQL';
 import generateDatabaseSchemaMigration from
   '../src/PostgreSQL/generateDatabaseSchemaMigration';
-import {segmentDescriptionsFromEdges} from
+import {segmentDescriptionsFromRelationships} from
   '../src/PostgreSQL/generateDatabaseInterface';
-import {sqlQueryFromEdge} from '../src/PostgreSQL/generateEdgeResolver';
+import {sqlQueryFromRelationship} from '../src/PostgreSQL/generateRelationshipResolver';
 import {keyMap} from '../src/util';
 import expectedDatabaseSchema from './BlogsSchema/expectedDatabaseSchema';
 
@@ -42,14 +42,18 @@ describe('schema definition', () => {
     },
   );
 
-  it('generates SQL queries to resolve edges', () => {
-    const edges = generateDatabaseInterface(definitionAST).edges;
+  it('generates SQL queries to resolve relationships', () => {
+    const database = generateDatabaseInterface(definitionAST);
+    const relationships = database.relationships;
     const segmentDescriptionsBySignature = keyMap(
-      segmentDescriptionsFromEdges(edges),
+      segmentDescriptionsFromRelationships(relationships),
       segment => segment.signature,
     );
-    const sqlQueries = edges.map(
-      edge => sqlQueryFromEdge(segmentDescriptionsBySignature, edge)
+    const sqlQueries = relationships.map(
+      relationship => sqlQueryFromRelationship(
+        segmentDescriptionsBySignature,
+        relationship
+      )
     );
     assert.deepEqual(
       sqlQueries,

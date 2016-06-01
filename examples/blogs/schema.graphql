@@ -12,11 +12,11 @@ type User implements Node {
   lastName: String
   fullName: String @virtual
   profileImage(size: Int): String @virtual
-  followedUsers: User @edge(path: "=FOLLOWED=>")
-  followers: User @edge(path: "<=FOLLOWED=")
-  posts: Post @edge(path: "=AUTHORED=>")
-  comments: Comment @edge(path: "=AUTHORED=>")
-  feed: Post @edge(path: "=FOLLOWED=>User=AUTHORED=>")
+  followedUsers: User @relationship(path: "=FOLLOWED=>")
+  followers: User @relationship(path: "<=FOLLOWED=")
+  posts: Post @relationship(path: "=AUTHORED=>")
+  comments: Comment @relationship(path: "=AUTHORED=>")
+  feed: Post @relationship(path: "=FOLLOWED=>User=AUTHORED=>")
 }
 
 type Post implements Node {
@@ -24,14 +24,14 @@ type Post implements Node {
   title: String!
   text: Text!
   createdAt: Date!
-  author: User! @edge(path: "<-AUTHORED-")
-  comments: Comment @edge(path: "=INSPIRED=>")
+  author: User! @relationship(path: "<-AUTHORED-")
+  comments: Comment @relationship(path: "=INSPIRED=>")
 }
 
 type Comment implements Node {
   id: ID!
   text: Text!
   createdAt: Date!
-  author: User @edge(path: "<-AUTHORED-")
-  subject: Post! @edge(path: "<-INSPIRED-")
+  author: User @relationship(path: "<-AUTHORED-")
+  subject: Post! @relationship(path: "<-INSPIRED-")
 }

@@ -38,7 +38,7 @@ export default function generateGraphQLSchema(
   // add aditional definitions and attach resolution functions
   defineScalarTypes(schema);
   defineBaseSchemaResolution(schema, database);
-  defineEdgeResolution(schema, database);
+  defineRelationshipResolution(schema, database);
   defineNodeIDResolution(schema);
   attachObjectTypeFieldResolution(schema, objects);
   defineMutations(schema, mutations);
@@ -68,16 +68,16 @@ function defineBaseSchemaResolution(
 }
 
 // generate resolve functions for connection fields
-function defineEdgeResolution(
+function defineRelationshipResolution(
   schema: GraphQLSchema,
   database: DatabaseInterface,
 ): void {
-  database.edges.forEach(edge => {
+  database.relationships.forEach(relationship => {
     defineFieldResolve(
       schema,
-      edge.path[0].fromType,
-      edge.fieldName,
-      database.generateEdgeResolver(edge),
+      relationship.path[0].fromType,
+      relationship.fieldName,
+      database.generateRelationshipResolver(relationship),
     );
   });
 }

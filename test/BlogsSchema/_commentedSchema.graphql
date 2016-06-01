@@ -35,7 +35,7 @@ directive @description(text: String) on SCALAR | OBJECT | INTERFACE | UNION |
 directive @depreciated(reason: String) on FIELD_DEFINITION
 directive @computed on FIELD_DEFINITION
 directive @hidden on FIELD_DEFINITION
-directive @edge(path: String) on FIELD_DEFINITION
+directive @relationship(path: String) on FIELD_DEFINITION
 
 
 
@@ -99,20 +99,20 @@ type User implements Node
   # with this many to many relationship, we would end up w/ a join table
   # user_followed_users.
 
-  followedUsers: User @edge(path: "=FOLLOWED=>")
-  followers: User @edge(path: "<=FOLLOWED=")
+  followedUsers: User @relationship(path: "=FOLLOWED=>")
+  followers: User @relationship(path: "<=FOLLOWED=")
 
   # the corresponding author fields on Posts and comments are singular, so for
   # these connections we know to add user_authored_id on the posts and comments
   # tables.
 
-  posts: Post @edge(path: "=AUTHORED=>")
-  comments: Comment @edge(path: "=AUTHORED=>")
+  posts: Post @relationship(path: "=AUTHORED=>")
+  comments: Comment @relationship(path: "=AUTHORED=>")
 
   # We can define fields that follow multiple relationships as shown.  This
   # would result in multiple joins (to user_followed_users, users, and posts).
 
-  feed: Post @edge(path: "=FOLLOWED=>User=AUTHORED=>")
+  feed: Post @relationship(path: "=FOLLOWED=>User=AUTHORED=>")
 }
 
 type Post implements Node
@@ -122,8 +122,8 @@ type Post implements Node
   title: String!
   text: String!
   createdAt: Date!
-  author: User @edge(path: "<-AUTHORED-")
-  comments: Comment @edge(path: "<=COMMENT_ON=")
+  author: User @relationship(path: "<-AUTHORED-")
+  comments: Comment @relationship(path: "<=COMMENT_ON=")
 }
 
 type Comment implements Node
@@ -132,6 +132,6 @@ type Comment implements Node
   id: ID!
   text: String!
   createdAt: Date!
-  author: User @edge(path: "<-AUTHORED-")
-  subject: Post @edge(path: "-COMMENT_ON->")
+  author: User @relationship(path: "<-AUTHORED-")
+  subject: Post @relationship(path: "-COMMENT_ON->")
 }

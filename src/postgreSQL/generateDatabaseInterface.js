@@ -4,13 +4,14 @@
 
 import type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
   Type, NamedType, DatabaseInterface, DatabaseSchema, Table, Index, Column,
-  ColumnType, Edge, EdgeSegment, EdgeSegmentPair, JoinTableDescription,
-  ForeignKeyDescription, EdgeSegmentDescription} from '../types';
+  ColumnType, Relationship, RelationshipSegment, RelationshipSegmentPair,
+  JoinTableDescription, ForeignKeyDescription, RelationshipSegmentDescription}
+  from '../types';
 import {plural} from 'pluralize';
 import {snake} from 'change-case';
 import resolveNode from './resolveNode';
-import {generateEdgeResolver, generateEdgeLoaders} from
-  './generateEdgeResolver';
+import {generateRelationshipResolver, generateRelationshipLoaders} from
+  './generateRelationshipResolver';
 import {invariant, keyMap, baseType} from '../util';
 import * as db from '../PostgreSQL/db';
 
@@ -20,9 +21,9 @@ export default function generateDatabaseInterface(
   const tables: Table[] = [];
   const tablesByName: {[key: string]: Table} = {};
   const indices: Index[] = [];
-  const edges: Edge[] = [];
+  const relationships: Relationship[] = [];
 
-  // create tables and indexes for object types, take inventory of edges
+  // create tables and indexes for object types, take inventory of relationships
   ast.definitions.forEach(definition => {
     if (isDatabaseType(definition)) {
       const table = tableFromObjectTypeDefinition(definition);
@@ -30,20 +31,22 @@ export default function generateDatabaseInterface(
       tables.push(table);
 
       indices.push(idIndexFromObjectTypeDefinition(definition));
-      edges.push(...edgesFromObjectTypeDefinition(definition));
+      relationships.push(...relationshipsFromObjectTypeDefinition(definition));
     }
   });
 
-  // having looked at each type and recorded their edges, we create normalized
-  // descriptions of their relationships
-  const segmentDescriptions = segmentDescriptionsFromEdges(edges);
+  // having looked at each type and recorded their relationships, we create
+  // normalized descriptions of their relationships
+  const segmentDescriptions = segmentDescriptionsFromRelationships(
+    relationships
+  );
   const segmentDescriptionsBySignature = keyMap(
     segmentDescriptions,
     segment => segment.signature
   );
 
-  // create join tables, foreign key columns, and indices based on the edge
-  // descriptions
+  // create join tables, foreign key columns, and indices based on the
+  // relationship descriptions
   segmentDescriptions.forEach(segment => {
     if (segment.type === 'join') {
       // add join table and indices
@@ -63,11 +66,15 @@ export default function generateDatabaseInterface(
       tables,
       indices,
     },
-    edges,
+    relationships,
     resolveNode,
-    generateEdgeResolver: generateEdgeResolver(segmentDescriptionsBySignature),
-    generateEdgeLoaders:
-      generateEdgeLoaders(segmentDescriptionsBySignature, edges),
+    generateRelationshipResolver: generateRelationshipResolver(
+      segmentDescriptionsBySignature
+    ),
+    generateRelationshipLoaders: generateRelationshipLoaders(
+      segmentDescriptionsBySignature,
+      relationships
+    ),
   };
 }
 
@@ -80,12 +87,13 @@ export function isDatabaseType(definition: Node): boolean {
 }
 
 export function isDatabaseField(definition: FieldDefinition): boolean {
-  // Fields with the @virtual directive are not recorded, fields with the @edge
-  // directive generate join tables or foreign keys which are added seperately
+  // Fields with the @virtual directive are not recorded, fields with the
+  // @relationship directive generate join tables or foreign keys which are
+  // added seperately
   return (
     !definition.directives ||
     !definition.directives.some(
-      d => d.name.value === 'virtual' || d.name.value === 'edge'
+      d => d.name.value === 'virtual' || d.name.value === 'relationship'
     )
   );
 }
@@ -159,42 +167,53 @@ export function idIndexFromObjectTypeDefinition(
   };
 }
 
-export function edgesFromObjectTypeDefinition(
+export function relationshipsFromObjectTypeDefinition(
   definition: ObjectTypeDefinition,
-): [Edge] {
+): [Relationship] {
   const fromType = definition.name.value;
-  const edges = [];
+  const relationships = [];
 
   definition.fields.forEach(field => {
     if (field.directives) {
-      const edgeDirective = field.directives.find(d => d.name.value === 'edge');
-      if (edgeDirective) {
-        invariant(!isListType(field.type), 'edges cannot be list types');
+      const relationshipDirective = field.directives.find(
+        d => d.name.value === 'relationship'
+      );
+      if (relationshipDirective) {
+        invariant(
+          !isListType(field.type),
+          'relationships cannot be list types'
+        );
         const fieldName = field.name.value;
         const nonNull = isNonNullType(field.type);
         const toType = baseType(field.type).name.value;
-        edges.push(
-          edgeFromDirective(fieldName, fromType, toType, nonNull, edgeDirective)
+        relationships.push(
+          relationshipFromDirective(
+            fieldName,
+            fromType,
+            toType,
+            nonNull,
+            relationshipDirective
+          )
         );
       }
     }
   });
 
-  return edges;
+  return relationships;
 }
 
-export function edgeFromDirective(
+export function relationshipFromDirective(
   fieldName: string,
   fromType: string,
   toType: string,
   nonNull: boolean,
   directive: Directive
-): Edge {
+): Relationship {
   const pathArgument = directive.arguments.find(
     argument => argument.name.value === 'path'
   );
 
-  return edgeFromPathString(
+  return relationshipFromPathString(
     fieldName,
     fromType,
     toType,
@@ -203,31 +222,40 @@ export function edgeFromDirective(
   );
 }
 
-export function edgeFromPathString(
+export function relationshipFromPathString(
   fieldName: string,
   initialType: string,
   finalType: string,
   nonNull: boolean,
   pathString: string,
-): Edge {
+): Relationship {
   const parts = pathString.split(/([A-Za-z_]+)/);
   const path = [];
   let fromType = initialType;
 
   while (parts.length > 3) {
     const [left, label, right, toType] = parts.splice(0, 4);
-    path.push(edgeSegmentFromParts(fromType, left, label, right, toType));
+    path.push(
+      relationshipSegmentFromParts(fromType, left, label, right, toType)
+    );
     fromType = toType;
   }
 
   const [left, label, right] = parts;
   path.push(
-    edgeSegmentFromParts(fromType, left, label, right, finalType, nonNull)
+    relationshipSegmentFromParts(
+      fromType,
+      left,
+      label,
+      right,
+      finalType,
+      nonNull
+    )
   );
 
   invariant(
     !nonNull || path.length === 1 && path[0].cardinality === 'singular',
-    'Only singular edges with one segment can be non null'
+    'Only singular relationships with one segment can be non null'
   );
 
   const cardinality = (
@@ -250,32 +278,33 @@ const ARROWS = {
   '<==': {cardinality: 'plural', direction: 'in'},
 };
 
-export function edgeSegmentFromParts(
+export function relationshipSegmentFromParts(
   fromType: string,
   left: string,
   label: string,
   right: string,
   toType: string,
   nonNull: boolean = false
-): EdgeSegment {
+): RelationshipSegment {
   const arrow = ARROWS[left + right];
   invariant(arrow, 'invalid path string');
   return Object.assign({fromType, toType, label, nonNull}, arrow);
 }
 
-export function segmentDescriptionsFromEdges(
-  edges: [Edge]
-): EdgeSegmentDescription[] {
-  const segments = flattenedUniqueSegmentsFromEdges(edges);
+export function segmentDescriptionsFromRelationships(
+  relationships: [Relationship]
+): RelationshipSegmentDescription[] {
+  const segments = flattenedUniqueSegmentsFromRelationships(relationships);
 
-  // create map of segments by taking their signature along the edge direction
-  const segmentMap: {[key: string]: EdgeSegment[]} = {};
+  // create map of segments by taking their signature along the relationship
+  // direction
+  const segmentMap: {[key: string]: RelationshipSegment[]} = {};
   segments.forEach(segment => {
-    const signature = pairingSignatureFromEdgeSegment(segment);
+    const signature = pairingSignatureFromRelationshipSegment(segment);
     segmentMap[signature] = (segmentMap[signature] || []).concat(segment);
   });
 
-  // create EdgeSegmentDescription objects
+  // create RelationshipSegmentDescription objects
   return Object.entries(segmentMap).map(([signature, segments]) => {
     const pair = {};
     segments.forEach(segment => pair[segment.direction] = segment);
@@ -284,8 +313,8 @@ export function segmentDescriptionsFromEdges(
     const type = isJoin ? 'join' : 'foreignKey';
     const storage = (
       isJoin
-      ? joinTableDescriptionFromEdgeSegmentPair(pair)
-      : foreignKeyDescriptionFromEdgeSegmentPair(pair)
+      ? joinTableDescriptionFromRelationshipSegmentPair(pair)
+      : foreignKeyDescriptionFromRelationshipSegmentPair(pair)
     );
 
     return {
@@ -297,7 +326,9 @@ export function segmentDescriptionsFromEdges(
   });
 }
 
-export function pairingSignatureFromEdgeSegment(segment: EdgeSegment): string {
+export function pairingSignatureFromRelationshipSegment(
+  segment: RelationshipSegment
+): string {
   const {fromType, toType, label, direction} = segment;
   return (
     (direction === 'in')
@@ -306,11 +337,13 @@ export function pairingSignatureFromEdgeSegment(segment: EdgeSegment): string {
   );
 }
 
-export function flattenedUniqueSegmentsFromEdges(edges: [Edge]): EdgeSegment[] {
-  const segmentMap: {[key: string]: EdgeSegment} = {};
-  edges.forEach(edge =>
-    edge.path.forEach(segment => {
-      const signature = identitySignatureFromEdgeSegment(segment);
+export function flattenedUniqueSegmentsFromRelationships(
+  relationships: Relationship[]
+): RelationshipSegment[] {
+  const segmentMap: {[key: string]: RelationshipSegment} = {};
+  relationships.forEach(relationship =>
+    relationship.path.forEach(segment => {
+      const signature = identitySignatureFromRelationshipSegment(segment);
       if (segmentMap[signature] == null || !segmentMap[signature].nonNull) {
         segmentMap[signature] = segment;
       }
@@ -320,24 +353,28 @@ export function flattenedUniqueSegmentsFromEdges(edges: [Edge]): EdgeSegment[] {
   return Object.values(segmentMap);
 }
 
-export function identitySignatureFromEdgeSegment(segment: EdgeSegment): string {
+export function identitySignatureFromRelationshipSegment(
+  segment: RelationshipSegment
+): string {
   const {fromType, toType, label, direction} = segment;
   return [fromType, toType, label, direction].join('|');
 }
 
-export function segmentPairRequiresJoinTable(pair: EdgeSegmentPair): boolean {
+export function segmentPairRequiresJoinTable(
+  pair: RelationshipSegmentPair
+): boolean {
   return (
     (pair.in == null || pair.in.cardinality === 'plural') &&
     (pair.out == null || pair.out.cardinality === 'plural')
   );
 }
 
-export function joinTableDescriptionFromEdgeSegmentPair(
-  pair: EdgeSegmentPair
+export function joinTableDescriptionFromRelationshipSegmentPair(
+  pair: RelationshipSegmentPair
 ): JoinTableDescription {
   invariant(
     pair.out || pair.in,
-    'edge segment pair must have at least one segment'
+    'relationship segment pair must have at least one segment'
   );
   const left = (pair.out && pair.out.fromType) || (pair.in && pair.in.toType);
   const right = (pair.out && pair.out.toType) || (pair.in && pair.in.fromType);
@@ -421,8 +458,8 @@ export function joinTableIndicesFromDescription(
 //   - if one segment is non null, add the column to its fromType, otherwise
 //     add it to the toType of the out segment.
 
-export function foreignKeyDescriptionFromEdgeSegmentPair(
-  pair: EdgeSegmentPair
+export function foreignKeyDescriptionFromRelationshipSegmentPair(
+  pair: RelationshipSegmentPair
 ): ForeignKeyDescription {
   const normalType = (
     pair.in && (

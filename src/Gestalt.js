@@ -17,15 +17,16 @@ export default function gestalt(config: {
   objects: ObjectTypeFieldResolutionDefinition[],
   mutations: MutationDefinitionFn[],
   secret: string,
-}): (request: Request, response: Response) => void {
+}): (request: Request, response: Response, next: () => void) => void {
   const {schemaPath, objects, mutations, secret} = config;
-  const schemaAST = parse(fs.readFileSync(schemaPath));
-  const {schema, database} = generateGraphQLSchema(schemaAST, objects, mutations);
+  const ast = parse(fs.readFileSync(schemaPath));
+  const {schema, database} = generateGraphQLSchema(ast, objects, mutations);
   const {db} = database;
 
   return (req, res, next) => {
     if (req.path !== '/graphql') {
-      return next();
+      next();
+      return;
     }
 
     session({secret, name: 'gestalt'})(req, res, () => {
@@ -35,7 +36,7 @@ export default function gestalt(config: {
           context: {
             db,
             session: request.session,
-            loaders: database.generateEdgeLoaders(),
+            loaders: database.generateRelationshipLoaders(),
           },
           graphiql: !isProduction,
           formatError: error => ({

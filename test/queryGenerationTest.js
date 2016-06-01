@@ -1,28 +1,37 @@
 // @flow
 import {assert} from 'chai';
-import {edgeFromPathString as edge, segmentDescriptionsFromEdges} from
-  '../src/PostgreSQL/generateDatabaseInterface';
+import {relationshipFromPathString as r, segmentDescriptionsFromRelationships}
+  from '../src/PostgreSQL/generateDatabaseInterface';
 import {keyMap} from '../src/util';
-import {sqlQueryFromEdge, objectKeyColumnFromEdge} from
-  '../src/PostgreSQL/generateEdgeResolver';
-import type {Edge, EdgeSegmentDescriptionMap} from '../src/types';
+import {sqlQueryFromRelationship, objectKeyColumnFromRelationship} from
+  '../src/PostgreSQL/generateRelationshipResolver';
+import type {Relationship, RelationshipSegmentDescriptionMap} from
+  '../src/types';
 
 declare function describe(a: string, b: () => any): void;
 declare function it(a: string, b: () => any): void;
 
 
 function testRelationship(
-  outEdge: ?Edge,
-  inEdge: ?Edge,
+  outRelationship: ?Relationship,
+  inRelationship: ?Relationship,
   outSQL: ?string,
   inSQL: ?string,
 ): void {
   const descriptions = keyMap(
-    segmentDescriptionsFromEdges([inEdge, outEdge].filter(edge => edge)),
+    segmentDescriptionsFromRelationships(
+      [inRelationship, outRelationship].filter(relationship => relationship)
+    ),
     segment => segment.signature,
   );
-  outEdge && assert.equal(outSQL, sqlQueryFromEdge(descriptions, outEdge));
-  inEdge && assert.equal(inSQL, sqlQueryFromEdge(descriptions, inEdge));
+  outRelationship && assert.equal(
+    outSQL,
+    sqlQueryFromRelationship(descriptions, outRelationship)
+  );
+  inRelationship && assert.equal(
+    inSQL,
+    sqlQueryFromRelationship(descriptions, inRelationship)
+  );
 }
 
 describe('query generation', () => {
@@ -30,8 +39,8 @@ describe('query generation', () => {
   describe('plural one segment foreign key relationship', () => {
     it('generates correct SQL', () => {
       testRelationship(
-        edge('posts', 'User', 'Post', false, '=AUTHORED=>'),
-        edge('author', 'Post', 'User', false, '<-AUTHORED-'),
+        r('posts', 'User', 'Post', false, '=AUTHORED=>'),
+        r('author', 'Post', 'User', false, '<-AUTHORED-'),
         'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1);',
         'SELECT users.* FROM users WHERE users.id = ANY ($1);',
       );
@@ -41,8 +50,8 @@ describe('query generation', () => {
   describe('plural one segment join table relationship', () => {
     it('generates correct SQL', () => {
       testRelationship(
-        edge('posts', 'User', 'Post', false, '=AUTHORED=>'),
-        edge('author', 'Post', 'User', false, '<=AUTHORED='),
+        r('posts', 'User', 'Post', false, '=AUTHORED=>'),
+        r('author', 'Post', 'User', false, '<=AUTHORED='),
 
         'SELECT posts.* FROM posts JOIN user_authored_posts ON ' +
         'user_authored_posts.authored_post_id = posts.id WHERE ' +
@@ -58,8 +67,8 @@ describe('query generation', () => {
   describe('plural two segment relationship', () => {
     it('generates correct SQL', () => {
       testRelationship(
-        edge('feed', 'User', 'Post', false, '=FOLLOWED=>User=AUTHORED=>'),
-        edge('audience', 'Post', 'User', false, '<=AUTHORED=User<=FOLLOWED='),
+        r('feed', 'User', 'Post', false, '=FOLLOWED=>User=AUTHORED=>'),
+        r('audience', 'Post', 'User', false, '<=AUTHORED=User<=FOLLOWED='),
 
         'SELECT posts.* FROM posts JOIN user_authored_posts ON ' +
         'user_authored_posts.authored_post_id = posts.id JOIN ' +
@@ -78,8 +87,8 @@ describe('query generation', () => {
   describe('singular one segment relationship', () => {
     it('generates correct SQL', () => {
       testRelationship(
-        edge('profile', 'User', 'Profile', true, '-CREATED->'),
-        edge('user', 'Profile', 'User', true, '<-CREATED-'),
+        r('profile', 'User', 'Profile', true, '-CREATED->'),
+        r('user', 'Profile', 'User', true, '<-CREATED-'),
 
         'SELECT profiles.* FROM profiles WHERE profiles.created_by_user_id = ' +
         'ANY ($1);',
@@ -92,8 +101,8 @@ describe('query generation', () => {
   describe('singular bidirectional two segment relationship', () => {
     it('generates correct SQL', () => {
       testRelationship(
-        edge('image', 'User', 'Image', false, '-CREATED->Profile<-DEPICTED-'),
-        edge('user', 'Image', 'User', false, '-DEPICTED->Profile<-CREATED-'),
+        r('image', 'User', 'Image', false, '-CREATED->Profile<-DEPICTED-'),
+        r('user', 'Image', 'User', false, '-DEPICTED->Profile<-CREATED-'),
 
         'SELECT images.* FROM images JOIN profiles ON ' +
         'profiles.depicted_by_image_id = images.id WHERE ' +
@@ -109,8 +118,8 @@ describe('query generation', () => {
   describe('singular two segment relationship', () => {
     it('generates correct SQL', () => {
       testRelationship(
-        edge('post', 'User', 'Theme', false, '-CREATED->Profile-SELECTED->'),
-        edge('user', 'Theme', 'User', false, '<-SELECTED-Profile<-CREATED-'),
+        r('post', 'User', 'Theme', false, '-CREATED->Profile-SELECTED->'),
+        r('user', 'Theme', 'User', false, '<-SELECTED-Profile<-CREATED-'),
 
         'SELECT themes.* FROM themes JOIN profiles ON profiles.id = ' +
         'themes.selected_by_profile_id WHERE profiles.created_by_user_id = ' +
@@ -125,8 +134,8 @@ describe('query generation', () => {
   describe('mixed singular and plural two segment relationship', () => {
     it('generates correct SQL', () => {
       testRelationship(
-        edge('images', 'User', 'Image', false, '-CREATED->PROFILE=UPLOADED=>'),
-        edge('owner', 'Image', 'User', false, '<-UPLOADED-PROFILE<-CREATED-'),
+        r('images', 'User', 'Image', false, '-CREATED->PROFILE=UPLOADED=>'),
+        r('owner', 'Image', 'User', false, '<-UPLOADED-PROFILE<-CREATED-'),
 
         'SELECT images.* FROM images JOIN profiles ON profiles.id = ' +
         'images.uploaded_by_profile_id WHERE profiles.created_by_user_id = ' +
@@ -141,7 +150,7 @@ describe('query generation', () => {
   describe('one sided outward one segment relationship', () => {
     it('generates correct SQL', () => {
       testRelationship(
-        edge('posts', 'User', 'Post', false, '=AUTHORED=>'),
+        r('posts', 'User', 'Post', false, '=AUTHORED=>'),
 
         null,
 
@@ -159,7 +168,7 @@ describe('query generation', () => {
       testRelationship(
         null,
 
-        edge('author', 'Post', 'User', false, '<-AUTHORED-'),
+        r('author', 'Post', 'User', false, '<-AUTHORED-'),
 
         null,
 
@@ -172,7 +181,7 @@ describe('query generation', () => {
   describe('one sided two segment relationship', () => {
     it('generates correct SQL', () => {
       testRelationship(
-        edge('feed', 'User', 'Post', false, '=FOLLOWED=>Page=AUTHORED=>'),
+        r('feed', 'User', 'Post', false, '=FOLLOWED=>Page=AUTHORED=>'),
 
         null,
 
@@ -190,7 +199,7 @@ describe('query generation', () => {
   describe('three segment relationship', () => {
     it('generates correct SQL', () => {
       testRelationship(
-        edge(
+        r(
           'feed',
           'User',
           'Comment',
@@ -198,7 +207,7 @@ describe('query generation', () => {
           '=FOLLOWED=>Page=MADE=>Post=INSPIRED=>'
         ),
 
-        edge(
+        r(
           'audience',
           'Comment',
           'User',
@@ -222,25 +231,31 @@ describe('query generation', () => {
 
 
 function testKeyColumns(
-  inEdge: Edge,
-  outEdge: Edge,
+  inRelationship: Relationship,
+  outRelationship: Relationship,
   inKeyColumn: string,
   outKeyColumn: string
 ): void {
   const descriptions = keyMap(
-    segmentDescriptionsFromEdges([inEdge, outEdge]),
+    segmentDescriptionsFromRelationships([inRelationship, outRelationship]),
     segment => segment.signature,
   );
-  assert.equal(objectKeyColumnFromEdge(descriptions, inEdge), inKeyColumn);
-  assert.equal(objectKeyColumnFromEdge(descriptions, outEdge), outKeyColumn);
+  assert.equal(
+    objectKeyColumnFromRelationship(descriptions, inRelationship),
+    inKeyColumn
+  );
+  assert.equal(
+    objectKeyColumnFromRelationship(descriptions, outRelationship),
+    outKeyColumn
+  );
 }
 
 
 describe('key column generation', () => {
   it('one segment foreign key relationship', () => {
     testKeyColumns(
-      edge('posts', 'User', 'Post', false, '=AUTHORED=>'),
-      edge('author', 'Post', 'User', false, '<-AUTHORED-'),
+      r('posts', 'User', 'Post', false, '=AUTHORED=>'),
+      r('author', 'Post', 'User', false, '<-AUTHORED-'),
       'id',
       'authoredByUserId',
     );
@@ -248,8 +263,8 @@ describe('key column generation', () => {
 
   it('two segment join table relationship', () => {
     testKeyColumns(
-      edge('posts', 'User', 'Post', false, '=AUTHORED=>'),
-      edge('author', 'Post', 'User', false, '<=AUTHORED='),
+      r('posts', 'User', 'Post', false, '=AUTHORED=>'),
+      r('author', 'Post', 'User', false, '<=AUTHORED='),
       'id',
       'id',
     );
