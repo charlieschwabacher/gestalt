@@ -14,8 +14,6 @@ import {mutationWithClientMutationId} from 'graphql-relay';
 import {insertConnectionTypes, removeHiddenNodes} from './ASTTransforms';
 import scalarTypeDefinitions from './scalarTypeDefinitions';
 import generateDatabaseInterface from '../PostgreSQL';
-import {isDatabaseType, baseType} from
-  '../PostgreSQL/generateDatabaseInterface';
 import baseSchema from './baseSchema';
 
 
