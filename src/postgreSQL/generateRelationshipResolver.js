@@ -164,12 +164,6 @@ export function applyConnectionArgs(
   };
 }
 
-// we deviate from the graphql
-export function validateConnectionArgs(
-  args: ConnectionArguments
-): {limit?: number, offset?: number} {
-  return {};
-}
 
 export function objectKeyColumnFromRelationship(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
@@ -220,7 +214,7 @@ export function sqlQueryFromRelationship(
   );
 }
 
-function queryFromRelationship(
+export function queryFromRelationship(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   relationship: Relationship,
 ): Query {
@@ -416,7 +410,7 @@ function descriptionFromSegment(
   return segmentDescriptionMap[signature];
 }
 
-function sqlStringFromQuery(query: Query): string {
+export function sqlStringFromQuery(query: Query): string {
   const {table, joins, conditions, limit, order} = query;
 
   return `SELECT ${table}.* FROM ${table}${

@@ -3,7 +3,6 @@
 import pg from 'pg';
 import {camelizeKeys, invariant} from '../util';
 import {snake} from 'change-case';
-import 'colors';
 
 const DATABASE_URL = 'postgres://localhost/gestalt';
 const LOG_QUERIES = false;
@@ -14,8 +13,9 @@ export function exec(
   escapes: ?any[]
 ): Promise<Object> {
   if (LOG_QUERIES) {
-    console.log(query.green);
+    console.log(query);
   }
+
   return new Promise((resolve, reject) => {
     pg.connect(DATABASE_URL, (err, client, done) => {
       if (err) {
