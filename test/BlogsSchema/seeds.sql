@@ -2,9 +2,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 INSERT INTO users (id, email, password_hash, created_at, first_name, last_name)
 VALUES
-  ('00000000-0000-0000-0000-000000000001', 'test1@test.com', 'password', now(), 'chester', 'tester'),
-  ('00000000-0000-0000-0000-000000000002', 'test2@test.com', 'password', now(), 'lester', 'tester'),
-  ('00000000-0000-0000-0000-000000000003', 'test3@test.com', 'password', now(), 'wester', 'tester');
+  ('00000000-0000-0000-0000-000000000001', 'test1@test.com', '$2a$10$INP2f5N10jopgqxZ1yITj.n0qkPuMRCUMzd4TsAOAFcfWxu2N2tA.', now(), 'Chester', 'Tester'),
+  ('00000000-0000-0000-0000-000000000002', 'test2@test.com', '$2a$10$INP2f5N10jopgqxZ1yITj.n0qkPuMRCUMzd4TsAOAFcfWxu2N2tA.', now(), 'Lester', 'Tester'),
+  ('00000000-0000-0000-0000-000000000003', 'test3@test.com', '$2a$10$INP2f5N10jopgqxZ1yITj.n0qkPuMRCUMzd4TsAOAFcfWxu2N2tA.', now(), 'Wester', 'Tester');
 
 INSERT INTO user_followed_users (user_id, followed_user_id)
 VALUES

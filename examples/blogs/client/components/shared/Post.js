@@ -16,13 +16,13 @@ export default Relay.createContainer(
       return (
         <div className='col light-bg mb1'>
           <div className='main-bg p1'>
-            <div className='row'>
+            <div className='row mb1'>
               <Link to={`/posts/${post.id}`} className='flex m0 mr1'>
                 {post.title}
               </Link>
               <User user={post.author}/>
             </div>
-            <p>{post.text}</p>
+            <div>{post.text}</div>
           </div>
           <div className='mx1'>
             {
@@ -30,22 +30,16 @@ export default Relay.createContainer(
                 <Comment key={i} comment={comment}/>
               )
             }
-            {
-              commentFormOpen
-              ?
-                <div className='text-right mx-1 p1'>
-                  <CreateCommentForm post={post}/>
-                  <a onClick={() => this.setState({commentFormOpen: false})}>
-                    Cancel
-                  </a>
-                </div>
-              :
-                <div className='text-right mx-1 p1'>
-                  <a onClick={() => this.setState({commentFormOpen: true})}>
-                    Comment
-                  </a>
-                </div>
-            }
+            <div className='text-right mx-1 p1'>
+              <a
+                onClick={
+                  () => this.setState({commentFormOpen: !commentFormOpen})
+                }
+              >
+                {commentFormOpen ? 'Cancel' : 'Comment'}
+              </a>
+              {commentFormOpen && <CreateCommentForm post={post}/>}
+            </div>
           </div>
         </div>
       );

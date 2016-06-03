@@ -11,6 +11,8 @@ export type {GraphQLFieldResolveFn, GraphQLResolveInfo, GraphQLFieldConfig,
   GraphQLType} from 'graphql/type/definition';
 export type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
   Type, NamedType} from 'graphql/language/ast';
+export type {ConnectionArguments} from
+  'graphql-relay/lib/connection/connectiontypes';
 
 // represents the interface between the GraphQL schema and database backend
 
@@ -133,12 +135,15 @@ export type MutationDefinition = {
 };
 
 
-// intermediate representations used in SQL query generation
+// Intermediate representations used in SQL query generation
+// this is not intended to represent all possible SQL queries - only the small
+// subset we use for relationship resolution
 
 export type Query = {
   table: string,
   joins: Join[],
   condition: Condition,
+  limit: ?number,
 }
 
 export type Join = {

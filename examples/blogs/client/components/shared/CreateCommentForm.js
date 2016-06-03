@@ -14,7 +14,7 @@ export default Relay.createContainer(
           })
         );
       }}
-      className='row align-stretch my1'
+      className='row align-stretch mt1'
     >
       <input type='text' name='text' placeholder='Text' className='flex'/>
       <input type='submit' value='Comment'/>

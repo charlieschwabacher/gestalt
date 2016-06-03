@@ -3,7 +3,6 @@ import {assert} from 'chai';
 import {reset, query, find, exec} from '../src/PostgreSQL/db';
 
 describe('postgres database interface', () => {
-
   before(async () => {
     await reset();
     await exec(
@@ -44,5 +43,4 @@ describe('postgres database interface', () => {
       );
     });
   });
-
 });

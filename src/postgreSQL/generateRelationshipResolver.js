@@ -4,7 +4,8 @@
 
 import type {Relationship, RelationshipSegmentDescriptionMap,
   RelationshipSegmentDescription, RelationshipSegment, Query, Join, Condition,
-  GraphQLFieldResolveFn} from '../types';
+  GraphQLFieldResolveFn, ConnectionArguments, ForeignKeyDescription,
+  JoinTableDescription} from '../types';
 import {pairingSignatureFromRelationshipSegment, tableNameFromTypeName} from
   './generateDatabaseInterface';
 import {query, find} from './db';
@@ -24,7 +25,7 @@ export function generateRelationshipResolver(
     return (object, args, context) => {
       const loader = context.loaders.get(relationship);
       const key = object[keyColumn];
-      return loader.load(key);
+      return loader.load({key, args});
     };
   };
 }
@@ -49,17 +50,24 @@ export function generateRelationshipLoaders(
         segmentDescriptionMap,
         relationship
       );
-      const sql = sqlQueryFromRelationship(segmentDescriptionMap, relationship);
 
       if (relationship.cardinality === 'singular') {
+        const sql = sqlQueryFromRelationship(
+          segmentDescriptionMap,
+          relationship
+        );
         relationshipLoaderMap.set(
           relationship,
           generateSingularRelationshipLoader(relationship, keyColumn, sql)
         );
       } else {
+        const query = queryFromRelationship(
+          segmentDescriptionMap,
+          relationship,
+        );
         relationshipLoaderMap.set(
           relationship,
-          generatePluralRelationshipLoader(relationship, keyColumn, sql)
+          generatePluralRelationshipLoader(relationship, keyColumn, query)
         );
       }
     });
@@ -73,7 +81,8 @@ function generateSingularRelationshipLoader(
   keyColumn: string,
   sql: string
 ): DataLoader {
-  return new DataLoader(async keys => {
+  return new DataLoader(async loadKeys => {
+    const keys = loadKeys.map(({key}) => key);
     const results = await query(sql, [keys]);
     const resultsByKey = keyMap(results, result => result[keyColumn]);
     return keys.map(key => resultsByKey[key]);
@@ -84,10 +93,11 @@ function generateSingularRelationshipLoader(
 function generatePluralRelationshipLoader(
   relationship: Relationship,
   keyColumn: string,
-  sql: string
+  baseQuery: Query
 ): DataLoader {
-  return new DataLoader(keys =>
-    Promise.all(keys.map(async key => {
+  return new DataLoader(loadKeys =>
+    Promise.all(loadKeys.map(async ({key, args}) => {
+      const sql = sqlStringFromQuery(applyConnectionArgs(baseQuery, args));
       const nodes = await query(sql, [[key]]);
       const edges = nodes.map(node => ({node, cursor: node.id}));
       return {
@@ -101,6 +111,14 @@ function generatePluralRelationshipLoader(
       };
     }))
   );
+}
+
+export function applyConnectionArgs(
+  query: Query,
+  args: ConnectionArguments
+): Query {
+  // TODO: fill in args here
+  return query;
 }
 
 export function objectKeyColumnFromRelationship(
@@ -209,10 +227,10 @@ function joinsFromSegments(
   for (let i = segments.length - 1; i >= 0; i--) {
     const segment = segments[i];
     const description = descriptionFromSegment(segmentDescriptionMap, segment);
-    const {storage} = description;
     const toTableName = tableNameFromTypeName(segment.toType);
 
     if (description.type === 'foreignKey') {
+      const storage: ForeignKeyDescription = description.storage;
       const {direction, table, referencedTable, column} = storage;
       if (segment.direction === direction) {
         joins.push({
@@ -232,6 +250,7 @@ function joinsFromSegments(
         });
       }
     } else {
+      const storage: JoinTableDescription = description.storage;
       const {name, leftTableName, leftColumnName, rightTableName,
         rightColumnName} = storage;
       if (toTableName === leftTableName) {
@@ -334,6 +353,7 @@ function compactJoins(joins: Join[]): Join[] {
   return compactJoins;
 }
 
+
 function descriptionFromSegment(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   segment: RelationshipSegment
@@ -343,7 +363,7 @@ function descriptionFromSegment(
 }
 
 function sqlStringFromQuery(query: Query): string {
-  const {table, joins, condition} = query;
+  const {table, joins, condition, limit} = query;
   return `SELECT ${table}.* FROM ${table}${
     joins.map(join => {
       const {table, condition} = join;
@@ -353,5 +373,9 @@ function sqlStringFromQuery(query: Query): string {
         `${right.table}.${right.column}`
       );
     }).join('')
-  } WHERE ${condition.table}.${condition.column} = ANY ($1);`;
+  } WHERE ${
+    `${condition.table}.${condition.column} = ANY ($1)`
+  }${
+    (limit != null) ? ` LIMIT ${limit}` : ''
+  };`
 }
