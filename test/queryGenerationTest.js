@@ -3,7 +3,8 @@ import {assert} from 'chai';
 import {relationshipFromPathString as r, segmentDescriptionsFromRelationships}
   from '../src/PostgreSQL/generateDatabaseInterface';
 import {keyMap} from '../src/util';
-import {sqlQueryFromRelationship, objectKeyColumnFromRelationship} from
+import {sqlQueryFromRelationship, objectKeyColumnFromRelationship,
+  limitAndOffsetFromConnectionArgs} from
   '../src/PostgreSQL/generateRelationshipResolver';
 import type {Relationship, RelationshipSegmentDescriptionMap} from
   '../src/types';

@@ -142,8 +142,9 @@ export type MutationDefinition = {
 export type Query = {
   table: string,
   joins: Join[],
-  condition: Condition,
-  limit: ?number,
+  conditions: Condition[],
+  order?: Order,
+  limit?: number,
 }
 
 export type Join = {
@@ -157,4 +158,11 @@ export type Join = {
 export type Condition = {
   table: string,
   column: string,
+  operator: string,
+  value: string,
+}
+
+export type Order = {
+  column: string,
+  direction: 'ASC' | 'DESC',
 }

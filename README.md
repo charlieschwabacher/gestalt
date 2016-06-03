@@ -1,26 +1,34 @@
 Gestalt
 =======
 
-Gestalt is a schema defined backend library using GraphQL.  With Gestalt, you
-can use the GraphQL IDL and a small set of directives to define and run a
-GraphQL schema, database schema, and API server with only a few lines of code.
+Gestalt is a schema defined backend library for GraphQL.  With Gestalt, you can
+use the GraphQL IDL and a small set of directives to define a GraphQL schema,
+database schema, and API server in only a few minutes.
 
+----
 
 GraphQL IDL
 -----------
+The GraphQL IDL was recently added to the GraphQL spec as a shorthand to
+describe types in a GraphQL schema.  Resolution has to be defined separately,
+but if you are willing to accept some defaults, Gestalt is able to define it
+for you with only a little extra information you provide through directives.
 
-```GraphQL
-type User {
-  name: String
-}
-```
+
+Base Schema
+-----------
+Gestalt defines base mutation and query types, the Relay Node interface and
+connection types, and directives it requires for database schema and field
+resolution definition.  In the IDL schema you provide, you are expected to
+define only
+
 
 Relationships
 -------------
-In addition to Types and their fields, a database backend needs some extra
-information about the relationships between types.  With Gestalt, you provide
-this information using the `@relationship` directive and a syntax inspired by
-Neo4j's Cypher query language.
+In addition to Types and their fields, Gestalt needs some extra information
+about the relationships between types.  You provide this using the
+`@relationship` directive and a syntax inspired by Neo4j's Cypher query
+language.
 
 ```GraphQL
 type User implements Node {
@@ -52,7 +60,7 @@ to its `posts` table.
 
 Arrows can be extended to represent more complex relationships:
 
-```
+```GraphQL
 type User implements Node {
   name: String
   posts: Post @relationship("=AUTHORED=>")
@@ -77,7 +85,6 @@ and `AUTHORED` relationships between users and posts, but it does require a more
 complex query to resolve the field.  Gestalt is able to generate an efficient
 query joining both tables.
 
-
 Other Directives
 ----------------
 There are a few more directives used by Gestalt to provide extra information
@@ -91,13 +98,18 @@ about how to create the database and GraphQL schemas.
   not be stored in the database.  Maybe they can be computed from existing
   fields or are stored in a different datastore.
 
+- `@index` marks fields that should be indexed in the database.
+
+- `@unique` marks fields that should have a guarantee of uniqueness by
+  constraint in the database.
+
 
 Defining Custom Resolution
 --------------------------
 Sometimes more processing is needed for fields in your API.  Its easy to define
 custom resolvers using gestalt.  Given the following User type:
 
-```
+```GraphQL
 type User extends Node {
   email: String @hidden
   firstName: String
@@ -110,7 +122,7 @@ type User extends Node {
 We could define custom resolution for `fullName` and a Gravatar image url
 `profileImage`:
 
-```
+```javascript
 export default {
   name: 'User',
   fields: {
@@ -139,9 +151,10 @@ Defining Mutations
 ------------------
 Mutations are always defined in code - mutation definitions depend on the types
 you define with the IDL, so you create them as functions of an object mapping
-type names to GraphQL Types and they are added to the schema in a second pass.
+type names to GraphQL Types and they are added to the schema in a second pass
+after object types are fully defined.
 
-```
+```javascript
 export default types => ({
   name: 'UpdateStatus',
   inputFields: {
@@ -159,16 +172,17 @@ export default types => ({
 ```
 
 The configuration object is nearly the same as what you would pass to
-`graphql-relay-js`'s `mutationWithClientMutationId`.  The only change is that
-types can be passed directly as values in `inputFields` and `outputFields`.
+`graphql-relay-js`'s `mutationWithClientMutationId`, with one difference - types
+can be passed directly as values in `inputFields` and `outputFields`.
 
 
 Creating an API Server
 ----------------------
-```
+```javascript
 const app = express();
 
 app.use('/graphql', gestalt({
+  databaseURL: 'postgres://localhost',
   schemaPath: `${__dirname}/schema.graphql`,
   objects: importAll(`${__dirname}/objects`),
   mutations: importAll(`${__dirname}/mutations`),
@@ -178,14 +192,25 @@ app.use('/graphql', gestalt({
 app.listen(3000);
 ```
 
+Gestalt provides Connect middleware to respond to GraphQL API requests.  It
+accepts the following options:
+
+- `databaseURL` - the url to a Postgres database
+- `schemaPath` - the path to your schema definition in GraphQL
+- `objects` - an array of object definitions
+- `mutations` - an array of mutation definition functions
+- `secret` - used to sign the session cookie
+- `development` - a boolean, if true gestalt will log queries and serve the
+  GraphiQL IDE.
+
 
 Should I use Gestalt?
 ---------------------
-If you are trying to add an API to a big existing app, or if you very specific
-storage requirements, Gestalt might not be the best choice for you.
+If you are trying to add an API to a big existing app, or if you have
+non-standard storage requirements, Gestalt might not be the best choice for you.
 
 If you are starting a new Relay app from scratch, Gestalt should save you a lot
-of time and make your schema easy to work with.
+of time and make your schema easier to work with.
 
 Gestalt is usable now - but its still very early.  The API is likely to change
 before it gets to a version 1.0.

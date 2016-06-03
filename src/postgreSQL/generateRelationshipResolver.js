@@ -11,7 +11,7 @@ import {pairingSignatureFromRelationshipSegment, tableNameFromTypeName} from
 import {query, find} from './db';
 import DataLoader from 'dataloader';
 import {camel} from 'change-case';
-import {keyMap, group} from '../util';
+import {invariant, keyMap, group} from '../util';
 
 
 export function generateRelationshipResolver(
@@ -25,7 +25,9 @@ export function generateRelationshipResolver(
     return (object, args, context) => {
       const loader = context.loaders.get(relationship);
       const key = object[keyColumn];
-      return loader.load({key, args});
+      return loader.load(
+        relationship.cardinality === 'singular' ? key : {key, args}
+      );
     };
   };
 }
@@ -50,24 +52,21 @@ export function generateRelationshipLoaders(
         segmentDescriptionMap,
         relationship
       );
+      const query = queryFromRelationship(
+        segmentDescriptionMap,
+        relationship,
+      );
+      const sql = sqlStringFromQuery(query);
 
       if (relationship.cardinality === 'singular') {
-        const sql = sqlQueryFromRelationship(
-          segmentDescriptionMap,
-          relationship
-        );
         relationshipLoaderMap.set(
           relationship,
           generateSingularRelationshipLoader(relationship, keyColumn, sql)
         );
       } else {
-        const query = queryFromRelationship(
-          segmentDescriptionMap,
-          relationship,
-        );
         relationshipLoaderMap.set(
           relationship,
-          generatePluralRelationshipLoader(relationship, keyColumn, query)
+          generatePluralRelationshipLoader(relationship, keyColumn, sql, query)
         );
       }
     });
@@ -81,8 +80,7 @@ function generateSingularRelationshipLoader(
   keyColumn: string,
   sql: string
 ): DataLoader {
-  return new DataLoader(async loadKeys => {
-    const keys = loadKeys.map(({key}) => key);
+  return new DataLoader(async keys => {
     const results = await query(sql, [keys]);
     const resultsByKey = keyMap(results, result => result[keyColumn]);
     return keys.map(key => resultsByKey[key]);
@@ -93,12 +91,17 @@ function generateSingularRelationshipLoader(
 function generatePluralRelationshipLoader(
   relationship: Relationship,
   keyColumn: string,
-  baseQuery: Query
+  sql: string,
+  baseQuery: Query,
 ): DataLoader {
-  return new DataLoader(loadKeys =>
-    Promise.all(loadKeys.map(async ({key, args}) => {
+  return new DataLoader(loadKeys => {
+    return Promise.all(loadKeys.map(async ({key, args}) => {
       const sql = sqlStringFromQuery(applyConnectionArgs(baseQuery, args));
-      const nodes = await query(sql, [[key]]);
+      const params = [[key]];
+      if (args.before || args.after) {
+        params.push(args.before || args.after);
+      }
+      const nodes = await query(sql, params);
       const edges = nodes.map(node => ({node, cursor: node.id}));
       return {
         edges,
@@ -109,16 +112,63 @@ function generatePluralRelationshipLoader(
         count: edges.length,
         totalCount: edges.length,
       };
-    }))
-  );
+    }));
+  });
 }
 
 export function applyConnectionArgs(
   query: Query,
   args: ConnectionArguments
 ): Query {
-  // TODO: fill in args here
-  return query;
+  const {first, last, before, after, order: column} = args;
+  const {table, joins} = query;
+  const value = `(SELECT ${column} FROM ${table} WHERE id = $2)`;
+  let {conditions} = query;
+
+  // we don't support combining forward and reverse paging because it does not
+  // translate well to SQL
+  invariant(
+    (first == null && after == null) || (last == null && before == null),
+    'forward and reverse pagination arguments should not be combined'
+  );
+
+  const limit = (first != null) ? first : last;
+
+  const order = {
+    column,
+    direction: (last != null || before != null) ? 'DESC' : 'ASC',
+  };
+
+  if (after != null) {
+    conditions = conditions.concat({
+      table,
+      column,
+      value,
+      operator: '>',
+    });
+  } else if (before != null) {
+    conditions = conditions.concat({
+      table,
+      column,
+      value,
+      operator: '<',
+    });
+  }
+
+  return {
+    table,
+    joins,
+    conditions,
+    limit,
+    order,
+  };
+}
+
+// we deviate from the graphql
+export function validateConnectionArgs(
+  args: ConnectionArguments
+): {limit?: number, offset?: number} {
+  return {};
 }
 
 export function objectKeyColumnFromRelationship(
@@ -182,30 +232,34 @@ function queryFromRelationship(
     joins: compactJoins(
       joinsFromPath(segmentDescriptionMap, relationship.path)
     ),
-    condition: conditionFromSegment(segmentDescriptionMap, initialSegment),
+    conditions: [conditionFromSegment(segmentDescriptionMap, initialSegment)],
+    batched: true,
   };
 }
+
 
 function conditionFromSegment(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   segment: RelationshipSegment
 ): Condition {
   const description = descriptionFromSegment(segmentDescriptionMap, segment);
+  const operator = '=';
+  const value = 'ANY ($1)';
 
   if (description.type === 'foreignKey') {
     const {table, referencedTable, column, direction} = description.storage;
     if (segment.direction === direction) {
-      return {table, column, value: '?'};
+      return {table, column, operator, value};
     } else {
-      return {table: referencedTable, column: 'id'};
+      return {table: referencedTable, column: 'id', operator, value};
     }
   } else {
     const {name, leftTableName, rightTableName, leftColumnName,
       rightColumnName} = description.storage;
     if (segment.direction === 'in') {
-      return {table: name, column: rightColumnName};
+      return {table: name, column: rightColumnName, operator, value};
     } else {
-      return {table: name, column: leftColumnName};
+      return {table: name, column: leftColumnName, operator, value};
     }
   }
 }
@@ -363,7 +417,8 @@ function descriptionFromSegment(
 }
 
 function sqlStringFromQuery(query: Query): string {
-  const {table, joins, condition, limit} = query;
+  const {table, joins, conditions, limit, order} = query;
+
   return `SELECT ${table}.* FROM ${table}${
     joins.map(join => {
       const {table, condition} = join;
@@ -374,8 +429,14 @@ function sqlStringFromQuery(query: Query): string {
       );
     }).join('')
   } WHERE ${
-    `${condition.table}.${condition.column} = ANY ($1)`
+    conditions.map(({table, column, operator, value}) =>
+      `${table}.${column} ${operator} ${value}`
+    ).join(' AND ')
+  }${
+    (order != null)
+    ? ` ORDER BY ${table}.${order.column} ${order.direction}`
+    : ''
   }${
     (limit != null) ? ` LIMIT ${limit}` : ''
-  };`
+  };`;
 }

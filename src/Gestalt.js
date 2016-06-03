@@ -39,10 +39,12 @@ export default function gestalt(config: {
             loaders: database.generateRelationshipLoaders(),
           },
           graphiql: !isProduction,
-          formatError: error => ({
-            message: error.message,
-            details: isProduction ? null : error.stack
-          })
+          formatError: error => {
+            return {
+              message: error.message,
+              details: isProduction ? null : error.stack
+            };
+          },
         };
       })(req, res, next);
     });

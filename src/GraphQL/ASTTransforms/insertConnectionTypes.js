@@ -86,6 +86,18 @@ export function addConnectionArgumentsToField(
         name: {kind: 'Name', value: 'String'}
       },
     },
+
+    // TODO: we should generate an enum type based on indexed arguments, and the
+    // type of the order argument should be that enum.
+    {
+      kind: 'InputValueDefinition',
+      name: {kind: 'Name', value: 'order'},
+      type: {
+        kind: 'NamedType',
+        name: {kind: 'Name', value: 'String'}
+      },
+      defaultValue: {kind: 'StringValue', value: 'created_at'},
+    },
   );
 }
 

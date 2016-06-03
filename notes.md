@@ -1,16 +1,20 @@
 TODO:
-  - respect connection arguments
+  - add createdAt columns to nodes by default, index when necessary for
+    connection resolution
   - write migration generation code: when schema changes run cli command to
     both update schema.json and generate a database migration
+  - during database definition handle creating extensions for UUIDs, geo, etc..
+  - handle @index, @unique directives on object fields
+  - enable order argument on connection fields, value is an enum w/ ASC and DESC
+    values for each indexed column
   - handle singular relationship to same table
   - handle union types (need type column in addition to foreign key, need to
     handle during query generation)
   - handle non node object types as JSON
-  - add @index, @unique directives on object fields
-  - during database definition handle creating extensions for UUIDs, geo, etc..
   - make resolvers use prepared statements
   - AST validation for helpful error messages (notes in stub files in
     ./src/validation)
+  - improve performance of relationship loaders (TODOs in comments in file)
 
 View Permissions?
   - existing way is to use the graph, anything reachable is viewable,
@@ -25,13 +29,6 @@ Definition
     Leaning no for simplicity
   - Could be cool to define named functions that transform values from the
     database, allow you to attach them / chain them to fields as directives
-
-Scaffolds?
-  - `gestalt create project` generate a new project?
-  - how much is generated as part of scaffold vs is internal to the library
-  - do we want anything beyond that - types or mutations, etc..?
-  - do we want scaffolds to include other libraries beyond express, react,
-    relay?
 
 Extended IDL Syntax?
   It would be nice if you could write relationships as:

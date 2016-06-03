@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "npm run start-api & npm run start-webpack",
-    "start-api": "nodemon --exec babel-node --ignore ./client/ ./server.js",
+    "start-api": "nodemon --exec babel-node --watch . --watch ../../src --ignore ./client/ ./server.js",
     "start-webpack": "babel-node ./webpackDevServer.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "NODE_ENV=production webpack --config ./webpack.config.js --progress --profile --colors"
