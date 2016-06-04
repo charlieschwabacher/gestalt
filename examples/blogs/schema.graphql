@@ -5,7 +5,7 @@ type Session {
 
 type User implements Node {
   id: ID!
-  email: String! @hidden
+  email: String! @hidden @index
   passwordHash: String! @hidden
   createdAt: Date!
   firstName: String
@@ -21,8 +21,8 @@ type User implements Node {
 
 type Post implements Node {
   id: ID!
-  title: String!
-  text: Text!
+  title: String! @index
+  text: String!
   createdAt: Date!
   author: User! @relationship(path: "<-AUTHORED-")
   comments: Comment @relationship(path: "=INSPIRED=>")
@@ -30,7 +30,7 @@ type Post implements Node {
 
 type Comment implements Node {
   id: ID!
-  text: Text!
+  text: String!
   createdAt: Date!
   author: User @relationship(path: "<-AUTHORED-")
   subject: Post! @relationship(path: "<-INSPIRED-")

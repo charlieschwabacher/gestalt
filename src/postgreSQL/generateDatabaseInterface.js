@@ -30,7 +30,8 @@ export default function generateDatabaseInterface(
       tablesByName[table.name] = table;
       tables.push(table);
 
-      indices.push(idIndexFromObjectTypeDefinition(definition));
+      indices.push(...defaultIndicesFromObjectTypeDefinition(definition));
+      indices.push(...directiveIndicesFromObjectTypeDefinition(definition));
       relationships.push(...relationshipsFromObjectTypeDefinition(definition));
     }
   });
@@ -98,6 +99,15 @@ export function isDatabaseField(definition: FieldDefinition): boolean {
   );
 }
 
+export function validateDatabaseField(definition: FieldDefinition): void {
+  // because we use the seq field for ordering, we can't allow it to be defined
+  // as a database field
+  invariant(
+    definition.name !== 'seq',
+    'The `seq` field is reserved by Gestalt and cannot be defined',
+  );
+}
+
 export function isNonNullType(type: Type): boolean {
   return type.kind === 'NonNullType';
 }
@@ -113,10 +123,20 @@ export function tableFromObjectTypeDefinition(
   definition: ObjectTypeDefinition,
 ): Table {
   const name = tableNameFromTypeName(definition.name.value);
-  const columns = [];
+  const columns = [
+    // every table gets an auto incrementing field 'seq' used for ordering
+    {
+      name: 'seq',
+      type: 'SERIAL',
+      primaryKey: false,
+      nonNull: false, // implied by SERIAL type
+      unique: true,
+    }
+  ];
 
   definition.fields.forEach(field => {
     if (isDatabaseField(field)) {
+      validateDatabaseField(field);
       columns.push(columnFromFieldDefintion(field));
     }
   });
@@ -130,6 +150,7 @@ export function columnFromFieldDefintion(definition: FieldDefinition): Column {
     type: columnTypeFromGraphQLType(definition.type),
     primaryKey: definition.name.value === 'id',
     nonNull: isNonNullType(definition.type),
+    unique: definition.directives.some(d => d.name.value === 'unique'),
   };
 }
 
@@ -142,29 +163,52 @@ export function columnTypeFromGraphQLType(type: Type): ColumnType {
     case 'ID':
       return 'uuid';
     case 'String':
-      return 'varchar(255)';
+      return 'text';
     case 'Int':
       return 'integer';
     case 'Float':
       return 'double precision';
-    case 'Text':
-      return 'text';
     case 'Date':
       return 'timestamp';
     case 'Money':
       return 'money';
+    case 'SERIAL':
+      return 'SERIAL';
     default:
       return 'jsonb';
   }
 }
 
-export function idIndexFromObjectTypeDefinition(
+export function defaultIndicesFromObjectTypeDefinition(
   definition: ObjectTypeDefinition,
-): Index {
-  return {
-    table: tableNameFromTypeName(definition.name.value),
-    columns: ['id'],
-  };
+): Index[] {
+  const table = tableNameFromTypeName(definition.name.value);
+  return [
+    {
+      table,
+      columns: ['seq'],
+    },
+    {
+      table,
+      columns: ['id'],
+    },
+  ];
+}
+
+export function directiveIndicesFromObjectTypeDefinition(
+  definition: ObjectTypeDefinition,
+): Index[] {
+  const indices = [];
+  const table = tableNameFromTypeName(definition.name.value);
+  definition.fields.forEach(field => {
+    if (
+      field.directives &&
+      field.directives.some(directive => directive.name.value === 'index')
+    ) {
+      indices.push({table, columns: [field.name.value]});
+    }
+  });
+  return indices;
 }
 
 export function relationshipsFromObjectTypeDefinition(
@@ -403,6 +447,7 @@ export function joinTableFromDescription(
         type: 'uuid',
         nonNull: true,
         primaryKey: false,
+        unique: false,
         references: {
           table: leftTableName,
           column: 'id',
@@ -413,6 +458,7 @@ export function joinTableFromDescription(
         type: 'uuid',
         nonNull: true,
         primaryKey: false,
+        unique: false,
         references: {
           table: rightTableName,
           column: 'id',
@@ -507,6 +553,7 @@ export function columnFromForeignKeyDescription(
     type: 'uuid',
     primaryKey: false,
     nonNull: description.nonNull,
+    unique: false,
     references: {
       table: description.referencedTable,
       column: 'id'

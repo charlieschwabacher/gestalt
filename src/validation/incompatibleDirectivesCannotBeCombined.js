@@ -1,2 +1,2 @@
-// fields may not combine @relationship and @virtual or @hidden and @virtual
+// the @virtual and @relationship directives are incompatible with any other
 // directives

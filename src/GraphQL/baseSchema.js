@@ -12,8 +12,6 @@ directive @unique on FIELD_DEFINITION
 
 scalar Date
 scalar Money
-scalar Text
-scalar Geo
 
 schema {
   query: QueryRoot

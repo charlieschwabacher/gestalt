@@ -5,7 +5,7 @@ import {camelizeKeys, invariant} from '../util';
 import {snake} from 'change-case';
 
 const DATABASE_URL = 'postgres://localhost/gestalt';
-const LOG_QUERIES = false;
+const LOG_QUERIES = true;
 
 // executes a SQL query and returns the result directly from pg
 export function exec(

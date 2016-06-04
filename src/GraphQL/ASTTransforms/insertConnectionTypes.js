@@ -1,25 +1,37 @@
 // @flow
 
-import type {Document, ObjectTypeDefinition, FieldDefinition} from
-  '../../types';
-import {baseType} from '../../util';
+import type {Document, ObjectTypeDefinition, TypeDefinition, FieldDefinition}
+  from '../../types';
+import {baseType, keyMap, setMap} from '../../util';
 import {plural} from 'pluralize';
+import {constantCase} from 'change-case';
 
 export default function insertConnectionTypes(ast: Document): void {
   const newDefinitions = [];
   const definedConnections = new Set;
+
+  const typeMap = keyMap(
+    ast.definitions.filter(
+      definition => definition.kind === 'ObjectTypeDefinition'
+    ),
+    definition => definition.name.value
+  );
 
   ast.definitions.forEach(definition => {
     definition.fields && definition.fields.forEach(field => {
       if (isPluralRelationship(field)) {
         const rootType = baseType(field.type);
         const typeName = rootType.name.value;
-        const connectionTypeName = `${plural(typeName)}Connection`;
+        const pluralTypeName = plural(typeName);
+        const connectionTypeName = `${pluralTypeName}Connection`;
         const edgeTypeName = `${typeName}Edge`;
+        const orderEnumTypeName = `${pluralTypeName}Order`;
+        const orderEnumValues = orderEnumValuesFromType(typeMap[typeName]);
+        const isOrderable = orderEnumValues.length > 0;
 
         rootType.name.value = connectionTypeName;
 
-        addConnectionArgumentsToField(field);
+        addConnectionArgumentsToField(field, orderEnumTypeName, isOrderable);
 
         if (!definedConnections.has(typeName)) {
           definedConnections.add(typeName);
@@ -27,7 +39,9 @@ export default function insertConnectionTypes(ast: Document): void {
             ...generateConnectionTypeDefintions(
               typeName,
               connectionTypeName,
-              edgeTypeName
+              edgeTypeName,
+              orderEnumTypeName,
+              orderEnumValues,
             )
           );
         }
@@ -51,7 +65,9 @@ function isPluralRelationship(field: FieldDefinition): boolean {
 }
 
 export function addConnectionArgumentsToField(
-  field: FieldDefinition
+  field: FieldDefinition,
+  orderEnumTypeName: string,
+  isOrderable: boolean,
 ): void {
   field.arguments.push(
     {
@@ -86,27 +102,29 @@ export function addConnectionArgumentsToField(
         name: {kind: 'Name', value: 'String'}
       },
     },
+  );
 
-    // TODO: we should generate an enum type based on indexed arguments, and the
-    // type of the order argument should be that enum.
-    {
+  if (isOrderable) {
+    field.arguments.push({
       kind: 'InputValueDefinition',
       name: {kind: 'Name', value: 'order'},
       type: {
         kind: 'NamedType',
-        name: {kind: 'Name', value: 'String'}
+        name: {kind: 'Name', value: orderEnumTypeName}
       },
-      defaultValue: {kind: 'StringValue', value: 'created_at'},
-    },
-  );
+    });
+  }
 }
 
 export function generateConnectionTypeDefintions(
   typeName: string,
   connectionTypeName: string,
-  edgeTypeName: string
-): [ObjectTypeDefinition, ObjectTypeDefinition] {
-  return [
+  edgeTypeName: string,
+  orderEnumTypeName: string,
+  orderEnumValues: string[],
+): TypeDefinition[] {
+  const definitions: TypeDefinition[] = [
+    // connection type
     {
       kind: 'ObjectTypeDefinition',
       name: {kind: 'Name', value: connectionTypeName},
@@ -144,6 +162,8 @@ export function generateConnectionTypeDefintions(
       ],
       interfaces: [],
     },
+
+    // edge type
     {
       kind: 'ObjectTypeDefinition',
       name: {kind: 'Name', value: edgeTypeName},
@@ -168,6 +188,36 @@ export function generateConnectionTypeDefintions(
         },
       ],
       interfaces: [],
-    }
+    },
   ];
+
+  if (orderEnumValues.length > 0) {
+    definitions.push({
+      kind: 'EnumTypeDefinition',
+      name: {kind: 'name', value: orderEnumTypeName},
+      values: orderEnumValues.map(value => ({
+        kind: 'EnumValueDefinition',
+        name: {kind: 'Name', value},
+      }))
+    });
+  }
+
+  return definitions;
+}
+
+export function orderEnumValuesFromType(
+  type: ObjectTypeDefinition,
+): string[] {
+  // take order enum types from fields that have the @index directive and are
+  // not @hidden
+  const values = [];
+  type.fields.forEach(({name, directives}) => {
+    const directiveNames = setMap(
+      directives, directive => directive.name.value
+    );
+    if (directiveNames.has('index') && !directiveNames.has('hidden')) {
+      values.push(constantCase(name.value));
+    }
+  });
+  return values;
 }

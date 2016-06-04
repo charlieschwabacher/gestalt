@@ -9,8 +9,8 @@ import type DataLoader from 'dataloader';
 export type {GraphQLSchema, GraphQLObjectType, GraphQLField} from 'graphql';
 export type {GraphQLFieldResolveFn, GraphQLResolveInfo, GraphQLFieldConfig,
   GraphQLType} from 'graphql/type/definition';
-export type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
-  Type, NamedType} from 'graphql/language/ast';
+export type {Document, Node, ObjectTypeDefinition, TypeDefinition,
+  FieldDefinition, Directive, Type, NamedType} from 'graphql/language/ast';
 export type {ConnectionArguments} from
   'graphql-relay/lib/connection/connectiontypes';
 
@@ -46,6 +46,7 @@ export type Column = {
   type: ColumnType,
   primaryKey: boolean,
   nonNull: boolean,
+  unique: boolean,
   references?: {
     table: string,
     column: string,
@@ -57,8 +58,8 @@ type Constraint = {
   columns: string[],
 }
 
-export type ColumnType = 'uuid' | 'jsonb' | 'varchar(255)' | 'timestamp' |
-  'text' | 'integer' | 'double precision' | 'money'
+export type ColumnType = 'uuid' | 'jsonb' | 'timestamp' | 'text' | 'integer' |
+  'double precision' | 'money' | 'SERIAL'
 
 export type Relationship = {
   fieldName: string,

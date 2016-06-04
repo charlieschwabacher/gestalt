@@ -10,7 +10,7 @@ import {pairingSignatureFromRelationshipSegment, tableNameFromTypeName} from
   './generateDatabaseInterface';
 import {query, find} from './db';
 import DataLoader from 'dataloader';
-import {camel} from 'change-case';
+import {camel, snake} from 'change-case';
 import {invariant, keyMap, group} from '../util';
 
 
@@ -120,8 +120,9 @@ export function applyConnectionArgs(
   query: Query,
   args: ConnectionArguments
 ): Query {
-  const {first, last, before, after, order: column} = args;
+  const {first, last, before, after} = args;
   const {table, joins} = query;
+  const column = args.order == null ? 'seq' : snake(args.order);
   const value = `(SELECT ${column} FROM ${table} WHERE id = $2)`;
   let {conditions} = query;
 

@@ -58,7 +58,7 @@ export function createTable(table: Table): string {
 
   const columnsRows = columns.map(
     column => {
-      const {name, type, primaryKey, nonNull, references} = column;
+      const {name, type, primaryKey, nonNull, unique, references} = column;
       const referencesClause = (
         references
         ? `REFERENCES ${references.table} (${references.column})`
@@ -69,6 +69,7 @@ export function createTable(table: Table): string {
         type,
         primaryKey ? 'PRIMARY KEY' : null,
         nonNull && !primaryKey ? 'NOT NULL' : null,
+        unique ? 'UNIQUE' : null,
         referencesClause,
       ].filter(p => p);
       return `  ${parts.join(' ')}`;

@@ -8,39 +8,52 @@ const schema: DatabaseSchema = {
       name: 'users',
       columns: [
         {
+          name: 'seq',
+          type: 'SERIAL',
+          primaryKey: false,
+          unique: true,
+          nonNull: false,
+        },
+        {
           name: 'id',
           type: 'uuid',
           primaryKey: true,
+          unique: false,
           nonNull: true,
         },
         {
           name: 'email',
-          type: 'varchar(255)',
+          type: 'text',
           primaryKey: false,
+          unique: true,
           nonNull: true,
         },
         {
           name: 'password_hash',
-          type: 'varchar(255)',
+          type: 'text',
           primaryKey: false,
+          unique: false,
           nonNull: true,
         },
         {
           name: 'created_at',
           type: 'timestamp',
           primaryKey: false,
+          unique: false,
           nonNull: true,
         },
         {
           name: 'first_name',
-          type: 'varchar(255)',
+          type: 'text',
           primaryKey: false,
+          unique: false,
           nonNull: false,
         },
         {
           name: 'last_name',
-          type: 'varchar(255)',
+          type: 'text',
           primaryKey: false,
+          unique: false,
           nonNull: false,
         },
       ]
@@ -49,33 +62,45 @@ const schema: DatabaseSchema = {
       name: 'posts',
       columns: [
         {
+          name: 'seq',
+          type: 'SERIAL',
+          primaryKey: false,
+          unique: true,
+          nonNull: false,
+        },
+        {
           name: 'id',
           type: 'uuid',
           primaryKey: true,
+          unique: false,
           nonNull: true,
         },
         {
           name: 'title',
-          type: 'varchar(255)',
+          type: 'text',
           primaryKey: false,
+          unique: false,
           nonNull: true,
         },
         {
           name: 'text',
           type: 'text',
           primaryKey: false,
+          unique: false,
           nonNull: true,
         },
         {
           name: 'created_at',
           type: 'timestamp',
           primaryKey: false,
+          unique: false,
           nonNull: true,
         },
         {
           name: 'authored_by_user_id',
           type: 'uuid',
           primaryKey: false,
+          unique: false,
           nonNull: true,
           references: {
             table: 'users',
@@ -88,27 +113,38 @@ const schema: DatabaseSchema = {
       name: 'comments',
       columns: [
         {
+          name: 'seq',
+          type: 'SERIAL',
+          primaryKey: false,
+          unique: true,
+          nonNull: false,
+        },
+        {
           name: 'id',
           type: 'uuid',
           primaryKey: true,
+          unique: false,
           nonNull: true,
         },
         {
           name: 'text',
           type: 'text',
           primaryKey: false,
+          unique: false,
           nonNull: true,
         },
         {
           name: 'created_at',
           type: 'timestamp',
           primaryKey: false,
+          unique: false,
           nonNull: true,
         },
         {
           name: 'authored_by_user_id',
           type: 'uuid',
           primaryKey: false,
+          unique: false,
           nonNull: false,
           references: {
             table: 'users',
@@ -119,6 +155,7 @@ const schema: DatabaseSchema = {
           name: 'inspired_by_post_id',
           type: 'uuid',
           primaryKey: false,
+          unique: false,
           nonNull: true,
           references: {
             table: 'posts',
@@ -134,6 +171,7 @@ const schema: DatabaseSchema = {
           name: 'user_id',
           type: 'uuid',
           primaryKey: false,
+          unique: false,
           nonNull: true,
           references: {
             table: 'users',
@@ -144,6 +182,7 @@ const schema: DatabaseSchema = {
           name: 'followed_user_id',
           type: 'uuid',
           primaryKey: false,
+          unique: false,
           nonNull: true,
           references: {
             table: 'users',
@@ -162,11 +201,31 @@ const schema: DatabaseSchema = {
   indices: [
     {
       table: 'users',
+      columns: ['seq'],
+    },
+    {
+      table: 'users',
       columns: ['id'],
+    },
+    {
+      table: 'users',
+      columns: ['email'],
+    },
+    {
+      table: 'posts',
+      columns: ['seq'],
     },
     {
       table: 'posts',
       columns: ['id'],
+    },
+    {
+      table: 'posts',
+      columns: ['title'],
+    },
+    {
+      table: 'comments',
+      columns: ['seq'],
     },
     {
       table: 'comments',
