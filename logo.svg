@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="58px" height="52px" viewBox="0 0 58 52" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g id="page" stroke="none" stroke-width="1" fill-rule="evenodd">
+        <g id="circles" fill="#000000">
+            <circle id="circle-1" cx="29" cy="11" r="11"></circle>
+            <circle id="circle-2" cx="11" cy="41" r="11"></circle>
+            <circle id="circle-3" cx="47" cy="41" r="11"></circle>
+        </g>
+        <polygon id="triangle" fill="#FFFFFF" points="29 11 47 41 11 41"></polygon>
+    </g>
+</svg>
