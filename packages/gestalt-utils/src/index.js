@@ -6,4 +6,5 @@ export {default as isListType} from './isListType';
 export {default as keyMap} from './keyMap';
 export {default as resolveMaybeThunk} from './resolveMaybeThunk';
 export {default as setMap} from './setMap';
+export {default as warn} from './warn';
 export * from './types';

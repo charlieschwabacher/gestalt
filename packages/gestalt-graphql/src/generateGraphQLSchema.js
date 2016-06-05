@@ -34,6 +34,7 @@ export default function generateGraphQLSchema(
   // generate GraphQLSchema and databsae interface from the GraphQL IDL AST
   const schema = buildASTSchema(modifiedAST);
   const {objectDefinitions, relationships} = databaseInfoFromAST(modifiedAST);
+
   const databaseInterface = databaseInterfaceDefinitionFn(
     objectDefinitions,
     relationships
@@ -48,7 +49,7 @@ export default function generateGraphQLSchema(
   defineMutations(schema, mutations);
 
   // log generated schema
-  console.log(printSchema(schema));
+  // console.log(printSchema(schema));
 
   return schema;
 }

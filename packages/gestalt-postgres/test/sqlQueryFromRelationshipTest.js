@@ -17,13 +17,6 @@ declare function describe(a: string, b: () => any): void;
 declare function it(a: string, b: () => any): void;
 
 
-const expectedSQLQueries =
-  fs.readFileSync(`${__dirname}/fixtures/expectedQueries.sql`, 'utf8');
-const schema = fs.readFileSync(`${__dirname}/fixtures/schema.graphql`, 'utf8');
-const schemaAST = parse(schema);
-const {objectDefinitions, relationships} = databaseInfoFromAST(schemaAST);
-
-
 function testRelationship(
   outRelationship: ?Relationship,
   inRelationship: ?Relationship,
@@ -47,10 +40,19 @@ function testRelationship(
 }
 
 
+const expectedSQLQueries =
+  fs.readFileSync(`${__dirname}/fixtures/expectedQueries.sql`, 'utf8');
+const schema = fs.readFileSync(`${__dirname}/fixtures/schema.graphql`, 'utf8');
+const schemaAST = parse(schema);
+const {objectDefinitions, relationships} = databaseInfoFromAST(schemaAST);
+
+
+
 describe('sqlQueryFromRelationship', () => {
 
-  it('generates SQL queries to resolve from fixture schema', () => {
+  it('generates SQL queries for fixture schema', () => {
     const database = generateDatabaseInterface(
+      '',
       objectDefinitions,
       relationships
     );

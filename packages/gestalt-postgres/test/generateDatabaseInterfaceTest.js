@@ -13,7 +13,7 @@ describe('generateDatabaseInterface', () => {
   it('generates a database schema definition from a GraphQL IDL AST', () => {
     assert.deepEqual(
       expectedDatabaseSchema,
-      generateDatabaseInterface(objectDefinitions, relationships).schema
+      generateDatabaseInterface('', objectDefinitions, relationships).schema
     );
   });
 });

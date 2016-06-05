@@ -16,6 +16,7 @@ import {invariant, keyMap, baseType} from 'gestalt-utils';
 import * as db from './db';
 
 export default function generateDatabaseInterface(
+  databaseURL: string,
   definitions: ObjectTypeDefinition[],
   relationships: Relationship[],
 ): DatabaseInterface {

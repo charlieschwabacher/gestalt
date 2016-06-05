@@ -1,5 +1,8 @@
 {
   "private": true,
+  "scripts": {
+    "test": "mocha"
+  },
   "devDependencies": {
     "babel-cli": "^6.6.5",
     "babel-eslint": "^6.0.0-beta.6",
@@ -20,6 +23,7 @@
     "graphql": "^0.6.0",
     "graphql-relay": "^0.4.2",
     "lerna": "2.0.0-beta.15",
+    "mocha": "^2.5.3",
     "pluralize": "^2.0.0"
   }
 }
