@@ -17,7 +17,6 @@
   "dependencies": {
     "cookie-session": "^1.2.0",
     "express-graphql": "^0.5.3",
-    "graphql": "^0.6.0",
     "gestalt-graphql": "^0.0.1"
   },
   "devDependencies": {

@@ -10,7 +10,7 @@ app.use(cors({origin: 'http://localhost:3000', credentials: true}));
 
 app.use(gestaltServer({
   schemaPath: `${__dirname}/schema.graphql`,
-  databaseInterface: gestaltPostgres('postgres://localhost/gestalt'),
+  database: gestaltPostgres('postgres://localhost/gestalt'),
   objects: importAll(`${__dirname}/server/objects`),
   mutations: importAll(`${__dirname}/server/mutations`),
   secret: '༼ つ ◕_◕ ༽つ',

@@ -17,7 +17,8 @@ const queryText = fs.readFileSync(queryPath, 'utf8');
 
 describe('generateGraphQLSchema', () => {
   it('generates a graphql schema from a GraphQL IDL AST', async () => {
-    const schema = generateGraphQLSchema(schemaText, [], [], databaseInterface);
+    const {schema} =
+      generateGraphQLSchema(schemaText, [], [], databaseInterface);
     const context = {session: {id: '!'}};
     const result = await graphql(schema, queryText, null, context);
     assert(

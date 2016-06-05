@@ -5,13 +5,13 @@ import path from 'path';
 import fs from 'fs';
 import {camel} from 'change-case';
 import {parse, buildASTSchema, concatAST, printSchema, GraphQLObjectType,
-  getNamedType} from 'graphql';
+  getNamedType, GraphQLSchema} from 'graphql';
 import {mutationWithClientMutationId} from 'graphql-relay';
 import {insertConnectionTypes, removeHiddenNodes} from './ASTTransforms';
 import databaseInfoFromAST from './databaseInfoFromAST';
 import scalarTypeDefinitions from './scalarTypeDefinitions';
 import baseSchema from './baseSchema';
-import type {Document, GraphQLSchema, ObjectTypeDefinition, GraphQLField,
+import type {Document, ObjectTypeDefinition, GraphQLField,
   GraphQLFieldResolveFn, MutationDefinitionFn, MutationDefinition,
   DatabaseInterface, DatabaseInterfaceDefinitionFn,
   ObjectTypeFieldResolutionDefinition, GraphQLType, TypeMap, Relationship} from
@@ -23,22 +23,23 @@ export default function generateGraphQLSchema(
   objects: ObjectTypeFieldResolutionDefinition[],
   mutations: MutationDefinitionFn[],
   databaseInterfaceDefinitionFn: DatabaseInterfaceDefinitionFn,
-): {schema: GraphQLSchema, database: DatabaseInterface} {
+): {schema: GraphQLSchema, databaseInterface: DatabaseInterface} {
   const ast = parse(schemaText);
+
+  // generate databse interface
+  const {objectDefinitions, relationships} = databaseInfoFromAST(ast);
+  const databaseInterface = databaseInterfaceDefinitionFn(
+    objectDefinitions,
+    relationships
+  );
 
   // preprocess the parsed AST to remove hidden types and insert implied types
   const modifiedAST = concatAST([baseSchema, ast]);
   removeHiddenNodes(modifiedAST);
   insertConnectionTypes(modifiedAST);
 
-  // generate GraphQLSchema and databsae interface from the GraphQL IDL AST
+  // generate GraphQLSchema
   const schema = buildASTSchema(modifiedAST);
-  const {objectDefinitions, relationships} = databaseInfoFromAST(modifiedAST);
-
-  const databaseInterface = databaseInterfaceDefinitionFn(
-    objectDefinitions,
-    relationships
-  );
 
   // add aditional definitions and attach resolution functions
   defineScalarTypes(schema);
@@ -49,9 +50,9 @@ export default function generateGraphQLSchema(
   defineMutations(schema, mutations);
 
   // log generated schema
-  // console.log(printSchema(schema));
+  console.log(printSchema(schema));
 
-  return schema;
+  return {schema, databaseInterface};
 }
 
 // attach serialization and parsing functions to scalar types defined by

@@ -2,13 +2,11 @@
 import fs from 'fs';
 import session from 'cookie-session';
 import graphqlHTTP from 'express-graphql';
-import {parse} from 'graphql';
 import generateGraphQLSchema from 'gestalt-graphql';
 import {invariant} from 'gestalt-utils';
 import type {ObjectTypeFieldResolutionDefinition, MutationDefinitionFn,
-  DatabaseInterface} from 'gestalt-utils';
+  DatabaseInterfaceDefinitionFn} from 'gestalt-utils';
 import type {Request, Response} from 'express';
-
 
 export default function gestaltServer(config: {
   schemaPath?: string,
@@ -16,11 +14,11 @@ export default function gestaltServer(config: {
   objects?: ObjectTypeFieldResolutionDefinition[],
   mutations?: MutationDefinitionFn[],
   secret: string,
-  databaseInterface: DatabaseInterface,
+  database: DatabaseInterfaceDefinitionFn,
   development?: boolean,
 }): (request: Request, response: Response, next: () => void) => void {
-  const {schemaPath, schemaText, objects, mutations, secret, databaseInterface,
-    development} = config;
+  const {schemaPath, schemaText, objects, mutations, secret, development,
+    database: databaseInterfaceDefinitionFn} = config;
 
   invariant(
     schemaPath == null || schemaText == null,
@@ -35,7 +33,7 @@ export default function gestaltServer(config: {
   );
 
   invariant(
-    databaseInterface != null,
+    databaseInterfaceDefinitionFn != null,
     'Gestalt server requires a database interface to be provided in its ' +
     'configuration'
   );
@@ -46,11 +44,11 @@ export default function gestaltServer(config: {
     'for secure sessions'
   );
 
-  const schema = generateGraphQLSchema(
+  const {schema, databaseInterface} = generateGraphQLSchema(
     schemaText || schemaPath && fs.readFileSync(schemaPath, 'utf8'),
     objects || [],
     mutations || [],
-    databaseInterface,
+    databaseInterfaceDefinitionFn,
   );
 
   return (req, res, next) => {
