@@ -17,6 +17,7 @@ export default Relay.createContainer(
       }}
       className='col align-stretch'
     >
+      <h3>New Post</h3>
       <input name='title' type='text' placeholder='Title'/>
       <textarea name='text' placeholder='Text'/>
       <input type='submit' value='Create Post'/>

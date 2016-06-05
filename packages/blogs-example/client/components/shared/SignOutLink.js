@@ -14,7 +14,7 @@ export default Relay.createContainer(
         },
       )}
     >
-      SignOut
+      Sign Out
     </a>
   ,
   {

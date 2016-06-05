@@ -10,7 +10,15 @@ export default {
     profileImage: (obj, args) => {
       const email = obj.email.toLowerCase();
       const hash = crypto.createHash('md5').update(email).digest('hex');
-      return `//www.gravatar.com/avatar/${hash}?d=retro&s=${args.size || 200}`;
+      return `//www.gravatar.com/avatar/${hash}?d=mm&s=${args.size || 200}`;
     },
+
+    following: async (obj, args, context) => {
+      const follows = await context.db.queryBy('user_followed_users', {
+        userID: context.session.currentUserID,
+        followedUserId: obj.id,
+      });
+      return follows.length > 0;
+    }
   },
 };

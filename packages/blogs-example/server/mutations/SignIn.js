@@ -10,7 +10,7 @@ export default types => ({
   outputFields: {
     session: types.Session,
   },
-  mutateAndGetPayload: async (input, context, info) => {
+  mutateAndGetPayload: async (input, context) => {
     const {email, password} = input;
     const {db, session} = context;
 

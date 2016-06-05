@@ -7,15 +7,14 @@ type User implements Node {
   id: ID!
   email: String! @hidden @index
   passwordHash: String! @hidden
-  createdAt: Date!
   firstName: String
   lastName: String
   fullName: String @virtual
-  profileImage(size: Int): String @virtual
+  profileImage(size: Int): String! @virtual
+  following: Boolean! @virtual
   followedUsers: User @relationship(path: "=FOLLOWED=>")
   followers: User @relationship(path: "<=FOLLOWED=")
   posts: Post @relationship(path: "=AUTHORED=>")
-  comments: Comment @relationship(path: "=AUTHORED=>")
   feed: Post @relationship(path: "=FOLLOWED=>User=AUTHORED=>")
 }
 
@@ -25,13 +24,4 @@ type Post implements Node {
   text: String!
   createdAt: Date!
   author: User! @relationship(path: "<-AUTHORED-")
-  comments: Comment @relationship(path: "=INSPIRED=>")
-}
-
-type Comment implements Node {
-  id: ID!
-  text: String!
-  createdAt: Date!
-  author: User @relationship(path: "<-AUTHORED-")
-  subject: Post! @relationship(path: "<-INSPIRED-")
 }

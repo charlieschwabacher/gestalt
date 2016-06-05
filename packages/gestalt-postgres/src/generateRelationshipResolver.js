@@ -106,10 +106,9 @@ function generatePluralRelationshipLoader(
       return {
         edges,
         pageInfo: {
-          hasPreviousPage: false,
-          hasNextPage: false,
+          hasPreviousPage: true,
+          hasNextPage: true,
         },
-        count: edges.length,
         totalCount: edges.length,
       };
     }));

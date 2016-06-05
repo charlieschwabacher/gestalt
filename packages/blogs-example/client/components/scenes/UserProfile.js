@@ -1,13 +1,20 @@
 import React from 'react';
 import Relay from 'react-relay';
-import {User, Feed} from '../shared';
+import {User, Feed, FollowButton, Post} from '../shared';
 
 export default Relay.createContainer(
-  ({node: user}) => (
+  ({session, node: user}) => (
     <div>
       <div className='row'>
         <div className='flex'>
-          <User user={user}/>
+          <section>
+            <h3>User:</h3>
+            <User user={user}/>
+            <FollowButton
+              user={user}
+              currentUser={session.currentUser}
+            />
+          </section>
           <hr/>
           <section>
             <h3>Following:</h3>
@@ -35,24 +42,53 @@ export default Relay.createContainer(
             }
           </section>
         </div>
-        <div className='flex-2 ml1'>
-          <h3 className='m0 mb1'>{user.firstName}'s Posts:</h3>
-          <Feed posts={user.posts}/>
+        <div className='flex-2' style={{marginLeft: '3rem'}}>
+          <h3>{user.firstName}'s Posts:</h3>
+          <hr/>
+          {
+            user.posts.edges.map(({node: post}, i) =>
+              <Post post={post} key={i}/>
+            )
+          }
+          {
+            user.posts.pageInfo.hasNextPage &&
+            <a onClick={() => relay.setVariables({count: relay.variables.count + 10})}>
+              more
+            </a>
+          }
         </div>
       </div>
     </div>
   ),
   {
+    initialVariables: {
+      count: 10,
+    },
     fragments: {
+      session: () => Relay.QL`
+        fragment on Session {
+          currentUser {
+            ${FollowButton.getFragment('currentUser')}
+          }
+        }
+      `,
       node: () => Relay.QL`
         fragment on User {
           id
           firstName
           ${User.getFragment('user')}
-          posts {
-            ${Feed.getFragment('posts')}
+          ${FollowButton.getFragment('user')}
+          posts(last: $count) {
+            edges {
+              node {
+                ${Post.getFragment('post')}
+              }
+            }
+            pageInfo {
+              hasNextPage
+            }
           }
-          followers {
+          followers(last: 10) {
             edges {
               node {
                 ${User.getFragment('user')}
@@ -60,7 +96,7 @@ export default Relay.createContainer(
             }
             totalCount
           }
-          followedUsers {
+          followedUsers(last: 10) {
             edges {
               node {
                 ${User.getFragment('user')}

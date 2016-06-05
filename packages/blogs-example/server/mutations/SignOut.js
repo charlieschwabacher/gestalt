@@ -4,7 +4,7 @@ export default types => ({
   outputFields: {
     session: types.Session,
   },
-  mutateAndGetPayload: (input, context, info) => {
+  mutateAndGetPayload: (input, context) => {
     const {session} = context;
     session.currentUserID = null;
     return {session};

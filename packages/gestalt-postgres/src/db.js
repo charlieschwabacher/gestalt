@@ -72,7 +72,7 @@ export function deleteBy(
   conditions: Object,
 ): Promise<Object> {
   const [sql, escapes] = whereFromConditions(conditions);
-  return exec(`DELETE FROM ${table} ${sql}`);
+  return exec(`DELETE FROM ${table} ${sql}`, escapes);
 }
 
 export function findBy(
@@ -92,10 +92,9 @@ export function queryBy(
 }
 
 function whereFromConditions(conditions: Object): [string, any[]] {
-  const comparisonOperator = key => ' = ';
   const sql = `WHERE ${
     Object.keys(conditions)
-      .map((key, i) => `${key} ${comparisonOperator(key)} $${i + 1}`)
+      .map((key, i) => `${snake(key)} = $${i + 1}`)
       .join(' AND ')
   };`;
   const escapes = Object.values(conditions);

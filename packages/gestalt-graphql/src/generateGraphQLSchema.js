@@ -50,7 +50,7 @@ export default function generateGraphQLSchema(
   defineMutations(schema, mutations);
 
   // log generated schema
-  console.log(printSchema(schema));
+  // console.log(printSchema(schema));
 
   return {schema, databaseInterface};
 }

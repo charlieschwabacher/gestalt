@@ -1,33 +1,33 @@
 import React from 'react';
 import Relay from 'react-relay';
-import {Feed, SignInForm, SignUpForm, CreatePostForm} from '../shared';
+import {SignInForm, SignUpForm, Post} from '../shared';
 
 export default Relay.createContainer(
-  ({session}) => (
+  ({session, relay}) => (
     <div>
       {
-        session.currentUser
+        (session.currentUser)
         ?
           <div>
-            <CreatePostForm user={session.currentUser}/>
             <hr/>
-            <div className='row'>
-              <div className='flex'>
-                <h3>Your Posts:</h3>
-                <Feed posts={session.currentUser.posts}/>
-              </div>
-              <div className='flex ml1'>
-                <h3>Feed:</h3>
-                <Feed posts={session.currentUser.feed}/>
-              </div>
-            </div>
+            {
+              session.currentUser.feed.edges.map(({node: post}, i) =>
+                <Post post={post} key={i}/>
+              )
+            }
+            {
+              session.currentUser.feed.pageInfo.hasNextPage &&
+              <a onClick={() => relay.setVariables({count: relay.variables.count + 10})}>
+                More
+              </a>
+            }
           </div>
         :
           <div className='row'>
             <div className='flex'>
               <SignInForm session={session}/>
             </div>
-            <div className='flex ml1'>
+            <div className='flex' style={{marginLeft: '3rem'}}>
               <SignUpForm session={session}/>
             </div>
           </div>
@@ -35,18 +35,24 @@ export default Relay.createContainer(
     </div>
   ),
   {
+    initialVariables: {
+      count: 10,
+    },
     fragments: {
       session: () => Relay.QL`
         fragment on Session {
           ${SignInForm.getFragment('session')}
           ${SignUpForm.getFragment('session')}
           currentUser {
-            ${CreatePostForm.getFragment('user')}
-            feed {
-              ${Feed.getFragment('posts')}
-            }
-            posts {
-              ${Feed.getFragment('posts')}
+            feed(last: $count) {
+              edges {
+                node {
+                  ${Post.getFragment('post')}
+                }
+              }
+              pageInfo {
+                hasNextPage
+              }
             }
           }
         }

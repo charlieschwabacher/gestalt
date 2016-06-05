@@ -2,13 +2,16 @@
 import React from 'react';
 import Relay from 'react-relay';
 import {Link} from 'react-router';
-import {User, SignOutLink} from './shared';
+import {User, SignOutLink, GestaltLogo} from './shared';
 
 export default Relay.createContainer(
   ({session, children}) => (
     <div>
-      <header className='p1 light-bg'>
+      <header style={{padding: '1rem'}}>
         <div className='container row'>
+          <div style={{margin: '-5px 10px -5px 0'}}>
+            <GestaltLogo height={25} color={'rebeccapurple'}/>
+          </div>
           <div className='flex'>
             <Link to='/'>Gestalt Blogs Example</Link>
           </div>
@@ -16,7 +19,9 @@ export default Relay.createContainer(
             session.currentUser &&
             <div className='row align-center'>
               <User user={session.currentUser}/>
-              <div className='mx1'>|</div>
+              <span style={{padding: '0 1rem'}}>|</span>
+              <Link to='/posts/new'>New Post</Link>
+              <span style={{padding: '0 1rem'}}>|</span>
               <SignOutLink session={session}/>
             </div>
           }

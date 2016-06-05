@@ -3,7 +3,7 @@ import Relay from 'react-relay';
 import {Post} from '.';
 
 export default Relay.createContainer(
-  ({posts}) => (
+  ({posts, relay}) => (
     <div>
       {
         posts.edges.map(({node: post}, i) =>
@@ -16,6 +16,9 @@ export default Relay.createContainer(
     </div>
   ),
   {
+    variables: {
+
+    },
     fragments: {
       posts: () => Relay.QL`
         fragment on PostsConnection {

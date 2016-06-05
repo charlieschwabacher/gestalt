@@ -11,3 +11,5 @@ export const node = {
     query { node(id: $id) }
   `,
 };
+
+export const nodeAndSession = Object.assign({}, node, session);

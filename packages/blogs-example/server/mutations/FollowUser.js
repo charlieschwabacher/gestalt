@@ -1,29 +1,35 @@
 export default types => ({
-  name: 'SignIn',
+  name: 'FollowUser',
   inputFields: {
     userID: types.ID,
-    follow: Boolean,
+    follow: types.Boolean,
   },
   outputFields: {
     user: types.User,
+    currentUser: types.User
   },
   mutateAndGetPayload: async (input, context, info) => {
     const {follow, userID} = input;
     const {db, session} = context;
-    const currentUserID = {session};
+    const {currentUserID} = session;
     const followedUserID = userID.split(':')[1];
 
     if (follow) {
-      db.insert('user_followed_users', {followedUserID, userId: currentUserID});
+      await db.exec(
+        'INSERT INTO user_followed_users (user_id, followed_user_id) ' +
+        'VALUES ($1, $2);',
+        [currentUserID, followedUserID]
+      );
     } else {
-      db.deleteBy(
+      await db.deleteBy(
         'user_followed_users',
-        {followedUserID, userId: currentUserID}
+        {userId: currentUserID, followedUserID}
       );
     }
 
-    const currentUser = db.findBy('users', {id: currentUserID});
+    const currentUser = await db.findBy('users', {id: currentUserID});
+    const user = await db.findBy('users', {id: followedUserID});
 
-    return {currentUser};
+    return {currentUser, user};
   },
 });

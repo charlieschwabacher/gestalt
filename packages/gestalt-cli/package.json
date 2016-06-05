@@ -10,6 +10,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "gestalt": "src/index.js"
+  },
   "author": "Charlie Schwabacher",
   "license": "MIT"
 }

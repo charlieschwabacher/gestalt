@@ -1,7 +1,6 @@
-export {default as Comment} from './Comment';
-export {default as CreateCommentForm} from './CreateCommentForm';
 export {default as CreatePostForm} from './CreatePostForm';
 export {default as Feed} from './Feed';
+export {default as FollowButton} from './FollowButton';
 export {default as GestaltLogo} from './GestaltLogo';
 export {default as Post} from './Post';
 export {default as SignInForm} from './SignInForm';
