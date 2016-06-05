@@ -2,6 +2,7 @@ TODO:
   - separate out db adapter, create repos for db adapter, cli
   - write migration generation code: when schema changes run cli command to
     both update schema.json and generate a database migration.
+  - write CLI tools for scaffolding a repo
   - during database definition handle creating extensions for UUIDs, geo, etc..
   - handle singular relationship to same table
   - handle non node object types as JSON

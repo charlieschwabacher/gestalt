@@ -1,0 +1,28 @@
+{
+  "name": "gestalt-graphql",
+  "version": "0.0.1",
+  "description": "",
+  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/charlieschwabacher/gestalt.git"
+  },
+  "scripts": {
+    "test": "$(npm bin)/mocha",
+    "flow": "flow; test $? -eq 0 -o $? -eq 2",
+    "build": "babel src --out-dir dist/"
+  },
+  "author": "Charlie Schwabacher",
+  "license": "ISC",
+  "dependencies": {
+    "change-case": "^2.3.1",
+    "graphql": "^0.6.0",
+    "graphql-relay": "^0.4.2",
+    "gestalt-utils": "^0.0.1"
+  },
+  "devDependencies": {
+    "babel-polyfill": "^6.7.2",
+    "babel-register": "^6.7.2",
+    "mocha": "^2.5.3"
+  }
+}

@@ -6,5 +6,5 @@ esproposal.class_instance_fields=enable
 [version]
 0.24.2
 
-[ignore]
-.*example-blogs/.*
+[include]
+\./.*

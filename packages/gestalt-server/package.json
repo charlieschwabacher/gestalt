@@ -1,0 +1,27 @@
+{
+  "name": "gestalt-server",
+  "version": "0.0.1",
+  "description": "schema defined graphql server",
+  "main": "src/gestalt.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/charlieschwabacher/gestalt.git"
+  },
+  "scripts": {
+    "test": "mocha",
+    "flow": "flow; test $? -eq 0 -o $? -eq 2",
+    "build": "babel src --out-dir dist/"
+  },
+  "author": "Charlie Schwabacher",
+  "license": "MIT",
+  "dependencies": {
+    "cookie-session": "^1.2.0",
+    "express-graphql": "^0.5.3",
+    "graphql": "^0.6.0",
+    "gestalt-graphql": "^0.0.1"
+  },
+  "devDependencies": {
+    "express": "^4.13.4",
+    "gestalt-utils": "^0.0.1"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "private": true,
+  "name": "example-blogs",
+  "version": "1.0.0",
+  "description": "An example blogging app using Gestalt and Relay",
+  "scripts": {
+    "start": "npm run start-api & npm run start-webpack",
+    "start-api": "nodemon --exec babel-node --watch . --watch ../../ --ignore ./client/ ./server.js",
+    "start-webpack": "babel-node ./webpackDevServer.js",
+    "build": "NODE_ENV=production webpack --config ./webpack.config.js --progress --profile --colors"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.9.0",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-react": "^6.5.0",
+    "babel-preset-stage-0": "^6.5.0",
+    "babel-relay-plugin": "^0.9.0",
+    "babel-relay-plugin-loader": "^0.8.1",
+    "nodemon": "^1.9.2",
+    "react": "^15.1.0",
+    "react-dom": "^15.1.0",
+    "react-relay": "^0.9.0",
+    "react-router": "^2.4.1",
+    "react-router-relay": "^0.13.2"
+  },
+  "dependencies": {
+    "babel-loader": "^6.2.4",
+    "bcrypt-as-promised": "^1.1.0",
+    "cors": "^2.7.1",
+    "express": "^4.13.4",
+    "gestalt-server": "file:../..",
+    "require-all": "^2.0.0",
+    "webpack": "^1.13.1",
+    "webpack-dev-middleware": "^1.6.1",
+    "gestalt-server": "^0.0.1",
+    "gestalt-postgres": "^0.0.1"
+  },
+  "metadata": {
+    "graphql": {
+      "schema": "./schema.json"
+    }
+  }
+}

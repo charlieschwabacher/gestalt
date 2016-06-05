@@ -1,4 +1,3 @@
-examples
 test
-src
-notes.md
+*.md
+*.log

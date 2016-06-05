@@ -1,0 +1,25 @@
+{
+  "name": "gestalt-utils",
+  "version": "0.0.1",
+  "description": "Shared dependencies for the gestalt packages",
+  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/charlieschwabacher/gestalt.git"
+  },
+  "scripts": {
+    "test": "mocha",
+    "flow": "flow; test $? -eq 0 -o $? -eq 2",
+    "build": "babel src --ignore types.js --out-dir dist/"
+  },
+  "author": "Charlie Schwabacher",
+  "license": "MIT",
+  "dependencies": {
+    "change-case": "^2.3.1"
+  },
+  "devDependencies": {
+    "dataloader": "^1.2.0",
+    "graphql": "^0.6.0",
+    "graphql-relay": "^0.4.2"
+  }
+}
