@@ -1,7 +1,7 @@
 import React from 'react';
 
 const WIDTH_HEIGHT_RATIO = 2 / Math.sqrt(3);
-const RADIUS_HEIGHT_RATIO = 1 / 5;
+const RADIUS_HEIGHT_RATIO = 2 / 11;
 
 export default ({
   height = 50,

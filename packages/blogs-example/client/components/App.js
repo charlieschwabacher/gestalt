@@ -7,7 +7,7 @@ import {User, SignOutLink, GestaltLogo} from './shared';
 export default Relay.createContainer(
   ({session, children}) => (
     <div>
-      <header style={{padding: '1rem'}}>
+      <header>
         <div className='container row'>
           <div style={{margin: '-5px 10px -5px 0'}}>
             <GestaltLogo height={25} color={'rebeccapurple'}/>
@@ -17,7 +17,7 @@ export default Relay.createContainer(
           </div>
           {
             session.currentUser &&
-            <div className='row align-center'>
+            <div className='row'>
               <User user={session.currentUser}/>
               <span style={{padding: '0 1rem'}}>|</span>
               <Link to='/posts/new'>New Post</Link>

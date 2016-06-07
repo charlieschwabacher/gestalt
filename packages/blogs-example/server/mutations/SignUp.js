@@ -16,8 +16,8 @@ export default types => ({
     const {email, password, firstName, lastName} = input;
     const {db, session} = context;
 
-    assert(email.match(/.+@.+?\..+/), 'email is invalid');
-    assert(password.length > 5, 'password is invalid');
+    assert(email.match(/.+@.+?\..+/), 'Email is invalid');
+    assert(password.length > 5, 'Password is invalid');
 
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await db.insert('users', {

@@ -1,4 +1,3 @@
-import assert from 'assert';
 import bcrypt from 'bcrypt-as-promised';
 
 export default types => ({
@@ -14,10 +13,13 @@ export default types => ({
     const {email, password} = input;
     const {db, session} = context;
 
-    const user = await db.findBy('users', {email});
-    await bcrypt.compare(password, user.passwordHash);
-
-    session.currentUserID = user.id;
-    return {session};
+    try {
+      const user = await db.findBy('users', {email});
+      await bcrypt.compare(password, user.passwordHash);
+      session.currentUserID = user.id;
+      return {session};
+    } catch (e) {
+      throw 'Email or password is invalid';
+    }
   },
 });

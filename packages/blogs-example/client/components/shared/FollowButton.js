@@ -4,8 +4,7 @@ import {FollowUser} from '../../mutations';
 
 export default Relay.createContainer(
   ({currentUser, user}) =>
-    <input
-      type='submit'
+    <button
       style={{margin: '1rem 0'}}
       onClick={
         () => Relay.Store.commitUpdate(
@@ -16,12 +15,13 @@ export default Relay.createContainer(
           })
         )
       }
-      value={
+    >
+      {
         user.following
         ? `Following ${user.firstName}`
         : `Follow ${user.firstName}`
       }
-    />
+    </button>
   ,
   {
     fragments: {

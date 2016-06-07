@@ -1,7 +1,7 @@
 TODO:
+  - handle PageInfo / totalCount on connections
   - write migration generation code: when schema changes run cli command to
     both update schema.json and generate a database migration.
-  - handle PageInfo / totalCount on connections
   - write CLI tools for scaffolding a repo
   - during database definition handle creating extensions for UUIDs, geo, etc..
   - handle singular relationship to same table

@@ -14,8 +14,8 @@ export default types => ({
     const {db, session} = context;
     const {currentUserID} = session;
 
-    assert(title.length > 0, 'post must have title');
-    assert(text.length > 0, 'post must have text');
+    assert(title.length > 0, 'Posts must have titles');
+    assert(text.length > 0, 'Posts must have text');
 
     const user = await db.findBy('users', {id: currentUserID});
 

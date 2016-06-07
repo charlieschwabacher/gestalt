@@ -4,24 +4,20 @@ import {SignIn} from '../../mutations';
 
 class SignInForm extends Component {
   state = {
-    loading: false,
-    error: false,
+    error: null,
   };
 
   signIn = e => {
     e.preventDefault();
-    if (this.state.loading) {
-      return;
-    }
-
-    this.setState({loading: true});
     Relay.Store.commitUpdate(
       new SignIn({
         session: this.props.session,
         email: e.target.email.value,
         password: e.target.password.value,
       }), {
-        onFailure: () => this.setState({loading: false, error: true}),
+        onFailure: transaction => this.setState({
+          error: transaction.getError().source.errors[0].message
+        }),
       }
     );
   }
@@ -31,24 +27,10 @@ class SignInForm extends Component {
     return (
       <form onSubmit={this.signIn}>
         <h3>Sign In:</h3>
-        {error && <div className='error'>Email or passord is invalid</div>}
-        <input
-          name='email'
-          type='email'
-          placeholder='Email'
-          disabled={loading}
-        />
-        <input
-          name='password'
-          type='password'
-          placeholder='Password'
-          disabled={loading}
-        />
-        <input
-          type='submit'
-          value='Sign In'
-          disabled={loading}
-        />
+        {error && <div className='error'>{error}</div>}
+        <input name='email' type='email' placeholder='Email' autofocus={true}/>
+        <input name='password' type='password' placeholder='Password'/>
+        <button type='submit'>Sign In</button>
       </form>
     );
   }
