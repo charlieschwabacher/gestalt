@@ -9,7 +9,7 @@ export default types => ({
   outputFields: {
     user: types.User,
   },
-  mutateAndGetPayload: async (input, context, info) => {
+  mutateAndGetPayload: async (input, context) => {
     const {title, text} = input;
     const {db, session} = context;
     const {currentUserID} = session;

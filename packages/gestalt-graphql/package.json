@@ -8,7 +8,7 @@
     "url": "https://github.com/charlieschwabacher/gestalt.git"
   },
   "scripts": {
-    "test": "$(npm bin)/mocha",
+    "test": "mocha",
     "flow": "flow; test $? -eq 0 -o $? -eq 2",
     "build": "babel src --out-dir dist/"
   },

@@ -1,8 +1,7 @@
 TODO:
-  - refactor db to create instances based on db url
-  - handle non node object types as JSON
   - write migration generation code: when schema changes run cli command to
     both update schema.json and generate a database migration.
+  - handle non node object types as JSON
   - during database definition handle creating extensions for UUIDs, geo, etc..
   - handle singular relationship to same table (need to keep track of table
     names used, name them if repeated)

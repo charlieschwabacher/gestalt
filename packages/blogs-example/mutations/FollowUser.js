@@ -8,7 +8,7 @@ export default types => ({
     user: types.User,
     currentUser: types.User
   },
-  mutateAndGetPayload: async (input, context, info) => {
+  mutateAndGetPayload: async (input, context) => {
     const {follow, userID} = input;
     const {db, session} = context;
     const {currentUserID} = session;
