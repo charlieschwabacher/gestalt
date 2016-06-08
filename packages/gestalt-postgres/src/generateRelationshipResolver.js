@@ -6,9 +6,9 @@ import type {Relationship, RelationshipSegmentDescriptionMap,
   RelationshipSegmentDescription, RelationshipSegment, Query, Join, Condition,
   GraphQLFieldResolveFn, ConnectionArguments, ForeignKeyDescription,
   JoinTableDescription} from 'gestalt-utils';
+import type DB from './DB';
 import {pairingSignatureFromRelationshipSegment, tableNameFromTypeName} from
   './generateDatabaseInterface';
-import {query, find} from './db';
 import DataLoader from 'dataloader';
 import {camel, snake} from 'change-case';
 import {invariant, keyMap, group} from 'gestalt-utils';
@@ -25,14 +25,18 @@ export function generateRelationshipResolver(
     return (object, args, context) => {
       const loader = context.loaders.get(relationship);
       const key = object[keyColumn];
-      return loader.load(
-        relationship.cardinality === 'singular' ? key : {key, args}
-      );
+      if (relationship.cardinality === 'singular') {
+        return loader.load(key);
+      } else {
+        validateConnectionArgs(args);
+        return loader.load({key, args});
+      }
     };
   };
 }
 
 export function generateRelationshipLoaders(
+  db: DB,
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   relationships: Relationship[],
 ): () => Map<Relationship, DataLoader> {
@@ -61,12 +65,23 @@ export function generateRelationshipLoaders(
       if (relationship.cardinality === 'singular') {
         relationshipLoaderMap.set(
           relationship,
-          generateSingularRelationshipLoader(relationship, keyColumn, sql)
+          generateSingularRelationshipLoader(
+            db,
+            relationship,
+            keyColumn,
+            sql
+          )
         );
       } else {
         relationshipLoaderMap.set(
           relationship,
-          generatePluralRelationshipLoader(relationship, keyColumn, sql, query)
+          generatePluralRelationshipLoader(
+            db,
+            relationship,
+            keyColumn,
+            sql,
+            query
+          )
         );
       }
     });
@@ -76,19 +91,20 @@ export function generateRelationshipLoaders(
 }
 
 function generateSingularRelationshipLoader(
+  db: DB,
   relationship: Relationship,
   keyColumn: string,
   sql: string
 ): DataLoader {
   return new DataLoader(async keys => {
-    const results = await query(sql, [keys]);
+    const results = await db.query(sql, [keys]);
     const resultsByKey = keyMap(results, result => result[keyColumn]);
     return keys.map(key => resultsByKey[key]);
   });
 }
 
-// TODO: this needs to handle connection arguments
 function generatePluralRelationshipLoader(
+  db: DB,
   relationship: Relationship,
   keyColumn: string,
   sql: string,
@@ -96,34 +112,77 @@ function generatePluralRelationshipLoader(
 ): DataLoader {
   return new DataLoader(loadKeys => {
     return Promise.all(loadKeys.map(async ({key, args}) => {
-      const sql = sqlStringFromQuery(applyConnectionArgs(baseQuery, args));
+      const slicedQuery = applyCursorsToEdges(baseQuery, args);
+      const connectionQuery = edgesToReturn(baseQuery, args);
+      const sql = sqlStringFromQuery(connectionQuery);
+      const countSql = sqlStringFromQuery(baseQuery, true);
       const params = [[key]];
       if (args.before || args.after) {
         params.push(args.before || args.after);
       }
-      const nodes = await query(sql, params);
+      const nodes = await db.query(sql, params);
+      const totalCount = await db.count(countSql, [[key]]);
       const edges = nodes.map(node => ({node, cursor: node.id}));
       return {
         edges,
+        totalCount,
         pageInfo: {
-          hasPreviousPage: true,
-          hasNextPage: true,
+          hasPreviousPage: await resolveHasPreviousPage(
+            db,
+            args,
+            slicedQuery,
+            nodes.length,
+            totalCount
+          ),
+          hasNextPage: await resolveHasNextPage(
+            db,
+            args,
+            slicedQuery,
+            nodes.length,
+            totalCount
+          ),
         },
-        totalCount: edges.length,
       };
     }));
   });
 }
 
-export function applyConnectionArgs(
-  query: Query,
+async function resolveHasPreviousPage(
+  db: DB,
+  args: Object,
+  slicedQuery: Query,
+  nodesLength: number,
+  totalCount: number,
+): Promise<boolean> {
+  if (args.last == null) {
+    return false;
+  }
+  if (args.before == null) {
+    return totalCount > nodesLength;
+  }
+  return (await db.count(slicedQuery)) > nodesLength;
+}
+
+async function resolveHasNextPage(
+  db: DB,
+  args: Object,
+  slicedQuery: Query,
+  nodesLength: number,
+  totalCount: number
+): Promise<boolean> {
+  if (args.first == null) {
+    return false;
+  }
+  if (args.after == null) {
+    return totalCount > nodesLength;
+  }
+  return (await db.count(slicedQuery) > nodesLength);
+}
+
+export function validateConnectionArgs(
   args: ConnectionArguments
-): Query {
+): void {
   const {first, last, before, after} = args;
-  const {table, joins} = query;
-  const column = args.order == null ? 'seq' : snake(args.order);
-  const value = `(SELECT ${column} FROM ${table} WHERE id = $2)`;
-  let {conditions} = query;
 
   // we don't support combining forward and reverse paging because it does not
   // translate well to SQL
@@ -131,8 +190,17 @@ export function applyConnectionArgs(
     (first == null && after == null) || (last == null && before == null),
     'forward and reverse pagination arguments should not be combined'
   );
+}
 
-  const limit = (first != null) ? first : last;
+export function applyCursorsToEdges(
+  query: Query,
+  args: ConnectionArguments
+): Query {
+  const {before, after, first, last} = args;
+  const column = args.order == null ? 'seq' : snake(args.order);
+  const {table} = query;
+  const value = `(SELECT ${column} FROM ${table} WHERE id = $2)`;
+  let {conditions} = query;
 
   const order = {
     column,
@@ -156,14 +224,23 @@ export function applyConnectionArgs(
   }
 
   return {
-    table,
-    joins,
-    conditions,
-    limit,
+    ...query,
     order,
+    conditions,
   };
 }
 
+export function edgesToReturn(
+  query: Query,
+  args: ConnectionArguments,
+): Query {
+  const {first, last} = args;
+  const limit = (first != null) ? first : last;
+  return {
+    ...query,
+    limit,
+  };
+}
 
 export function objectKeyColumnFromRelationship(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
@@ -410,10 +487,17 @@ function descriptionFromSegment(
   return segmentDescriptionMap[signature];
 }
 
-export function sqlStringFromQuery(query: Query): string {
+export function sqlStringFromQuery(
+  query: Query,
+  count: boolean = false
+): string {
   const {table, joins, conditions, limit, order} = query;
 
-  return `SELECT ${table}.* FROM ${table}${
+  return `SELECT ${
+    count
+    ? `COUNT(${table}.*)`
+    : `${table}.*`
+  } FROM ${table}${
     joins.map(join => {
       const {table, condition} = join;
       const {left, right} = condition;

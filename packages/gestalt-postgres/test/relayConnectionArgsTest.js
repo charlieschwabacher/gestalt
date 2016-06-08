@@ -3,8 +3,8 @@
 import assert from 'assert';
 import {relationshipFromPathString as r, segmentDescriptionsFromRelationships}
   from '../src/generateDatabaseInterface';
-import {sqlStringFromQuery, applyConnectionArgs, queryFromRelationship} from
-  '../src/generateRelationshipResolver';
+import {sqlStringFromQuery, applyCursorsToEdges, edgesToReturn,
+  queryFromRelationship} from '../src/generateRelationshipResolver';
 import {keyMap} from 'gestalt-utils';
 import type {Relationship, ConnectionArguments} from 'gestalt-utils';
 
@@ -23,8 +23,11 @@ function testConnectionArgs(
   );
   assert.equal(
     sqlStringFromQuery(
-      applyConnectionArgs(
-        queryFromRelationship(descriptions, relationships[0]),
+      edgesToReturn(
+        applyCursorsToEdges(
+          queryFromRelationship(descriptions, relationships[0]),
+          args
+        ),
         args
       )
     ),
@@ -39,7 +42,7 @@ describe('connection query generation', () => {
     r('author', 'Post', 'User', true, '<-AUTHORED-'),
   ];
 
-  it('hanldes none', () => {
+  it('handles none', () => {
     testConnectionArgs(
       relationships,
       {order: 'created_at'},
@@ -48,7 +51,7 @@ describe('connection query generation', () => {
     );
   });
 
-  it('hanldes first', () => {
+  it('handles first', () => {
     testConnectionArgs(
       relationships,
       {order: 'created_at', first: 3},

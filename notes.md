@@ -1,5 +1,4 @@
 TODO:
-  - handle PageInfo / totalCount on connections
   - refactor db to create instances based on db url
   - handle non node object types as JSON
   - write migration generation code: when schema changes run cli command to
@@ -11,6 +10,7 @@ TODO:
 
 ------------------------------ MAKE PUBLIC HERE --------------------------------
 
+  - handle PageInfo / totalCount on connections w/ lookahead and better batching
   - AST validation for helpful error messages (notes in stub files in
     ./src/validation)
   - handle union types (need type column in addition to foreign key, need to

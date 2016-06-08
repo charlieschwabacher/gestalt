@@ -9,17 +9,22 @@ import type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
   from 'gestalt-utils';
 import {plural} from 'pluralize';
 import {snake} from 'change-case';
-import resolveNode from './resolveNode';
+import generateNodeResolver from './generateNodeResolver';
 import {generateRelationshipResolver, generateRelationshipLoaders} from
   './generateRelationshipResolver';
 import {invariant, keyMap, baseType} from 'gestalt-utils';
-import * as db from './db';
+import DB from './DB';
 
 export default function generateDatabaseInterface(
   databaseURL: string,
   definitions: ObjectTypeDefinition[],
   relationships: Relationship[],
 ): DatabaseInterface {
+  const db = new DB({
+    url: databaseURL,
+    log: true,
+  });
+
   const tables: Table[] = [];
   const tablesByName: {[key: string]: Table} = {};
   const indices: Index[] = [];
@@ -65,12 +70,12 @@ export default function generateDatabaseInterface(
       tables,
       indices,
     },
-    resolveNode,
+    resolveNode: generateNodeResolver(db),
     generateRelationshipResolver: generateRelationshipResolver(
       segmentDescriptionsBySignature,
-      relationships
     ),
     generateRelationshipLoaders: generateRelationshipLoaders(
+      db,
       segmentDescriptionsBySignature,
       relationships
     ),
