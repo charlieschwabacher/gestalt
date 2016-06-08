@@ -1,5 +1,5 @@
 // @flow
-
+import colors from 'colors';
 import pg from 'pg';
 import {camelizeKeys, invariant} from 'gestalt-utils';
 import {snake} from 'change-case';
@@ -13,7 +13,7 @@ export function exec(
   escapes: ?any[]
 ): Promise<Object> {
   if (LOG_QUERIES) {
-    console.log(query);
+    console.log(query.green, escapes);
   }
 
   return new Promise((resolve, reject) => {
@@ -30,6 +30,15 @@ export function exec(
       });
     });
   });
+}
+
+export async function count(
+  query: string,
+  escapes: ?any[],
+): Promise<number> {
+  const result = await exec(query, escapes);
+  invariant(result.rows.length === 1, 'count should select a single row');
+  return result.rows[0].count;
 }
 
 // exectutes a query expecting a single row - it returns the row as an
@@ -61,7 +70,8 @@ export async function insert(
   const columns = Object.keys(object).map(snake);
   const values = escapes.map((v, i) => `$${i + 1}`);
   const result = await exec(
-    `INSERT INTO ${table} (id, ${columns}) VALUES (uuid_generate_v4(), ${values}) RETURNING *;`,
+    `INSERT INTO ${table} (id, ${columns}) ` +
+    `VALUES (uuid_generate_v4(), ${values}) RETURNING *;`,
     escapes
   );
   return camelizeKeys(result.rows[0]);

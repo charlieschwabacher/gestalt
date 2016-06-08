@@ -1,3 +1,3 @@
 #! /usr/bin/env node
 
-console.log('its the cli yo!');
+console.log('its the cli!');

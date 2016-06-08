@@ -32,7 +32,7 @@ class CreatePostForm extends Component {
       <form onSubmit={this.createPost}>
         <h3>New Post</h3>
         {error && <div className='error'>{error}</div>}
-        <input name='title' type='text' placeholder='Title' autoFocus={true}/>
+        <input name='title' type='text' placeholder='Title'/>
         <textarea name='text' placeholder='Text'/>
         <button type='submit'>Create Post</button>
       </form>

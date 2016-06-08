@@ -1,6 +1,6 @@
-export {default as CreatePostForm} from './CreatePostForm';
 export {default as FollowButton} from './FollowButton';
 export {default as GestaltLogo} from './GestaltLogo';
+export {default as NewPostForm} from './NewPostForm';
 export {default as Post} from './Post';
 export {default as Posts} from './Posts';
 export {default as SignInForm} from './SignInForm';

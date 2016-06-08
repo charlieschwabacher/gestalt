@@ -1,12 +1,13 @@
 TODO:
   - handle PageInfo / totalCount on connections
+  - refactor db to create instances based on db url
+  - handle non node object types as JSON
   - write migration generation code: when schema changes run cli command to
     both update schema.json and generate a database migration.
-  - write CLI tools for scaffolding a repo
   - during database definition handle creating extensions for UUIDs, geo, etc..
-  - handle singular relationship to same table
-  - handle non node object types as JSON
-  - figure out a way to fix issue w/ doubled graphql dependency and lerna
+  - handle singular relationship to same table (need to keep track of table
+    names used, name them if repeated)
+  - write CLI tools for scaffolding a repo
 
 ------------------------------ MAKE PUBLIC HERE --------------------------------
 
@@ -16,7 +17,7 @@ TODO:
     handle during query generation)
   - make resolvers use prepared statements
   - improve performance of relationship loaders (TODOs in comments in file)
-
+  - replace change-case w/ individual packages for constant, snake, camel case
 
 Open Questions:
 

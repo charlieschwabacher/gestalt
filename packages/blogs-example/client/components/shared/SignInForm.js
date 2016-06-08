@@ -28,7 +28,7 @@ class SignInForm extends Component {
       <form onSubmit={this.signIn}>
         <h3>Sign In:</h3>
         {error && <div className='error'>{error}</div>}
-        <input name='email' type='email' placeholder='Email' autofocus={true}/>
+        <input name='email' type='email' placeholder='Email'/>
         <input name='password' type='password' placeholder='Password'/>
         <button type='submit'>Sign In</button>
       </form>
