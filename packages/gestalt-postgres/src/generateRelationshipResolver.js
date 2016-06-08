@@ -112,8 +112,8 @@ function generatePluralRelationshipLoader(
 ): DataLoader {
   return new DataLoader(loadKeys => {
     return Promise.all(loadKeys.map(async ({key, args}) => {
-      const slicedQuery = applyCursorsToEdges(baseQuery, args);
-      const connectionQuery = edgesToReturn(baseQuery, args);
+      const slicedQuery = applyCursorsToQuery(baseQuery, args);
+      const connectionQuery = applyLimitToQuery(slicedQuery, args);
       const sql = sqlStringFromQuery(connectionQuery);
       const countSql = sqlStringFromQuery(baseQuery, true);
       const params = [[key]];
@@ -192,7 +192,7 @@ export function validateConnectionArgs(
   );
 }
 
-export function applyCursorsToEdges(
+export function applyCursorsToQuery(
   query: Query,
   args: ConnectionArguments
 ): Query {
@@ -230,7 +230,7 @@ export function applyCursorsToEdges(
   };
 }
 
-export function edgesToReturn(
+export function applyLimitToQuery(
   query: Query,
   args: ConnectionArguments,
 ): Query {
@@ -281,15 +281,6 @@ export function resolvedKeyColumnFromRelationship(
 
 // Work backwards along the path applying joins, stopping before the first
 // segment.
-
-export function sqlQueryFromRelationship(
-  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
-  relationship: Relationship,
-): string {
-  return sqlStringFromQuery(
-    queryFromRelationship(segmentDescriptionMap, relationship)
-  );
-}
 
 export function queryFromRelationship(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,

@@ -3,7 +3,7 @@
 import assert from 'assert';
 import {relationshipFromPathString as r, segmentDescriptionsFromRelationships}
   from '../src/generateDatabaseInterface';
-import {sqlStringFromQuery, applyCursorsToEdges, edgesToReturn,
+import {sqlStringFromQuery, applyCursorsToQuery, applyLimitToQuery,
   queryFromRelationship} from '../src/generateRelationshipResolver';
 import {keyMap} from 'gestalt-utils';
 import type {Relationship, ConnectionArguments} from 'gestalt-utils';
@@ -23,8 +23,8 @@ function testConnectionArgs(
   );
   assert.equal(
     sqlStringFromQuery(
-      edgesToReturn(
-        applyCursorsToEdges(
+      applyLimitToQuery(
+        applyCursorsToQuery(
           queryFromRelationship(descriptions, relationships[0]),
           args
         ),

@@ -7,9 +7,9 @@ import {databaseInfoFromAST} from 'gestalt-graphql';
 import generateDatabaseInterface, {relationshipFromPathString as r,
   segmentDescriptionsFromRelationships} from '../src/generateDatabaseInterface';
 import {keyMap} from 'gestalt-utils';
-import {sqlQueryFromRelationship, objectKeyColumnFromRelationship,
-  limitAndOffsetFromConnectionArgs, sqlStringFromQuery, applyConnectionArgs,
-  queryFromRelationship} from '../src/generateRelationshipResolver';
+import {objectKeyColumnFromRelationship, limitAndOffsetFromConnectionArgs,
+  sqlStringFromQuery, applyConnectionArgs, queryFromRelationship} from
+  '../src/generateRelationshipResolver';
 
 import type {Relationship, RelationshipSegmentDescriptionMap,
   ConnectionArguments} from 'gestalt-utils';
@@ -31,11 +31,15 @@ function testRelationship(
   );
   outRelationship && assert.equal(
     outSQL,
-    sqlQueryFromRelationship(descriptions, outRelationship)
+    sqlStringFromQuery(
+      queryFromRelationship(descriptions, outRelationship)
+    )
   );
   inRelationship && assert.equal(
     inSQL,
-    sqlQueryFromRelationship(descriptions, inRelationship)
+    sqlStringFromQuery(
+      queryFromRelationship(descriptions, inRelationship)
+    )
   );
 }
 
@@ -61,9 +65,11 @@ describe('sqlQueryFromRelationship', () => {
       segment => segment.signature,
     );
     const sqlQueries = relationships.map(
-      relationship => sqlQueryFromRelationship(
-        segmentDescriptionsBySignature,
-        relationship
+      relationship => sqlStringFromQuery(
+        queryFromRelationship(
+          segmentDescriptionsBySignature,
+          relationship
+        )
       )
     );
     assert.deepEqual(
