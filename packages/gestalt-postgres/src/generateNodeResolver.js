@@ -9,7 +9,6 @@ export default function generateNodeResolver(
   db: DB
 ): GraphQLFieldResolveFn {
   return async (source, args, context, info) => {
-    console.log('resolving node!', args.id);
     const [typeName, id] = args.id.split(':');
     const tableName = tableNameFromTypeName(typeName);
     const result = await db.findBy(tableName, {id});

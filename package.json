@@ -4,7 +4,7 @@
     "test": "mocha",
     "clear-root-modules": "rm -rf node_modules",
     "clear-package-modules": "find ./packages/*/node_modules -maxdepth 0 | xargs rm -rf",
-    "reset": "npm run clear-root-modules & npm run clear-package-modules & npm install & lerna bootstrap"
+    "reset": "npm run clear-root-modules & npm run clear-package-modules & npm install & lerna bootstrap",
   },
   "devDependencies": {
     "babel-cli": "^6.6.5",

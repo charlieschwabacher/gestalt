@@ -32,6 +32,7 @@ export type DatabaseInterface = {
 export type DatabaseInterfaceDefinitionFn = (
   objectTypes: ObjectTypeDefinition,
   relationships: Relationship,
+  config: GestaltServerConfig,
 ) => DatabaseInterface;
 
 export type DatabaseSchema = {
@@ -42,10 +43,11 @@ export type DatabaseSchema = {
 export type Table = {
   name: string,
   columns: Column[],
-  constraints?: Constraint[],
+  constraints: Constraint[],
 }
 
 export type Index = {
+  name?: string,
   table: string,
   columns: string[],
 }
@@ -63,7 +65,8 @@ export type Column = {
 }
 
 type Constraint = {
-  type: 'unique',
+  name?: string,
+  type: 'UNIQUE',
   columns: string[],
 }
 
@@ -176,3 +179,16 @@ export type Order = {
   column: string,
   direction: 'ASC' | 'DESC',
 }
+
+
+// config for gestalt server
+
+export type GestaltServerConfig = {
+  schemaPath?: string,
+  schemaText?: string,
+  objects?: ObjectTypeFieldResolutionDefinition[],
+  mutations?: MutationDefinitionFn[],
+  secret: string,
+  database: DatabaseInterfaceDefinitionFn,
+  development?: boolean,
+};

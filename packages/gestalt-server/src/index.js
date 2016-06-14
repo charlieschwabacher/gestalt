@@ -1,22 +1,18 @@
 // @flow
 import fs from 'fs';
+import {red} from 'colors/safe';
 import session from 'cookie-session';
 import graphqlHTTP from 'express-graphql';
 import generateGraphQLSchema from 'gestalt-graphql';
 import {invariant} from 'gestalt-utils';
 import type {ObjectTypeFieldResolutionDefinition, MutationDefinitionFn,
-  DatabaseInterfaceDefinitionFn} from 'gestalt-utils';
+  DatabaseInterfaceDefinitionFn, GestaltServerConfig} from 'gestalt-utils';
 import type {Request, Response} from 'express';
 
-export default function gestaltServer(config: {
-  schemaPath?: string,
-  schemaText?: string,
-  objects?: ObjectTypeFieldResolutionDefinition[],
-  mutations?: MutationDefinitionFn[],
-  secret: string,
-  database: DatabaseInterfaceDefinitionFn,
-  development?: boolean,
-}): (request: Request, response: Response, next: () => void) => void {
+
+export default function gestaltServer(
+  config: GestaltServerConfig
+): (request: Request, response: Response, next: () => void) => void {
   const {schemaPath, schemaText, objects, mutations, secret, development,
     database: databaseInterfaceDefinitionFn} = config;
 
@@ -49,6 +45,7 @@ export default function gestaltServer(config: {
     objects || [],
     mutations || [],
     databaseInterfaceDefinitionFn,
+    config,
   );
 
   return (req, res, next) => {

@@ -2,7 +2,8 @@
 // generates a migration in SQL to make the necessary updates.
 // @flow
 
-import type {DatabaseSchema, Table, Column, Index} from '../types';
+import type {DatabaseSchema, Table, Column, Index} from 'gestalt-utils';
+import {keyValMap} from 'gestalt-utils'
 
 const REQUIRED_EXTENSIONS = ['uuid-ossp'];
 
@@ -39,11 +40,17 @@ function tablesByNameFromSchema(
 function indicesByTableNameFromSchema(
   schema: DatabaseSchema
 ): {[key: string]: Index[]} {
-  return schema.indices.reduce((memo, index) => {
-    memo[index.table] = memo[index.table] || [];
-    memo[index.table].push(index);
-    return memo;
-  }, {});
+  return schema.indices.reduce(
+    (memo, index) => {
+      memo[index.table].push(index);
+      return memo;
+    },
+    keyValMap(
+      schema.tables,
+      table => table.name,
+      () => []
+    )
+  );
 }
 
 export function generateSchemaUpdateMigration(

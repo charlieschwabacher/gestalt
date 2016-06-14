@@ -4,10 +4,6 @@ import pg from 'pg';
 import {camelizeKeys, invariant} from 'gestalt-utils';
 import {snake} from 'change-case';
 
-const DATABASE_URL = 'postgres://localhost/gestalt';
-const LOG_QUERIES = true;
-
-
 function whereFromConditions(conditions: Object): [string, any[]] {
   const sql = `WHERE ${
     Object.keys(conditions)

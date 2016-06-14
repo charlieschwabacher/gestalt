@@ -12,7 +12,7 @@ export default Relay.createContainer(
   ({node: post}) => (
     <div>
       <div style={{textAlign: 'right'}}>
-        {formatDate(post.createdAt)}
+        Posted on {formatDate(post.createdAt)}
       </div>
       <hr style={{marginTop: '0.5rem'}}/>
       <Post post={post}/>

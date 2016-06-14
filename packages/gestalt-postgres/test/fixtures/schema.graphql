@@ -8,6 +8,8 @@ type User implements Node {
   email: String! @unique @hidden @index
   passwordHash: String! @hidden
   createdAt: Date!
+  location: Location
+  favoriteFood: Food
   firstName: String
   lastName: String
   fullName: String @virtual
@@ -16,6 +18,17 @@ type User implements Node {
   posts: Post @relationship(path: "=AUTHORED=>")
   comments: Comment @relationship(path: "=AUTHORED=>")
   feed: Post @relationship(path: "=FOLLOWED=>User=AUTHORED=>")
+}
+
+type Location {
+  city: String!
+  state: String!
+}
+
+enum Food {
+  ICE_CREAM
+  PIZZA
+  SALAD
 }
 
 type Post implements Node {

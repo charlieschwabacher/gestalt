@@ -12,7 +12,7 @@ const schema: DatabaseSchema = {
           type: 'SERIAL',
           primaryKey: false,
           unique: true,
-          nonNull: false,
+          nonNull: true,
         },
         {
           name: 'id',
@@ -37,10 +37,24 @@ const schema: DatabaseSchema = {
         },
         {
           name: 'created_at',
-          type: 'timestamp',
+          type: 'timestamp without time zone',
           primaryKey: false,
           unique: false,
           nonNull: true,
+        },
+        {
+          name: 'location',
+          type: 'jsonb',
+          primaryKey: false,
+          unique: false,
+          nonNull: false,
+        },
+        {
+          name: 'favorite_food',
+          type: 'jsonb',
+          primaryKey: false,
+          unique: false,
+          nonNull: false,
         },
         {
           name: 'first_name',
@@ -56,7 +70,8 @@ const schema: DatabaseSchema = {
           unique: false,
           nonNull: false,
         },
-      ]
+      ],
+      constraints: [],
     },
     {
       name: 'posts',
@@ -66,7 +81,7 @@ const schema: DatabaseSchema = {
           type: 'SERIAL',
           primaryKey: false,
           unique: true,
-          nonNull: false,
+          nonNull: true,
         },
         {
           name: 'id',
@@ -91,7 +106,7 @@ const schema: DatabaseSchema = {
         },
         {
           name: 'created_at',
-          type: 'timestamp',
+          type: 'timestamp without time zone',
           primaryKey: false,
           unique: false,
           nonNull: true,
@@ -108,6 +123,7 @@ const schema: DatabaseSchema = {
           }
         },
       ],
+      constraints: [],
     },
     {
       name: 'comments',
@@ -117,7 +133,7 @@ const schema: DatabaseSchema = {
           type: 'SERIAL',
           primaryKey: false,
           unique: true,
-          nonNull: false,
+          nonNull: true,
         },
         {
           name: 'id',
@@ -135,7 +151,7 @@ const schema: DatabaseSchema = {
         },
         {
           name: 'created_at',
-          type: 'timestamp',
+          type: 'timestamp without time zone',
           primaryKey: false,
           unique: false,
           nonNull: true,
@@ -163,6 +179,7 @@ const schema: DatabaseSchema = {
           }
         },
       ],
+      constraints: [],
     },
     {
       name: 'user_followed_users',
@@ -192,7 +209,7 @@ const schema: DatabaseSchema = {
       ],
       constraints: [
         {
-          type: 'unique',
+          type: 'UNIQUE',
           columns: ['user_id', 'followed_user_id']
         }
       ]
@@ -200,40 +217,8 @@ const schema: DatabaseSchema = {
   ],
   indices: [
     {
-      table: 'users',
-      columns: ['seq'],
-    },
-    {
-      table: 'users',
-      columns: ['id'],
-    },
-    {
-      table: 'users',
-      columns: ['email'],
-    },
-    {
-      table: 'posts',
-      columns: ['seq'],
-    },
-    {
-      table: 'posts',
-      columns: ['id'],
-    },
-    {
       table: 'posts',
       columns: ['title'],
-    },
-    {
-      table: 'comments',
-      columns: ['seq'],
-    },
-    {
-      table: 'comments',
-      columns: ['id'],
-    },
-    {
-      table: 'user_followed_users',
-      columns: ['user_id'],
     },
     {
       table: 'user_followed_users',

@@ -7,4 +7,4 @@ esproposal.class_instance_fields=enable
 0.24.2
 
 [ignore]
-.*example-blogs/.*
+.*blogs-example/.*

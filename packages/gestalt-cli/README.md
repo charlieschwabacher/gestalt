@@ -11,8 +11,7 @@ and then
   - `mkdir {name}`
   - `cd {name}`
   - `git init`
-  - `npm init`
-  - `updates package json w/ name`
+  - `writes package.json`
   - `npm install --save gestalt gestalt-postgres`
   - creates `server.js`
   - creates `schema.graphql` w/ session type

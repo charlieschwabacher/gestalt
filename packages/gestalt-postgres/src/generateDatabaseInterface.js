@@ -5,8 +5,8 @@
 import type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
   Type, NamedType, DatabaseInterface, DatabaseSchema, Table, Index, Column,
   ColumnType, Relationship, RelationshipSegment, RelationshipSegmentPair,
-  JoinTableDescription, ForeignKeyDescription, RelationshipSegmentDescription}
-  from 'gestalt-utils';
+  JoinTableDescription, ForeignKeyDescription, RelationshipSegmentDescription,
+  GestaltServerConfig} from 'gestalt-utils';
 import {plural} from 'pluralize';
 import {snake} from 'change-case';
 import generateNodeResolver from './generateNodeResolver';
@@ -19,10 +19,11 @@ export default function generateDatabaseInterface(
   databaseURL: string,
   definitions: ObjectTypeDefinition[],
   relationships: Relationship[],
+  config?: GestaltServerConfig,
 ): DatabaseInterface {
   const db = new DB({
     url: databaseURL,
-    log: true,
+    log: config && config.development,
   });
 
   const tables: Table[] = [];
@@ -35,8 +36,7 @@ export default function generateDatabaseInterface(
     tablesByName[table.name] = table;
     tables.push(table);
 
-    indices.push(...defaultIndicesFromObjectTypeDefinition(definition));
-    indices.push(...directiveIndicesFromObjectTypeDefinition(definition));
+     indices.push(...indicesFromObjectTypeDefinition(definition));
   });
 
   // having looked at each type and recorded their relationships, we create
@@ -124,7 +124,7 @@ export function tableFromObjectTypeDefinition(
       name: 'seq',
       type: 'SERIAL',
       primaryKey: false,
-      nonNull: false, // implied by SERIAL type
+      nonNull: true,
       unique: true,
     }
   ];
@@ -136,7 +136,7 @@ export function tableFromObjectTypeDefinition(
     }
   });
 
-  return {name, columns};
+  return {name, columns, constraints: []};
 }
 
 export function columnFromFieldDefintion(definition: FieldDefinition): Column {
@@ -164,7 +164,7 @@ export function columnTypeFromGraphQLType(type: Type): ColumnType {
     case 'Float':
       return 'double precision';
     case 'Date':
-      return 'timestamp';
+      return 'timestamp without time zone';
     case 'Money':
       return 'money';
     case 'SERIAL':
@@ -174,23 +174,7 @@ export function columnTypeFromGraphQLType(type: Type): ColumnType {
   }
 }
 
-export function defaultIndicesFromObjectTypeDefinition(
-  definition: ObjectTypeDefinition,
-): Index[] {
-  const table = tableNameFromTypeName(definition.name.value);
-  return [
-    {
-      table,
-      columns: ['seq'],
-    },
-    {
-      table,
-      columns: ['id'],
-    },
-  ];
-}
-
-export function directiveIndicesFromObjectTypeDefinition(
+export function indicesFromObjectTypeDefinition(
   definition: ObjectTypeDefinition,
 ): Index[] {
   const indices = [];
@@ -198,7 +182,10 @@ export function directiveIndicesFromObjectTypeDefinition(
   definition.fields.forEach(field => {
     if (
       field.directives &&
-      field.directives.some(directive => directive.name.value === 'index')
+      field.directives.some(directive => directive.name.value === 'index') &&
+      // a uniqueness constraint implies an index, so if the @unique directive
+      // is present we don't need to add an additional one
+      !field.directives.some(directive => directive.name.value === 'unique')
     ) {
       indices.push({table, columns: [field.name.value]});
     }
@@ -462,7 +449,7 @@ export function joinTableFromDescription(
     ],
     constraints: [
       {
-        type: 'unique',
+        type: 'UNIQUE',
         columns: [leftColumnName, rightColumnName],
       },
     ],
@@ -472,14 +459,8 @@ export function joinTableFromDescription(
 export function joinTableIndicesFromDescription(
   description: JoinTableDescription
 ): Index[] {
-  const {name, leftTableName, rightTableName, leftColumnName,
-    rightColumnName} = description;
-
+  const {name, rightColumnName} = description;
   return [
-    {
-      table: name,
-      columns: [leftColumnName],
-    },
     {
       table: name,
       columns: [rightColumnName],

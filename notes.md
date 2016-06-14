@@ -1,21 +1,25 @@
 TODO:
   - write migration generation code: when schema changes run cli command to
     both update schema.json and generate a database migration.
-  - handle non node object types as JSON
+  - write CLI tools for scaffolding a repo
   - during database definition handle creating extensions for UUIDs, geo, etc..
   - handle singular relationship to same table (need to keep track of table
     names used, name them if repeated)
-  - write CLI tools for scaffolding a repo
 
 ------------------------------ MAKE PUBLIC HERE --------------------------------
 
   - handle PageInfo / totalCount on connections w/ lookahead and better batching
+  - keep track of non null, unique, and primary key as constraints on tables
+    instead of as fields on columns in database schema types?
   - AST validation for helpful error messages (notes in stub files in
     ./src/validation)
+  - come up w/ a config file format .gestaltrc
   - handle union types (need type column in addition to foreign key, need to
     handle during query generation)
-  - make resolvers use prepared statements
-  - improve performance of relationship loaders (TODOs in comments in file)
+  - handle enum types w/ db enums
+  - make sure resolvers use prepared statements
+  - do obvious perf optimization of relationship loaders (TODOs in comments in
+    file)
   - replace change-case w/ individual packages for constant, snake, camel case
 
 Open Questions:

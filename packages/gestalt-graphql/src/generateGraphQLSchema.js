@@ -14,8 +14,8 @@ import baseSchema from './baseSchema';
 import type {Document, ObjectTypeDefinition, GraphQLField,
   GraphQLFieldResolveFn, MutationDefinitionFn, MutationDefinition,
   DatabaseInterface, DatabaseInterfaceDefinitionFn,
-  ObjectTypeFieldResolutionDefinition, GraphQLType, TypeMap, Relationship} from
-  'gestalt-utils';
+  ObjectTypeFieldResolutionDefinition, GraphQLType, TypeMap, Relationship,
+  GestaltServerConfig} from 'gestalt-utils';
 
 // generate a graphql schema given object types,
 export default function generateGraphQLSchema(
@@ -23,17 +23,35 @@ export default function generateGraphQLSchema(
   objects: ObjectTypeFieldResolutionDefinition[],
   mutations: MutationDefinitionFn[],
   databaseInterfaceDefinitionFn: DatabaseInterfaceDefinitionFn,
+  config?: GestaltServerConfig,
 ): {schema: GraphQLSchema, databaseInterface: DatabaseInterface} {
-  const ast = parse(schemaText);
+  const ast = parse(ast);
+  const schema = generateGraphQLSchemaWithoutResolution(ast, mutations);
 
-  // generate databse interface
+  // log generated schema
+  // console.log(printSchema(schema));
+
   const {objectDefinitions, relationships} = databaseInfoFromAST(ast);
   const databaseInterface = databaseInterfaceDefinitionFn(
     objectDefinitions,
-    relationships
+    relationships,
+    config,
   );
 
-  // preprocess the parsed AST to remove hidden types and insert implied types
+  defineScalarTypes(schema);
+  defineBaseSchemaResolution(schema, databaseInterface);
+  defineRelationshipResolution(schema, relationships, databaseInterface);
+  defineNodeIDResolution(schema);
+  attachObjectTypeFieldResolution(schema, objects);
+
+  return {schema, databaseInterface};
+}
+
+export function generateGraphQLSchemaWithoutResolution(
+  ast: Document,
+  mutations: MutationDefinitionFn[]
+): GraphQLSchema {
+  // preprocess the AST to remove hidden types and insert implied types
   const modifiedAST = concatAST([baseSchema, ast]);
   removeHiddenNodes(modifiedAST);
   insertConnectionTypes(modifiedAST);
@@ -41,18 +59,10 @@ export default function generateGraphQLSchema(
   // generate GraphQLSchema
   const schema = buildASTSchema(modifiedAST);
 
-  // add aditional definitions and attach resolution functions
-  defineScalarTypes(schema);
-  defineBaseSchemaResolution(schema, databaseInterface);
-  defineRelationshipResolution(schema, relationships, databaseInterface);
-  defineNodeIDResolution(schema);
-  attachObjectTypeFieldResolution(schema, objects);
+  // create and attach mutations
   defineMutations(schema, mutations);
 
-  // log generated schema
-  // console.log(printSchema(schema));
-
-  return {schema, databaseInterface};
+  return schema;
 }
 
 // attach serialization and parsing functions to scalar types defined by

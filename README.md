@@ -1,9 +1,9 @@
 Gestalt
 =======
 
-Gestalt is a library that lets you use the GraphQL schema language and a small
-set of directives to define a GraphQL schema, database schema, and API server
-in only a few minutes.
+Gestalt is a library that allows you to use the GraphQL schema language and a
+small set of directives to define a GraphQL schema, database schema, and API
+server with only a few lines of code.
 
 
 GraphQL Schema Language
@@ -11,27 +11,28 @@ GraphQL Schema Language
 The GraphQL Schema Language is a shorthand to describe types in a GraphQL schema
 and a recent addition to the GraphQL spec.  The Schema Language doesn't cover
 resolution, but if you are willing to accept some reasonable defaults, Gestalt
-is able to define resolution for you with only a little extra information.
+is able to define resolution for you.
 
-Gestalt is designed to make it really for small teams of 1-10 developers to
-build APIs quickly.  Its also designed not to lock you in - you can build an API
-with Gestalt, make changes quickly, and then replace pieces of it one at a time
-as your app grows and your needs change.
+Gestalt is designed to make it really easy for small teams of 1-10 developers to
+build GraphQL APIs quickly.  Its also designed not to lock you in - you can
+build an API with Gestalt, make changes quickly, and then replace pieces of it
+one at a time as your app grows and your needs change.
 
 
 Writing a Schema
 ----------------
 The first step towards building an app with Gestalt is writing a schema.
 Gestalt defines the base mutation and query types, the Relay Node interface and
-connection types, and a few directives, and an additional `Date` scalar type.
-In the `schema.graphql` file you provide, you are only expected to define your
-object, interface and union types.
+connection types, and a few directives and additional scalar types for you.  In
+the `schema.graphql` file you provide, you are only expected to define your
+object types.
 
 Any Objects you define extending the Node interface result in database tables.
-Objects and arrays they reference are stored in Postgres as structured data, and
-relationships between objects are defined with directives.  Mutations are
-defined separately using javascript and are attached to the schema in a second
-pass.
+Other objects and arrays they reference are stored in Postgres as json, and
+relationships between nodes are specified with directives.
+
+Mutations are defined separately using javascript and are attached to the schema
+in a second pass.
 
 ```GraphQL
 type User extends Node {
@@ -47,8 +48,9 @@ Session Type
 Gestalt defines two fields on the query root, `node` and `session` - you are
 expected to define the Session type as the entry point to your schema.  Session
 is not a Node, so it won't be stored in the database and you will need to define
-custom resolution for its fields.  The session value is accessible in the
-context.  When modified, it will be stored after every request.
+custom resolution for its fields.  A session object is made accessible in the
+query context.  It is both readable and writable, and any changes are persisted
+between requests.
 
 ```GraphQL
 type Session {
@@ -61,8 +63,7 @@ Object Relationships
 In addition to Types and their fields, Gestalt needs extra information about
 the relationships between objects in order to generate a database schema and
 efficient queries for resolution.  You provide this using the `@relationship`
-directive and a syntax inspired by Neo4j's Cypher query
-language.
+directive and a syntax inspired by Neo4j's Cypher query language.
 
 ```GraphQL
 type User implements Node {
@@ -80,20 +81,20 @@ the arrow `in` or `out`, and a cardinality ('singular' or 'plural') based on the
 `-` or `=` characters.
 
 Arrows with identical labels and types at their head and tail are matched, and
-the combination of their cardinalities determines how the relationship will be
-stored in the database.
+the combination of their cardinalities determines how the relationship between
+their types will be stored in the database.
 
 A plural arrow also indicates that a field should be a Relay connection -
-Gestalt will create `PostsConnection` and `PostEdge` types, and update the
-type of the `posts` field to `PostsConnection`.  In addition to the relay
-connection arguments, if any scalar fields on the parent type are indexed,
-Gestalt will add an `order` argument to connection field and create a
-`PostsOrder` enum type allowing the connection to be sorted.
+Based on the directives in the example above, Gestalt would create
+`PostsConnection` and `PostEdge` types, and update the type of the `posts`
+field to `PostsConnection`.  In addition to the relay connection arguments, if
+any scalar fields on the parent type are indexed, Gestalt will add an `order`
+argument to connection field and create a `PostsOrder` enum type allowing the
+connection to be sorted.
 
-Based on the edge directives in the example above, Gestalt will calculate how to
-store and query the relationship efficiently - if we are using a Postgres
-adapter, Gestalt will add a foreign key `authored_by_user_id` to the `posts`
-table.
+Gestalt will calculate how to store and query relationships efficiently -
+continuing with example above, if we are using the `gestalt-postgres` adapter,
+Gestalt will add a foreign key `authored_by_user_id` to the `posts` table.
 
 Arrows can be extended to represent more complex relationships:
 
