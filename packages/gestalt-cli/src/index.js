@@ -1,6 +1,7 @@
-#! /usr/bin/env babel-node
+#! /usr/bin/env node
 // @flow
 
+import 'babel-polyfill';
 import commander from 'commander';
 import packageDescription from '../package.json';
 import init from './init';

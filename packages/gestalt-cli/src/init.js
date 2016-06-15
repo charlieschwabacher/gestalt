@@ -5,9 +5,10 @@ import fs from 'fs';
 import path from 'path';
 import prompt from 'prompt';
 import rimraf from 'rimraf';
+import ejs from 'ejs';
 import {get, exec, copy} from './cli';
 import {invariant} from 'gestalt-utils';
-import {snake} from 'change-case';
+import {snake, camel} from 'change-case';
 import {version} from '../package.json';
 
 export default async function(name: string): Promise {
@@ -42,15 +43,32 @@ export default async function(name: string): Promise {
       }
     }
 
-    // ask for necessary information
+    // ask for necessary config information
     const config = await get({
       properties: {
-        databaseUrl: {
-          message: 'what is the url to your PostgreSQL database?',
-          default: `postgres://localhost/${snake(name)}`
-        }
+        databaseAdapter: {
+          message: 'what database adapter should this project use?',
+          default: 'gestalt-postgres',
+        },
       },
     });
+    config.databaseAdapterFn = camel(config.databaseAdapter);
+
+    // ask for database adapter specific config
+    // TODO: we should require this from the adapter package
+    const databaseAdapterConfigProperties = {
+      'gestalt-postgres': {
+        databaseURL: {
+          message: 'what is the url to your database?',
+          default: `postgres://localhost/${snake(name)}`
+        },
+      },
+    };
+    if (databaseAdapterConfigProperties[config.databaseAdapter] != null) {
+      config.databaseAdapterConfig = await get({
+        properties: databaseAdapterConfigProperties[config.databaseAdapter]
+      });
+    }
 
     console.log(`Creating a new Gestalt project in ${root}...`);
 
@@ -74,12 +92,12 @@ export default async function(name: string): Promise {
 
     console.log('Installing gestalt packages from npm...');
 
-    // console.log(
-    //   await exec(
-    //     'npm install --save --save-exact express ' +
-    //     `gestalt-server@${version} gestalt-postgres@${version}`
-    //   )
-    // );
+    console.log(
+      await exec(
+        'npm install --save --save-exact express ' +
+        `gestalt-server@${version} ${config.databaseAdapter}@${version}`
+      )
+    );
 
     console.log('Copying files...');
 
@@ -104,20 +122,18 @@ export default async function(name: string): Promise {
     // copy server.js with interpolated values
     fs.writeFileSync(
       path.join(root, 'server.js'),
-      fs.readFileSync(
-        path.join(__dirname, '../template/server.js'),
-        'utf8',
-      ).replace(
-        /{{([$A-Z_][0-9A-Z_$]*)}}/gi,
-        (match, capture) => config[capture],
+      ejs.render(
+        fs.readFileSync(
+          path.join(__dirname, '../template/server.js.ejs'),
+          'utf8',
+        ),
+        config
       )
     );
 
   } catch (err) {
-
     console.log('gestalt init failed with the error:', err);
     throw err;
-
   }
 
   prompt.stop();

@@ -2,23 +2,27 @@
   "name": "gestalt-cli",
   "version": "0.0.1",
   "description": "command line tools for the gestalt framework",
-  "main": "src/index.js",
+  "main": "lib/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/charlieschwabacher/gestalt.git"
   },
   "scripts": {
     "test": "mocha",
-    "gestalt": "gestalt"
+    "gestalt": "node ./lib/index.js",
+    "build": "babel src --out-dir lib/",
+    "watch": "babel --watch src --out-dir lib/"
   },
   "bin": {
-    "gestalt": "src/index.js"
+    "gestalt": "lib/index.js"
   },
   "author": "Charlie Schwabacher",
   "license": "MIT",
   "dependencies": {
+    "babel-polyfill": "^6.9.1",
     "change-case": "^2.3.1",
     "commander": "^2.9.0",
+    "ejs": "^2.4.2",
     "gestalt-graphql": "0.0.1",
     "gestalt-postgres": "0.0.1",
     "gestalt-utils": "0.0.1",

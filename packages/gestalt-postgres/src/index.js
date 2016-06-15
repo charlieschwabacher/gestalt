@@ -3,10 +3,10 @@
 import generateDatabaseInterface from './generateDatabaseInterface';
 import type {DatabaseInterfaceDefinitionFn} from 'gestalt-utils';
 
-export default function gestaltPostgres(
+export default function gestaltPostgres(config: {
   databaseURL: string
-): DatabaseInterfaceDefinitionFn {
-  return (objectDefinitions, relationships, config) =>
+}): DatabaseInterfaceDefinitionFn {
+  return (objectDefinitions, relationships, {databaseURL}) =>
     generateDatabaseInterface(
       databaseURL,
       objectDefinitions,

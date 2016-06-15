@@ -242,8 +242,8 @@ app.listen(3000);
 Gestalt provides Connect middleware based on `express-graphql` to respond to
 GraphQL API requests.  It accepts the following options:
 
-- `databaseURL` - the url to a Postgres database
 - `schemaPath` - the path to your schema definition in GraphQL
+- `database` - a database adapter
 - `objects` - an array of object definitions
 - `mutations` - an array of mutation definition functions
 - `secret` - used to sign the session cookie
@@ -259,8 +259,9 @@ non-standard storage requirements, Gestalt might not be the best choice for you.
 If you are starting a new Relay app from scratch, Gestalt should save you a lot
 of time and make your schema easier to work with.
 
-Gestalt is usable now - but its still very early.  The API is likely to change
-before it gets to a version 1.0.
+Gestalt is usable now - but it's still very early.  The javascript API is likely
+to change before it gets to a version 1.0.  Any changes will aim to be easy to
+work around.
 
 
 Other Database Adapters

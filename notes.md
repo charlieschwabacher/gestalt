@@ -1,26 +1,29 @@
 TODO:
   - write migration generation code: when schema changes run cli command to
-    both update schema.json and generate a database migration.
-  - write CLI tools for scaffolding a repo
-  - during database definition handle creating extensions for UUIDs, geo, etc..
+    generate a database migration.
   - handle singular relationship to same table (need to keep track of table
     names used, name them if repeated)
 
 ------------------------------ MAKE PUBLIC HERE --------------------------------
 
-  - handle PageInfo / totalCount on connections w/ lookahead and better batching
-  - keep track of non null, unique, and primary key as constraints on tables
-    instead of as fields on columns in database schema types?
+  - handle PageInfo / totalCount on connections w/ lookahead and better
+    batching, write unit tests
   - AST validation for helpful error messages (notes in stub files in
     ./src/validation)
-  - come up w/ a config file format .gestaltrc
+  - keep track of non null, unique, and primary key as constraints on tables
+    instead of as fields on columns in database schema types?
+  - come up w/ a config file format .gestaltrc?
   - handle union types (need type column in addition to foreign key, need to
     handle during query generation)
   - handle enum types w/ db enums
-  - make sure resolvers use prepared statements
   - do obvious perf optimization of relationship loaders (TODOs in comments in
     file)
+  - make sure resolvers use prepared statements
   - replace change-case w/ individual packages for constant, snake, camel case
+  - Define named functions that transform values from the database, allow you to
+    attach them / chain them to fields as directives.. sort of like middleware
+    for field resolution.  These will also be useful for permissions checks
+    because they are free to return nil or raise errors.
 
 Open Questions:
 
@@ -31,9 +34,9 @@ View Permissions?
     on each table for ordering anyways.. is it possible / better to just have a
     single serial id column and encrypt / decrypt node ids in a way that keeps
     them secure?
-  - would like to add another way letting you define different named permission
-    checks as functions of obj and session and then attach them to types or
-    fields with directives
+  - third way in todo above: define different named permission checks as
+    functions of obj and session and then attach them to types or fields with
+    directives
 
 Definition
   - right now the node interface is used to define types that will be stored in
@@ -42,11 +45,6 @@ Definition
   - right now plural relations in the db automatically become relay connections,
     should there be some way to make some use arrays instead w/o edges / node?
     Leaning no for simplicity
-  - Could be cool to define named functions that transform values from the
-    database, allow you to attach them / chain them to fields as directives..
-    sort of like middleware for field resolution.  Maybe this encompasses the
-    permissions checks above because these are free to return nil or raise
-    errors.
 
 Extended IDL Syntax?
   - It would be nice if you could write relationships as:

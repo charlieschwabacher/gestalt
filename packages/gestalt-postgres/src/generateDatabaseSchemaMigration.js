@@ -3,7 +3,8 @@
 // @flow
 
 import type {DatabaseSchema, Table, Column, Index} from 'gestalt-utils';
-import {keyValMap} from 'gestalt-utils'
+import {keyValMap} from 'gestalt-utils';
+import {readExistingDatabaseSchema} from './readExistingDatabaseSchema';
 
 const REQUIRED_EXTENSIONS = ['uuid-ossp'];
 
@@ -20,12 +21,16 @@ export default function generateDatabaseSchemaMigration(
 
 export function generateInitialMigration(schema: DatabaseSchema): string {
   const indicesByTableName = indicesByTableNameFromSchema(schema);
-  return schema.tables.map(
-    table => (
-      createTable(table) +
-      indicesByTableName[table.name].map(createIndex).join('')
-    )
-  ).join('\n');
+  return (
+    REQUIRED_EXTENSIONS.map(createExtension).join('\n') +
+    '\n\n' +
+    schema.tables.map(
+      table => (
+        createTable(table) +
+        indicesByTableName[table.name].map(createIndex).join('')
+      )
+    ).join('\n')
+  );
 }
 
 function tablesByNameFromSchema(
@@ -93,7 +98,8 @@ export function createTable(table: Table): string {
 }
 
 export function dropTable(table: Table): string {
-  return '';
+  const {name} = table;
+  return `DROP TABLE ${name};`;
 }
 
 export function alterTable(table: Table): string {
@@ -113,7 +119,7 @@ export function alterColumn(column: Column): string {
 }
 
 export function createExtension(extension: string): string {
-  return `CREATE EXTENSION "${extension}";`;
+  return `CREATE EXTENSION IF NOT EXISTS "${extension}";`;
 }
 
 export function createIndex(index: Index): string {

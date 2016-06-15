@@ -2,7 +2,7 @@
   "name": "gestalt-utils",
   "version": "0.0.1",
   "description": "Shared dependencies for the gestalt packages",
-  "main": "src/index.js",
+  "main": "lib/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/charlieschwabacher/gestalt.git"
@@ -10,7 +10,8 @@
   "scripts": {
     "test": "mocha",
     "flow": "flow; test $? -eq 0 -o $? -eq 2",
-    "build": "babel src --ignore types.js --out-dir dist/"
+    "build": "babel src --out-dir lib/",
+    "watch": "babel --watch src --out-dir lib/"
   },
   "author": "Charlie Schwabacher",
   "license": "MIT",

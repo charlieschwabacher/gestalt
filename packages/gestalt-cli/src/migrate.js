@@ -3,20 +3,24 @@
 import fs from 'fs';
 import path from 'path';
 import importAll from 'import-all';
+import prompt from 'prompt';
 import {graphql, parse} from 'graphql';
 import {introspectionQuery} from 'graphql/utilities';
 import {generateGraphQLSchemaWithoutResolution} from 'gestalt-graphql';
+import {get} from './cli';
 
 export default async function migrate() {
+  prompt.start();
   try {
     console.log('migrating..');
     await updateJSONSchema();
     await updateDatabaseSchema();
     console.log('Gestalt migration complete');
   } catch (err) {
-    console.log('gestalt migrate failed with the error:', err);
+    console.log('gestalt migration failed with the error:', err);
     throw err;
   }
+  prompt.stop();
 }
 
 async function updateJSONSchema(): Promise {

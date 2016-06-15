@@ -1,0 +1,56 @@
+# changes:
+# remove favoriteFood field from User, remove Food enum type
+# add @index directive to firstName field on User
+# add images column to Post, add Image type
+# make text field on Post nullable
+# add @unique directive to title column on Post
+# remove Comment type, related fields
+# add Page type, add pages field to User
+
+type Session {
+  id: ID!
+  currentUser: User
+}
+
+type User implements Node {
+  id: ID!
+  email: String! @unique @hidden @index
+  passwordHash: String! @hidden
+  createdAt: Date!
+  location: Location
+  firstName: String @index
+  lastName: String
+  fullName: String @virtual
+  followedUsers: User @relationship(path: "=FOLLOWED=>")
+  followers: User @relationship(path: "<=FOLLOWED=")
+  posts: Post @relationship(path: "=AUTHORED=>")
+  pages: Page @relationship(path: "=CREATED=>")
+  feed: Post @relationship(path: "=FOLLOWED=>User=AUTHORED=>")
+}
+
+type Location {
+  city: String!
+  state: String!
+}
+
+type Post implements Node {
+  id: ID!
+  title: String! @index @unique
+  subtitle: String
+  text: String
+  images: [Image]
+  createdAt: Date!
+  author: User! @relationship(path: "<-AUTHORED-")
+}
+
+type Image {
+  url: String
+  width: Number
+  height: Number
+}
+
+type Page implements Node {
+  title: String! @index
+  content: String
+  author: User! @relationship(path: "<-CREATED-")
+}

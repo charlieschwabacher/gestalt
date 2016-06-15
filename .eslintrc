@@ -27,7 +27,6 @@
     "object-shorthand": [2, "properties"],
     "prefer-arrow-callback": 2,
     "prefer-const": 2,
-    "prefer-template": 2,
     "quotes": [2, "single"],
     "semi": [2, "always"],
     "strict": [2, "never"],
