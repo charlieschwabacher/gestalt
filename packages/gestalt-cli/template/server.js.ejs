@@ -1,0 +1,25 @@
+import express from 'express';
+import gestaltServer from 'gestalt-server';
+import <%= databaseAdapterFn %> from '<%= databaseAdapter %>';
+import importAll from 'import-all';
+
+const app = express();
+
+app.use(gestaltServer({
+  schemaPath: `${__dirname}/schema.graphql`,
+  objects: importAll(`${__dirname}/objects`),
+  mutations: importAll(`${__dirname}/mutations`),
+  database: <%= databaseAdapterFn %>({<%-
+    '\n    ' + Object.entries(databaseAdapterConfig).map(function(pair) {
+      const key = pair[0];
+      const value = pair[1];
+      return (
+        key + ': ' + ((typeof value === 'string') ? '\'' + value + '\'' : value)
+      );
+    }).join(',\n    ') + '\n  '
+  %>}),
+  development: true,
+  secret: '༼ つ ◕_◕ ༽つ',
+}));
+
+app.listen(3000);
