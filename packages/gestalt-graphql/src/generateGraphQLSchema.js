@@ -25,7 +25,7 @@ export default function generateGraphQLSchema(
   databaseInterfaceDefinitionFn: DatabaseInterfaceDefinitionFn,
   config?: GestaltServerConfig,
 ): {schema: GraphQLSchema, databaseInterface: DatabaseInterface} {
-  const ast = parse(ast);
+  const ast = parse(schemaText);
   const schema = generateGraphQLSchemaWithoutResolution(ast, mutations);
 
   // log generated schema

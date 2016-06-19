@@ -1,8 +1,6 @@
 TODO:
   - write migration generation code: when schema changes run cli command to
     generate a database migration.
-  - handle singular relationship to same table (need to keep track of table
-    names used, name them if repeated)
 
 ------------------------------ MAKE PUBLIC HERE --------------------------------
 
@@ -11,15 +9,17 @@ TODO:
     unit tests
   - AST validation for helpful error messages (notes in stub files in
     ./src/validation)
-  - keep track of non null, unique, and primary key as constraints on tables
-    instead of as fields on columns in database schema types?
+  - do obvious perf optimization of relationship loaders (TODOs in comments in
+    file)
+  - make sure resolvers use prepared statements
+  - handle singular relationship to same table (need to keep track of table
+    names used, name them if repeated)
   - come up w/ a config file format .gestaltrc?
   - handle union types (need type column in addition to foreign key, need to
     handle during query generation)
   - handle enum types w/ db enums
-  - do obvious perf optimization of relationship loaders (TODOs in comments in
-    file)
-  - make sure resolvers use prepared statements
+  - refactor: keep track of non null, unique, and primary key as constraints on
+    tables instead of as fields on Column objects?
   - replace change-case w/ individual packages for constant, snake, camel case
   - Define named functions that transform values from the database, allow you to
     attach them / chain them to fields as directives.. sort of like middleware
@@ -27,25 +27,6 @@ TODO:
     because they are free to return nil or raise errors.
 
 Open Questions:
-
-View Permissions?
-  - existing way is to use the graph, anything reachable is viewable,
-    don't expose ids of things that are private
-  - right now i'm using random uuids for secure ids, but need to store a SERIAL
-    on each table for ordering anyways.. is it possible / better to just have a
-    single serial id column and encrypt / decrypt node ids in a way that keeps
-    them secure?
-  - third way in todo above: define different named permission checks as
-    functions of obj and session and then attach them to types or fields with
-    directives
-
-Definition
-  - right now the node interface is used to define types that will be stored in
-    the database - should we instead use a directive?  If we use a directive,
-    that will require the user to define `resolveNode`.
-  - right now plural relations in the db automatically become relay connections,
-    should there be some way to make some use arrays instead w/o edges / node?
-    Leaning no for simplicity
 
 Extended IDL Syntax?
   - It would be nice if you could write relationships as:
@@ -68,5 +49,24 @@ Extended IDL Syntax?
     100% prefer the first syntax, but am concerned about compatibility w/ other
     tools if we introduce syntax extensions.  On the other hand, having a base
     schema that gets prepended already could make this difficult so maybe there
-    isn't that much to lose, and we can always write the complete translated
+    isn't *that* much to lose, and we can always write the complete translated
     schema to a file or something.
+
+View Permissions:
+  - existing way is to use the graph, anything reachable is viewable,
+    don't expose ids of things that are private
+  - right now i'm using random uuids for secure ids, but need to store a SERIAL
+    on each table for ordering anyways.. is it possible / better to just have a
+    single serial id column and encrypt / decrypt node ids in a way that keeps
+    them secure?
+  - third way in todo above: define different named permission checks as
+    functions of obj and session and then attach them to types or fields with
+    directives
+
+Definition:
+  - right now the node interface is used to define types that will be stored in
+    the database - should we instead use a directive?  If we use a directive,
+    that will require the user to define `resolveNode`.
+  - right now plural relations in the db automatically become relay connections,
+    should there be some way to make some use arrays instead w/o edges / node?
+    Leaning no for simplicity

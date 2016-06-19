@@ -40,7 +40,9 @@ export function relationshipsFromObjectTypeDefinition(
         );
         const fieldName = field.name.value;
         const nonNull = field.type.kind === 'NonNullType';
-        const toType = baseType(field.type).name.value;
+        const toType =
+          baseType(field.type).name.value.replace(/Connection$/, '');
+
         relationships.push(
           relationshipFromDirective(
             fieldName,

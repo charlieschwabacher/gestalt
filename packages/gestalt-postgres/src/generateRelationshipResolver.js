@@ -60,9 +60,9 @@ export function generateRelationshipLoaders(
         segmentDescriptionMap,
         relationship,
       );
-      const sql = sqlStringFromQuery(query);
 
       if (relationship.cardinality === 'singular') {
+        const sql = sqlStringFromQuery(query);
         relationshipLoaderMap.set(
           relationship,
           generateSingularRelationshipLoader(
@@ -79,7 +79,6 @@ export function generateRelationshipLoaders(
             db,
             relationship,
             keyColumn,
-            sql,
             query
           )
         );
@@ -107,7 +106,6 @@ function generatePluralRelationshipLoader(
   db: DB,
   relationship: Relationship,
   keyColumn: string,
-  sql: string,
   baseQuery: Query,
 ): DataLoader {
   return new DataLoader(loadKeys => {

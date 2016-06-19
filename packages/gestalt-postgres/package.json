@@ -25,6 +25,7 @@
   "devDependencies": {
     "babel-polyfill": "^6.7.2",
     "babel-register": "^6.7.2",
+    "colors": "^1.1.2",
     "gestalt-graphql": "^0.0.1",
     "mocha": "^2.5.3"
   }

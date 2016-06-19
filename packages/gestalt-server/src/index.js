@@ -41,7 +41,7 @@ export default function gestaltServer(
   );
 
   const {schema, databaseInterface} = generateGraphQLSchema(
-    schemaText || schemaPath && fs.readFileSync(schemaPath, 'utf8'),
+    schemaText || (schemaPath && fs.readFileSync(schemaPath, 'utf8')),
     objects || [],
     mutations || [],
     databaseInterfaceDefinitionFn,

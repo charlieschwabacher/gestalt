@@ -23,5 +23,5 @@ type Post implements Node {
   title: String! @index
   text: String!
   createdAt: Date!
-  author: User! @relationship(path: "<-AUTHORED-")
+  author: User @relationship(path: "<-AUTHORED-")
 }

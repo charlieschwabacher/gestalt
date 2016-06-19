@@ -223,8 +223,9 @@ directly as values in the `inputFields` and `outputFields` objects.
 Creating an API Server
 ----------------------
 ```javascript
-import gestaltServer from 'gestaltServer';
-import gestaltPostgres from 'gestaltPostgres';
+import gestaltServer from 'gestalt-server';
+import gestaltPostgres from 'gestalt-postgres';
+import importAll from 'import-all';
 
 const app = express();
 

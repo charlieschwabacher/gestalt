@@ -21,6 +21,7 @@
     "gestalt-graphql": "^0.0.1"
   },
   "devDependencies": {
+    "colors": "^1.1.2",
     "express": "^4.13.4",
     "gestalt-utils": "^0.0.1"
   }

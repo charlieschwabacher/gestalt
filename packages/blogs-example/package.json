@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "example-blogs",
+  "name": "blogs-example",
   "version": "1.0.0",
   "description": "An example blogging app using Gestalt and Relay",
   "scripts": {
