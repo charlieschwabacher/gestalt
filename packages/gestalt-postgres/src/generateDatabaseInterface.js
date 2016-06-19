@@ -14,6 +14,7 @@ import {generateRelationshipResolver, generateRelationshipLoaders} from
   './generateRelationshipResolver';
 import {invariant, keyMap, baseType} from 'gestalt-utils';
 import DB from './DB';
+import REQUIRED_EXTENSIONS from './REQUIRED_EXTENSIONS';
 
 export default function generateDatabaseInterface(
   databaseURL: string,
@@ -23,7 +24,7 @@ export default function generateDatabaseInterface(
 ): DatabaseInterface {
   const db = new DB({
     url: databaseURL,
-    log: config && config.development,
+    log: config != null && config.development,
   });
 
   const tables: Table[] = [];
@@ -36,7 +37,7 @@ export default function generateDatabaseInterface(
     tablesByName[table.name] = table;
     tables.push(table);
 
-     indices.push(...indicesFromObjectTypeDefinition(definition));
+    indices.push(...indicesFromObjectTypeDefinition(definition));
   });
 
   // having looked at each type and recorded their relationships, we create
@@ -69,6 +70,7 @@ export default function generateDatabaseInterface(
     schema: {
       tables,
       indices,
+      extensions: REQUIRED_EXTENSIONS,
     },
     resolveNode: generateNodeResolver(db),
     generateRelationshipResolver: generateRelationshipResolver(
@@ -187,7 +189,7 @@ export function indicesFromObjectTypeDefinition(
       // is present we don't need to add an additional one
       !field.directives.some(directive => directive.name.value === 'unique')
     ) {
-      indices.push({table, columns: [field.name.value]});
+      indices.push({table, columns: [snake(field.name.value)]});
     }
   });
   return indices;

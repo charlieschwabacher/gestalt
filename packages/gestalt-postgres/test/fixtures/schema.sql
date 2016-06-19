@@ -20,7 +20,9 @@ CREATE TABLE posts (
   created_at timestamp without time zone NOT NULL,
   authored_by_user_id uuid NOT NULL REFERENCES users (id)
 );
+
 CREATE INDEX ON posts (title);
+
 CREATE INDEX ON posts (authored_by_user_id);
 
 CREATE TABLE comments (
@@ -31,7 +33,9 @@ CREATE TABLE comments (
   authored_by_user_id uuid REFERENCES users (id),
   inspired_by_post_id uuid NOT NULL REFERENCES posts (id)
 );
+
 CREATE INDEX ON comments (authored_by_user_id);
+
 CREATE INDEX ON comments (inspired_by_post_id);
 
 CREATE TABLE user_followed_users (
@@ -39,4 +43,5 @@ CREATE TABLE user_followed_users (
   followed_user_id uuid NOT NULL REFERENCES users (id),
   UNIQUE (user_id, followed_user_id)
 );
+
 CREATE INDEX ON user_followed_users (followed_user_id);

@@ -50,6 +50,7 @@ type Image {
 }
 
 type Page implements Node {
+  id: ID!
   title: String! @index
   content: String
   author: User! @relationship(path: "<-CREATED-")

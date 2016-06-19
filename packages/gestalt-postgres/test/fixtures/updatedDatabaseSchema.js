@@ -3,6 +3,9 @@
 import type {DatabaseSchema} from 'gestalt-utils';
 
 const schema: DatabaseSchema = {
+  extensions: [
+    'uuid-ossp',
+  ],
   tables: [
     {
       name: 'users',
@@ -140,21 +143,28 @@ const schema: DatabaseSchema = {
           type: 'SERIAL',
           primaryKey: false,
           nonNull: true,
-          unique: true
+          unique: true,
+        },
+        {
+          name: 'id',
+          type: 'uuid',
+          primaryKey: true,
+          nonNull: true,
+          unique: false,
         },
         {
           name: 'title',
           type: 'text',
           primaryKey: false,
           nonNull: true,
-          unique: false
+          unique: false,
         },
         {
           name: 'content',
           type: 'text',
           primaryKey: false,
           nonNull: false,
-          unique: false
+          unique: false,
         },
         {
           name: 'created_by_user_id',
@@ -164,11 +174,11 @@ const schema: DatabaseSchema = {
           unique: false,
           references: {
             table: 'users',
-            column: 'id'
-          }
+            column: 'id',
+          },
         }
       ],
-      constraints: []
+      constraints: [],
     },
     {
       name: 'user_followed_users',
@@ -181,8 +191,8 @@ const schema: DatabaseSchema = {
           unique: false,
           references: {
             table: 'users',
-            column: 'id'
-          }
+            column: 'id',
+          },
         },
         {
           name: 'followed_user_id',
@@ -192,53 +202,53 @@ const schema: DatabaseSchema = {
           unique: false,
           references: {
             table: 'users',
-            column: 'id'
-          }
-        }
+            column: 'id',
+          },
+        },
       ],
       constraints: [
         {
           type: 'UNIQUE',
           columns: [
             'user_id',
-            'followed_user_id'
-          ]
-        }
-      ]
-    }
+            'followed_user_id',
+          ],
+        },
+      ],
+    },
   ],
   indices: [
     {
       table: 'users',
       columns: [
-        'firstName'
-      ]
+        'first_name',
+      ],
     },
     {
       table: 'pages',
       columns: [
-        'title'
-      ]
+        'title',
+      ],
     },
     {
       table: 'user_followed_users',
       columns: [
-        'followed_user_id'
-      ]
+        'followed_user_id',
+      ],
     },
     {
       table: 'posts',
       columns: [
-        'authored_by_user_id'
-      ]
+        'authored_by_user_id',
+      ],
     },
     {
       table: 'pages',
       columns: [
-        'created_by_user_id'
-      ]
-    }
-  ]
+        'created_by_user_id',
+      ],
+    },
+  ],
 };
 
 export default schema;

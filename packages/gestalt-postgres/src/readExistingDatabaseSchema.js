@@ -1,8 +1,8 @@
 // @flow
 // TODO: I think its possible to load this data in the right format, or at least
-// something a lot closer to the right format, entirely w/ SQL.  I think that
-// would be a better approach. If anyone who knows how to do that reads this,
-// please help! 😊
+// something a lot closer to the right format, entirely w/ SQL.  It seems like
+// that could be a better approach. If anyone who knows how to do that reads
+// this, please help! 😊
 
 import type {DatabaseSchema, Constraint, Index} from 'gestalt-utils';
 import {camelizeKeys, keyValMap, sortBy} from 'gestalt-utils';
@@ -13,8 +13,9 @@ export async function readExistingDatabaseSchema(
 ): DatabaseSchema {
   const db = new DB({url: databaseUrl, log: false});
 
-  const [columns, columnConstraints, tableConstraints, indices] = (
+  const [extensions, columns, columnConstraints, tableConstraints, indices] = (
     await Promise.all([
+      loadExtensions(db),
       loadColumns(db),
       loadColumnConstraints(db),
       loadTableConstraints(db),
@@ -51,6 +52,7 @@ export async function readExistingDatabaseSchema(
   return {
     tables,
     indices,
+    extensions,
   };
 }
 
@@ -188,6 +190,11 @@ function loadIndices(db: DB): Promise<Index[]> {
       t.relname,
       i.relname
   `);
+}
+
+export async function loadExtensions(db: DB): Promise<string[]> {
+  const rows = await db.query('SELECT extname FROM pg_extension;');
+  return rows.map(({extname}) => extname);
 }
 
 export function normalizeSchemaForComparison(

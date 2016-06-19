@@ -27,7 +27,7 @@ export type DatabaseInterface = {
   generateRelationshipLoaders: (relationships: Relationship[]) =>
     Map<Relationship, DataLoader>,
   db?: any,
-}
+};
 
 export type DatabaseInterfaceDefinitionFn = (
   objectTypes: ObjectTypeDefinition,
@@ -38,19 +38,20 @@ export type DatabaseInterfaceDefinitionFn = (
 export type DatabaseSchema = {
   tables: Table[],
   indices: Index[],
-}
+  extensions: string[],
+};
 
 export type Table = {
   name: string,
   columns: Column[],
   constraints: Constraint[],
-}
+};
 
 export type Index = {
   name?: string,
   table: string,
   columns: string[],
-}
+};
 
 export type Column = {
   name: string,
@@ -62,22 +63,83 @@ export type Column = {
     table: string,
     column: string,
   },
-}
+};
 
 type Constraint = {
   name?: string,
   type: 'UNIQUE',
   columns: string[],
-}
+};
 
 export type ColumnType = 'uuid' | 'jsonb' | 'timestamp' | 'text' | 'integer' |
-  'double precision' | 'money' | 'SERIAL'
+  'double precision' | 'money' | 'SERIAL';
+
+export type DatabaseSchemaMigration = {
+  sql: string,
+  operations: DatabaseSchemaMigrationOperation[],
+};
+
+export type DatabaseSchemaMigrationOperation = CreateTable | AddColumn |
+  ChangeColumnType | CreateIndex | AddUniquenessConstraint |
+  RemoveUniquenessConstraint | MakeNullable | MakeNonNullable | CreateExtension;
+
+export type CreateTable = {
+  type: 'CreateTable',
+  table: Table,
+};
+
+export type AddColumn = {
+  type: 'AddColumn',
+  table: Table,
+  column: Column,
+};
+
+export type ChangeColumnType = {
+  type: 'ChangeColumnType',
+  table: Table,
+  column: Column,
+  toType: ColumnType,
+};
+
+export type CreateIndex = {
+  type: 'CreateIndex',
+  index: Index,
+};
+
+export type AddUniquenessConstraint = {
+  type: 'AddUniquenessConstraint',
+  table: Table,
+  constraint: Constraint,
+};
+
+export type RemoveUniquenessConstraint = {
+  type: 'RemoveUniquenessConstraint',
+  table: Table,
+  constraint: Constraint,
+};
+
+export type MakeNullable = {
+  type: 'MakeNullable',
+  table: Table,
+  column: Column,
+};
+
+export type MakeNonNullable = {
+  type: 'MakeNonNullable',
+  table: Table,
+  column: Column,
+};
+
+export type CreateExtension = {
+  type: 'CreateExtension',
+  extension: string,
+}
 
 export type Relationship = {
   fieldName: string,
   cardinality: 'singular' | 'plural',
   path: RelationshipSegment[],
-}
+};
 
 export type RelationshipSegment = {
   fromType: string,
@@ -87,12 +149,12 @@ export type RelationshipSegment = {
   cardinality: 'singular' | 'plural',
   nonNull: boolean,
   signature: string,
-}
+};
 
 export type RelationshipSegmentPair = {
   in?: RelationshipSegment,
   out?: RelationshipSegment,
-}
+};
 
 export type RelationshipSegmentDescription = {
   type: 'join',
@@ -104,7 +166,7 @@ export type RelationshipSegmentDescription = {
   signature: string,
   pair: RelationshipSegmentPair,
   storage: ForeignKeyDescription,
-}
+};
 
 export type JoinTableDescription = {
   name: string,
@@ -112,7 +174,7 @@ export type JoinTableDescription = {
   rightTableName: string,
   leftColumnName: string,
   rightColumnName: string,
-}
+};
 
 export type ForeignKeyDescription = {
   direction: 'in' | 'out',
@@ -120,7 +182,7 @@ export type ForeignKeyDescription = {
   referencedTable: string,
   column: string,
   nonNull: boolean,
-}
+};
 
 export type RelationshipSegmentDescriptionMap =
   {[key: string]: RelationshipSegmentDescription};
@@ -158,7 +220,7 @@ export type Query = {
   conditions: Condition[],
   order?: Order,
   limit?: number,
-}
+};
 
 export type Join = {
   table: string,
@@ -166,19 +228,19 @@ export type Join = {
     left: {table: string, column: string},
     right: {table: string, column: string},
   },
-}
+};
 
 export type Condition = {
   table: string,
   column: string,
   operator: string,
   value: string,
-}
+};
 
 export type Order = {
   column: string,
   direction: 'ASC' | 'DESC',
-}
+};
 
 
 // config for gestalt server

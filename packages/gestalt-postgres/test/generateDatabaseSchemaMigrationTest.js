@@ -17,18 +17,23 @@ describe('generateDatabaseSchemaMigration', () => {
     () => {
       assert.equal(
         expectedSQLSchema,
-        generateDatabaseSchemaMigration(expectedDatabaseSchema)
+        generateDatabaseSchemaMigration(expectedDatabaseSchema).sql
       );
     },
   );
 
   it('generates SQL updating an existing schema', () => {
+    const schema = generateDatabaseSchemaMigration(
+      updatedDatabaseSchema,
+      expectedDatabaseSchema,
+    );
+
     assert.equal(
       expectedSQLSchemaUpdate,
       generateDatabaseSchemaMigration(
-        expectedDatabaseSchema,
         updatedDatabaseSchema,
-      ),
+        expectedDatabaseSchema,
+      ).sql,
     );
   });
 });

@@ -3,6 +3,9 @@
 import type {DatabaseSchema} from 'gestalt-utils';
 
 const schema: DatabaseSchema = {
+  extensions: [
+    'uuid-ossp',
+  ],
   tables: [
     {
       name: 'users',

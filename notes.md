@@ -7,7 +7,8 @@ TODO:
 ------------------------------ MAKE PUBLIC HERE --------------------------------
 
   - handle PageInfo / totalCount on connections w/ lookahead and better
-    batching, write unit tests
+    batching (would it be better to use stored procedures in PL/pgSQL?), un-pend
+    unit tests
   - AST validation for helpful error messages (notes in stub files in
     ./src/validation)
   - keep track of non null, unique, and primary key as constraints on tables
