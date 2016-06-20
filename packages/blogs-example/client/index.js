@@ -6,7 +6,7 @@ import useRelay from 'react-router-relay';
 import routes from './routes';
 
 Relay.injectNetworkLayer(
-  new DefaultNetworkLayer('//localhost:3001/graphql', {
+  new DefaultNetworkLayer('/graphql', {
     credentials: 'include',
   })
 );

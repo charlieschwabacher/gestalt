@@ -29,7 +29,7 @@ export default async function(name: string): Promise {
       const {yesno} = await get({
         name: 'yesno',
         message: `Directory ${name} already exists. Continue? [yes/no]`,
-        validator: /y[es]*|n[o]?/,
+        validator: /^(y(es)?|no?)$/i,
         warning: 'Must respond yes or no',
         default: 'no',
       });
@@ -43,32 +43,11 @@ export default async function(name: string): Promise {
       }
     }
 
-    // ask for necessary config information
-    const config = await get({
-      properties: {
-        databaseAdapter: {
-          message: 'what database adapter should this project use?',
-          default: 'gestalt-postgres',
-        },
-      },
+    const {databaseURL} = await get({
+      name: 'databaseURL',
+      message: 'what is the url to your database?',
+      default: `postgres://localhost/${snake(name)}`,
     });
-    config.databaseAdapterFn = camel(config.databaseAdapter);
-
-    // ask for database adapter specific config
-    // TODO: we should require this from the adapter package
-    const databaseAdapterConfigProperties = {
-      'gestalt-postgres': {
-        databaseURL: {
-          message: 'what is the url to your database?',
-          default: `postgres://localhost/${snake(name)}`
-        },
-      },
-    };
-    if (databaseAdapterConfigProperties[config.databaseAdapter] != null) {
-      config.databaseAdapterConfig = await get({
-        properties: databaseAdapterConfigProperties[config.databaseAdapter]
-      });
-    }
 
     console.log(`Creating a new Gestalt project in ${root}...`);
 
@@ -95,7 +74,7 @@ export default async function(name: string): Promise {
     console.log(
       await exec(
         'npm install --save --save-exact express ' +
-        `gestalt-server@${version} ${config.databaseAdapter}@${version}`
+        `gestalt-server@${version} gestalt-postgres@${version}`
       )
     );
 
@@ -110,7 +89,7 @@ export default async function(name: string): Promise {
       [
         'schema.graphql',
         'objects/session.js',
-        'mutations/.gitkeep'
+        'mutations/.gitkeep',
       ].map(
         fileName => copy(
           path.join(__dirname, '../template', fileName),
@@ -127,7 +106,7 @@ export default async function(name: string): Promise {
           path.join(__dirname, '../template/server.js.ejs'),
           'utf8',
         ),
-        config
+        {databaseURL}
       )
     );
 

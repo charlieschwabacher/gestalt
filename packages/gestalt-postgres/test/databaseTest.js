@@ -1,7 +1,7 @@
 import fs from 'fs';
 import assert from 'assert';
 import DB from '../src/DB';
-import {readExistingDatabaseSchema, normalizeSchemaForComparison} from
+import readExistingDatabaseSchema, {normalizeSchemaForComparison} from
   '../src/readExistingDatabaseSchema';
 import expectedDatabaseSchema from './fixtures/expectedDatabaseSchema';
 

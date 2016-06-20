@@ -8,7 +8,7 @@ import type {DatabaseSchema, Constraint, Index} from 'gestalt-utils';
 import {camelizeKeys, keyValMap, sortBy} from 'gestalt-utils';
 import DB from './DB';
 
-export async function readExistingDatabaseSchema(
+export default async function readExistingDatabaseSchema(
   databaseUrl: string,
 ): DatabaseSchema {
   const db = new DB({url: databaseUrl, log: false});

@@ -1,6 +1,6 @@
 {
   "name": "gestalt-cli",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "command line tools for the gestalt framework",
   "main": "lib/index.js",
   "repository": {
@@ -9,7 +9,6 @@
   },
   "scripts": {
     "test": "mocha",
-    "gestalt": "node ./lib/index.js",
     "build": "babel src --out-dir lib/",
     "watch": "babel --watch src --out-dir lib/"
   },
@@ -20,15 +19,18 @@
   "license": "MIT",
   "dependencies": {
     "babel-polyfill": "^6.9.1",
+    "babel-register": "^6.9.0",
     "change-case": "^2.3.1",
+    "colors": "^1.1.2",
     "commander": "^2.9.0",
     "ejs": "^2.4.2",
-    "gestalt-graphql": "0.0.1",
-    "gestalt-postgres": "0.0.1",
-    "gestalt-utils": "0.0.1",
+    "gestalt-graphql": "^0.0.1",
+    "gestalt-postgres": "^0.0.2",
+    "gestalt-utils": "^0.0.1",
     "graphql": "^0.6.0",
     "import-all": "^1.0.1",
     "prompt": "^1.0.0",
-    "rimraf": "^2.5.2"
+    "rimraf": "^2.5.2",
+    "semver": "^5.1.0"
   }
 }

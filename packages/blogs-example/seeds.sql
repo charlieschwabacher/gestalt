@@ -1,10 +1,10 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-INSERT INTO users (id, email, password_hash, created_at, first_name, last_name)
+INSERT INTO users (id, email, password_hash, first_name, last_name)
 VALUES
-  ('00000000-0000-0000-0000-000000000001', 'test1@test.com', '$2a$10$INP2f5N10jopgqxZ1yITj.n0qkPuMRCUMzd4TsAOAFcfWxu2N2tA.', now(), 'Chester', 'Tester'),
-  ('00000000-0000-0000-0000-000000000002', 'test2@test.com', '$2a$10$INP2f5N10jopgqxZ1yITj.n0qkPuMRCUMzd4TsAOAFcfWxu2N2tA.', now(), 'Lester', 'Tester'),
-  ('00000000-0000-0000-0000-000000000003', 'test3@test.com', '$2a$10$INP2f5N10jopgqxZ1yITj.n0qkPuMRCUMzd4TsAOAFcfWxu2N2tA.', now(), 'Wester', 'Tester');
+  ('00000000-0000-0000-0000-000000000001', 'test1@test.com', '$2a$10$INP2f5N10jopgqxZ1yITj.n0qkPuMRCUMzd4TsAOAFcfWxu2N2tA.', 'Chester', 'Tester'),
+  ('00000000-0000-0000-0000-000000000002', 'test2@test.com', '$2a$10$INP2f5N10jopgqxZ1yITj.n0qkPuMRCUMzd4TsAOAFcfWxu2N2tA.', 'Lester', 'Tester'),
+  ('00000000-0000-0000-0000-000000000003', 'test3@test.com', '$2a$10$INP2f5N10jopgqxZ1yITj.n0qkPuMRCUMzd4TsAOAFcfWxu2N2tA.', 'Wester', 'Tester');
 
 INSERT INTO user_followed_users (user_id, followed_user_id)
 VALUES
@@ -30,9 +30,3 @@ VALUES
   ('00000000-0000-0000-0000-000000000017', 'n', 'lorem ipsum', now() + interval '14 hours', '00000000-0000-0000-0000-000000000003'),
   ('00000000-0000-0000-0000-000000000018', 'o', 'lorem ipsum', now() + interval '15 hours', '00000000-0000-0000-0000-000000000003'),
   ('00000000-0000-0000-0000-000000000019', 'p', 'lorem ipsum', now() + interval '16 hours', '00000000-0000-0000-0000-000000000003');
-
-INSERT INTO comments (id, text, created_at, authored_by_user_id, inspired_by_post_id)
-VALUES
-  ('00000000-0000-0000-0000-000000000020', 'hey', now(), '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000004'),
-  ('00000000-0000-0000-0000-000000000021', 'hey', now(), '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000005'),
-  ('00000000-0000-0000-0000-000000000022', 'hey', now(), '00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000006');
