@@ -9,7 +9,6 @@ import ejs from 'ejs';
 import {get, exec, copy} from './cli';
 import {invariant} from 'gestalt-utils';
 import {snake, camel} from 'change-case';
-import {version} from '../package.json';
 
 export default async function(name: string): Promise {
   try {
@@ -62,7 +61,7 @@ export default async function(name: string): Promise {
         version: '0.0.1',
         private: true,
         scripts: {
-          start: 'node server.js'
+          start: 'babel-node server.js'
         },
       }, null, 2)
     );
@@ -73,9 +72,13 @@ export default async function(name: string): Promise {
 
     console.log(
       await exec(
-        'npm install --save --save-exact express ' +
-        `gestalt-server@${version} gestalt-postgres@${version}`
-      )
+        'npm install --save --save-exact express import-all gestalt-server ' +
+        'gestalt-postgres'
+      ),
+      await exec(
+        'npm install --save-dev babel-cli babel-preset-es2015 ' +
+        'babel-preset-stage-0'
+      ),
     );
 
     console.log('Copying files...');
@@ -87,6 +90,7 @@ export default async function(name: string): Promise {
     // copy static files
     await Promise.all(
       [
+        '.babelrc',
         'schema.graphql',
         'objects/session.js',
         'mutations/.gitkeep',

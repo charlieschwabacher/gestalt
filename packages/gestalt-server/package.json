@@ -1,6 +1,6 @@
 {
   "name": "gestalt-server",
-  "version": "0.0.2",
+  "version": "0.0.6",
   "description": "schema defined graphql server",
   "main": "lib/index.js",
   "repository": {
@@ -15,13 +15,13 @@
   "author": "Charlie Schwabacher",
   "license": "MIT",
   "dependencies": {
+    "colors": "^1.1.2",
     "cookie-session": "^1.2.0",
     "express-graphql": "^0.5.3",
-    "gestalt-graphql": "^0.0.1"
+    "gestalt-graphql": "^0.0.6"
   },
   "devDependencies": {
-    "colors": "^1.1.2",
     "express": "^4.13.4",
-    "gestalt-utils": "^0.0.1"
+    "gestalt-utils": "^0.0.6"
   }
 }
