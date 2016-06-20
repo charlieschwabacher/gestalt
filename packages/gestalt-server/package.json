@@ -15,12 +15,12 @@
   "author": "Charlie Schwabacher",
   "license": "MIT",
   "dependencies": {
+    "colors": "^1.1.2",
     "cookie-session": "^1.2.0",
     "express-graphql": "^0.5.3",
     "gestalt-graphql": "^0.0.1"
   },
   "devDependencies": {
-    "colors": "^1.1.2",
     "express": "^4.13.4",
     "gestalt-utils": "^0.0.1"
   }

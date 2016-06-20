@@ -73,9 +73,13 @@ export default async function(name: string): Promise {
 
     console.log(
       await exec(
-        'npm install --save --save-exact express ' +
+        'npm install --save --save-exact express import-all ' +
         `gestalt-server@${version} gestalt-postgres@${version}`
-      )
+      ),
+      await exec(
+        'npm install --save-dev babel-cli babel-preset-es2015 ' +
+        'babel-preset-stage-0'
+      ),
     );
 
     console.log('Copying files...');
@@ -87,6 +91,7 @@ export default async function(name: string): Promise {
     // copy static files
     await Promise.all(
       [
+        '.babelrc',
         'schema.graphql',
         'objects/session.js',
         'mutations/.gitkeep',
