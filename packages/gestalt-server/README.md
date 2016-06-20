@@ -1,5 +1,5 @@
-gestalt-postgres
-----------------
+gestalt-server
+--------------
 
 Connect middleware based on `express-graphql` to create a GraphQL API server
 using the Gestalt framework.  Accepts the following options:
