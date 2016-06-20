@@ -26,17 +26,22 @@ export default function generateGraphQLSchema(
   config?: GestaltServerConfig,
 ): {schema: GraphQLSchema, databaseInterface: DatabaseInterface} {
   const ast = parse(schemaText);
-  const schema = generateGraphQLSchemaWithoutResolution(ast, mutations);
 
-  // log generated schema
-  // console.log(printSchema(schema));
-
+  // we take inventory of object definitions and relationships before the ast
+  // is modified
   const {objectDefinitions, relationships} = databaseInfoFromAST(ast);
   const databaseInterface = databaseInterfaceDefinitionFn(
     objectDefinitions,
     relationships,
     config,
   );
+
+  // this modifies the AST by prepending the base schema, removing hidden
+  // fields, and inserting connection types
+  const schema = generateGraphQLSchemaWithoutResolution(ast, mutations);
+
+  // log generated schema
+  // console.log(printSchema(schema));
 
   defineScalarTypes(schema);
   defineBaseSchemaResolution(schema, databaseInterface);
