@@ -1,7 +1,7 @@
 {
+  "private": true,
   "name": "blogs-example",
   "version": "0.0.2",
-  "private": true,
   "description": "An example blogging app using Gestalt and Relay",
   "scripts": {
     "start": "babel-node server.js",
