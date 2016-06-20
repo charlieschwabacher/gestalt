@@ -277,4 +277,4 @@ different backend, please consider writing one!
 Roadmap
 -------
 
-check out `notes.md` for current todos and progress.
+See `notes.md` for current todos and progress.
