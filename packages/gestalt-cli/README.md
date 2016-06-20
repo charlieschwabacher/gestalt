@@ -10,7 +10,6 @@ and then
 - `gestalt init {name}` - creates a new project
   - `mkdir {name}`
   - `cd {name}`
-  - `git init`
   - `writes package.json`
   - `npm install --save gestalt gestalt-postgres`
   - creates `server.js`

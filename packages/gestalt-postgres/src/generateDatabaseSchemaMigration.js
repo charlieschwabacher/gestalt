@@ -23,7 +23,7 @@
 import type {DatabaseSchema, Table, Column, Index, DatabaseSchemaMigration,
   DatabaseSchemaMigrationOperation, ColumnType} from 'gestalt-utils';
 import {keyMap, group, invariant} from 'gestalt-utils';
-import {readExistingDatabaseSchema} from './readExistingDatabaseSchema';
+import readExistingDatabaseSchema from './readExistingDatabaseSchema';
 
 const EMPTY_SCHEMA = {tables: [], indices: [], extensions: []};
 

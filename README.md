@@ -231,7 +231,9 @@ const app = express();
 
 app.use('/graphql', gestalt({
   schemaPath: `${__dirname}/schema.graphql`,
-  database: gestaltPostgres('postgres://localhost'),
+  database: gestaltPostgres({
+    databaseURL: 'postgres://localhost'
+  }),
   objects: importAll(`${__dirname}/objects`),
   mutations: importAll(`${__dirname}/mutations`),
   secret: '༼ つ ◕_◕ ༽つ',

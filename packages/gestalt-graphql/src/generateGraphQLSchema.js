@@ -226,19 +226,6 @@ function defineFieldResolve(
   field.resolve = resolve;
 }
 
-function hasDirective(
-  directiveName: string,
-  expected: boolean = true,
-): (node: Node) => boolean {
-  return (node: Node) =>
-    (
-      node.directives &&
-      node.directives.some(
-        directive => (directive.name.value === directiveName)
-      )
-    ) === expected;
-}
-
 function resolveSession(
   object: Object,
   args: Object,

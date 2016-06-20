@@ -3,7 +3,7 @@ import {relationshipFromPathString} from
   '../src/databaseInfoFromAST';
 
 describe('databaseInfoFromAST', () => {
-
+  xit('generates correct info');
 });
 
 describe('relationshipFromPathString', () => {

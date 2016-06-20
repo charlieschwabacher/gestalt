@@ -1,12 +1,7 @@
 TODO:
-  - write migration generation code: when schema changes run cli command to
-    generate a database migration.
-
------------------------------- MAKE PUBLIC HERE --------------------------------
-
+  - un-pend unit tests for generateRelationshipResolver
   - handle PageInfo / totalCount on connections w/ lookahead and better
-    batching (would it be better to use stored procedures in PL/pgSQL?), un-pend
-    unit tests
+    batching (would it be better to use stored procedures in PL/pgSQL?)
   - AST validation for helpful error messages (notes in stub files in
     ./src/validation)
   - do obvious perf optimization of relationship loaders (TODOs in comments in
@@ -14,17 +9,20 @@ TODO:
   - make sure resolvers use prepared statements
   - handle singular relationship to same table (need to keep track of table
     names used, name them if repeated)
-  - come up w/ a config file format .gestaltrc?
   - handle union types (need type column in addition to foreign key, need to
     handle during query generation)
   - handle enum types w/ db enums
   - refactor: keep track of non null, unique, and primary key as constraints on
     tables instead of as fields on Column objects?
-  - replace change-case w/ individual packages for constant, snake, camel case
+  - refactor: code cleanup in CLI, move code into main package allowing globally
+    installed CLI module to be updated less frequently
+  - refactor: replace change-case w/ individual modules for constant, snake,
+    camel case (change-case includes other unused modules)
   - Define named functions that transform values from the database, allow you to
     attach them / chain them to fields as directives.. sort of like middleware
     for field resolution.  These will also be useful for permissions checks
     because they are free to return nil or raise errors.
+  - come up w/ a config file format .gestaltrc?
 
 Open Questions:
 
