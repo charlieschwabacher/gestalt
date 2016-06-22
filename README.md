@@ -1,38 +1,106 @@
+<p align='center'>
+  <img
+    width=58
+    height=50
+    src='https://cdn.rawgit.com/charlieschwabacher/gestalt/master/logo.svg'
+  />
+</p>
+
 Gestalt
 =======
 
-Gestalt is a library that allows you to use the GraphQL schema language and a
-small set of directives to define a GraphQL schema, database schema, and API
-server with only a few lines of code.
+Gestalt lets you use the [GraphQL](http://graphql.org/) schema language and a
+small set of directives to define an API with a PostgreSQL backend
+declaratively, *really quickly*, and with a *tiny* amount of code.
 
 
-GraphQL Schema Language
+GraphQL schema language
 -----------------------
-The GraphQL Schema Language is a shorthand to describe types in a GraphQL schema
-and a recent addition to the GraphQL spec.  The Schema Language doesn't cover
-resolution, but if you are willing to accept some reasonable defaults, Gestalt
-is able to define resolution for you.
+The GraphQL schema language (also called IDL for *interface definition
+language*) is a [proposed](https://github.com/facebook/graphql/pull/90) addition
+to the GraphQL spec adding a shorthand to describe types in a GraphQL schema.
+While it isn't officially part of the spec, the
+[reference implementation](https://github.com/graphql/graphql-js) of GraphQL
+already includes a parser for the IDL, and if you have spent much time with the
+GraphQL [docs](http://graphql.org/docs/typesystem/) you have probably
+already seen it.  It looks like this:
+
+```graphql
+type Human {
+  id: String!
+  name: String
+  age: Int
+}
+```
+
+The Schema Language can be used to define the types in a schema: Objects,
+Enums, Interfaces, etc., but it doesn't cover resolution.  To actually create a
+usable GraphQL API you end up writing a lot of code like this:
+
+```js
+import {
+  GraphQLInt,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLString
+} from 'graphql';
+
+export default new GraphQLObjectType({
+    name: 'Human',
+    fields: {
+      id: {
+        type: new GraphQLNonNull(GraphQLString),
+        resolve(obj) {
+          return obj.id;
+        }
+      },
+      name: {
+        type: GraphQLString,
+        resolve(obj) {
+          return obj.name;
+        }
+      },
+      age: {
+        type: GraphQLInt,
+        resolve(obj) {
+          return obj.age;
+        }
+      }
+    }
+  })
+});
+```
+
+It would be nice to just write the first thing!  If you use Gestalt and are
+willing to accept some reasonable defaults, you can.  Gestalt understands how
+your objects are related and is able to define resolution for you.
 
 Gestalt is designed to make it really easy for small teams of 1-10 developers to
 build GraphQL APIs quickly.  Its also designed not to lock you in - you can
-build an API with Gestalt, make changes quickly, and then replace pieces of it
-one at a time as your app grows and your needs change.
+build an API with Gestalt, make changes quickly, and drop down to javascript
+whenever you need to do something your own way.
 
 
-Writing a Schema
+Getting started with Gestalt
+-----------------------------
+
+If you want to jump straight to the code, here is an
+[example project](//github.com/charlieschwabacher/gestalt/tree/master/packages/blogs-example).
+If you want a hands on introduction, this
+[step by step tutorial](//github.com/charlieschwabacher/gestalt/blob/master/docs/getting-started.md).
+will walk you through creating a new project.
+
+Writing a schema
 ----------------
 The first step towards building an app with Gestalt is writing a schema.
 Gestalt defines the base mutation and query types, the Relay Node interface and
 connection types, and a few directives and additional scalar types for you.  In
-the `schema.graphql` file you provide, you are only expected to define your
-object types.
+the `schema.graphql` file you provide, you only define types specific to your
+app.
 
-Any Objects you define extending the Node interface result in database tables.
-Other objects and arrays they reference are stored in Postgres as json, and
-relationships between nodes are specified with directives.
-
-Mutations are defined separately using javascript and are attached to the schema
-in a second pass.
+Any Objects you define implementing the Node interface result in database
+tables.  Other objects and arrays they reference are stored in PostgreSQL as
+JSON, and relationships between nodes are specified with directives.
 
 ```GraphQL
 type User extends Node {
@@ -43,27 +111,12 @@ type User extends Node {
 }
 ```
 
-Session Type
-------------
-Gestalt defines two fields on the query root, `node` and `session` - you are
-expected to define the Session type as the entry point to your schema.  Session
-is not a Node, so it won't be stored in the database and you will need to define
-custom resolution for its fields.  A session object is made accessible in the
-query context.  It is both readable and writable, and any changes are persisted
-between requests.
-
-```GraphQL
-type Session {
-  currentUser: User
-}
-```
-
-Object Relationships
+Object relationships
 --------------------
-In addition to Types and their fields, Gestalt needs extra information about
-the relationships between objects in order to generate a database schema and
-efficient queries for resolution.  You provide this using the `@relationship`
-directive and a syntax inspired by Neo4j's Cypher query language.
+Gestalt needs information about the relationships between objects to generate a
+database schema and efficient queries for resolution.  You provide this using
+the `@relationship` directive and a syntax inspired by
+[Neo4j](//github.com/neo4j/neo4j)'s Cypher query language.
 
 ```GraphQL
 type User implements Node {
@@ -84,6 +137,12 @@ Arrows with identical labels and types at their head and tail are matched, and
 the combination of their cardinalities determines how the relationship between
 their types will be stored in the database.
 
+In the example above the relationship 'user authored post' is represented with
+an arrow pointing out from `User` and in to `Post`.  Because a user can author
+many posts, but each post has only one author, the arrow on the posts field of
+the User type is plural (`=`) and the arrow on the author field of the Post type
+is singular (`-`).
+
 A plural arrow also indicates that a field should be a Relay connection -
 Based on the directives in the example above, Gestalt would create
 `PostsConnection` and `PostEdge` types, and update the type of the `posts`
@@ -93,10 +152,10 @@ argument to connection field and create a `PostsOrder` enum type allowing the
 connection to be sorted.
 
 Gestalt will calculate how to store and query relationships efficiently -
-continuing with example above, if we are using the `gestalt-postgres` adapter,
-Gestalt will add a foreign key `authored_by_user_id` to the `posts` table.
+continuing with example above, Gestalt will add a foreign key
+`authored_by_user_id` to the `posts` table.
 
-Arrows can be extended to represent more complex relationships:
+Relationships can be extended to represent more complex relationships:
 
 ```GraphQL
 type User implements Node {
@@ -124,7 +183,7 @@ complex query.  Gestalt will generate an efficient query to resolve the field
 by joining the `user_followed_users` and `posts` tables.
 
 
-Other Directives
+Other directives
 ----------------
 In addition to `@relationship`, there are a few more directives used by Gestalt
 to provide extra information about how to create the database and GraphQL
@@ -146,7 +205,23 @@ schemas.
   constraint in the database.
 
 
-Defining Custom Resolution
+Session type
+------------
+Gestalt defines two fields on the query root, `node` and `session` - you are
+expected to define the Session type as the entry point to your schema.  Session
+is not a Node, so it won't be stored in the database and you will need to define
+custom resolution for its fields.  A session object is made accessible in the
+query context.  It is both readable and writable, and any changes are persisted
+between requests.
+
+```GraphQL
+type Session {
+  currentUser: User
+}
+```
+
+
+Defining custom resolution
 --------------------------
 Sometimes more processing is needed for fields in your API.  Its easy to define
 custom resolvers using gestalt.  Given the following User type:
@@ -190,7 +265,7 @@ every object, and when it is present for an object, it doesn't need to be
 defined for every field.
 
 
-Defining Mutations
+Defining mutations
 ------------------
 Mutation definitions depend on the types you define with the schema language,
 so you create them as functions of an object mapping type names to GraphQL
@@ -220,8 +295,12 @@ same as what you would pass to `graphql-relay-js`'s
 directly as values in the `inputFields` and `outputFields` objects.
 
 
-Creating an API Server
+Creating an API server
 ----------------------
+
+Gestalt provides Connect middleware based on `express-graphql` to respond to
+GraphQL API requests.
+
 ```javascript
 import gestaltServer from 'gestalt-server';
 import gestaltPostgres from 'gestalt-postgres';
@@ -229,21 +308,20 @@ import importAll from 'import-all';
 
 const app = express();
 
-app.use('/graphql', gestalt({
+app.use('/graphql', gestaltServer({
   schemaPath: `${__dirname}/schema.graphql`,
   database: gestaltPostgres({
     databaseURL: 'postgres://localhost'
   }),
   objects: importAll(`${__dirname}/objects`),
   mutations: importAll(`${__dirname}/mutations`),
-  secret: '༼ つ ◕_◕ ༽つ',
+  secret: '!',
 }));
 
 app.listen(3000);
 ```
 
-Gestalt provides Connect middleware based on `express-graphql` to respond to
-GraphQL API requests.  It accepts the following options:
+Gestalt server accepts the following options:
 
 - `schemaPath` - the path to your schema definition in GraphQL
 - `database` - a database adapter
@@ -256,25 +334,47 @@ GraphQL API requests.  It accepts the following options:
 
 Should I use Gestalt?
 ---------------------
+Yes! Gestalt is cool 😀
+
 If you are trying to add an API to a big existing app, or if you have
 non-standard storage requirements, Gestalt might not be the best choice for you.
 
 If you are starting a new Relay app from scratch, Gestalt should save you a lot
 of time and make your schema easier to work with.
 
-Gestalt is usable now - but it's still very early.  The javascript API is likely
-to change before it gets to a version 1.0.  Any changes will aim to be easy to
-work around.
+Gestalt is usable now - but it's still very early.  There are likely to be some
+major changes before it gets to version 1.0.  That said - changes will not be
+gratuitous and will aim to be easy to work around.
 
 
-Other Database Adapters
+Other database adapters
 -----------------------
 I have written a backend using PostgreSQL, but Gestalt is designed for pluggable
 database adapters.  If Gestalt sounds cool to you, but you would like to use a
 different backend, please consider writing one!
 
 
-Roadmap
--------
+The Gestalt modules
+-------------------
+Although they are all part of this git repo, Gestalt is made up a few different
+npm modules so that you can use only parts you need.
 
-See `notes.md` for current todos and progress.
+
+- [gestalt-cli](//github.com/charlieschwabacher/gestalt/tree/master/packages/gestalt-cli) -
+  a command line tool to scaffold new projects, run database migrations, and
+  update your `schema.json` file.
+
+
+- [gestalt-server](//github.com/charlieschwabacher/gestalt/tree/master/packages/gestalt-server) -
+  connect middleware that loads your `schema.graphql` file and
+
+
+- [gestalt-graphql](//github.com/charlieschwabacher/gestalt/tree/master/packages/gestalt-graphql) -
+  if you want to generate a GraphQL schema, but don't need the middleware, you
+  can use `gestalt-graphql` directly.
+
+
+- [gestalt-postgres](//github.com/charlieschwabacher/gestalt/tree/master/packages/gestalt-postgres) -
+  the only database adapter (so far) for Gestalt.  `gestalt-postgres` generates
+  a SQL schema and queries based on your `schema.graphql`.  It is used with
+  either `gestalt-server` or `gestalt-graphql`.

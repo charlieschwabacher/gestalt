@@ -7,7 +7,7 @@ Gestalt CLI includes the command line tools for using Gestalt:
 
 and then
 
-- `gestalt init {name}` - creates a new project
+- `gestalt init {name}` - scaffolds a new project
 - `gestalt migrate`
   - updates `schema.json` from `schema.graphql`
   - generates and runs database schema migrations based on changes to your
