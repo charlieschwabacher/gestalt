@@ -30,8 +30,8 @@ export type DatabaseInterface = {
 };
 
 export type DatabaseInterfaceDefinitionFn = (
-  objectTypes: ObjectTypeDefinition,
-  relationships: Relationship,
+  objectTypes: ObjectTypeDefinition[],
+  relationships: Relationship[],
   config: GestaltServerConfig,
 ) => DatabaseInterface;
 
