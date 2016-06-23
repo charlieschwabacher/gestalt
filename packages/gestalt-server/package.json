@@ -2,7 +2,6 @@
   "name": "gestalt-server",
   "version": "0.0.9",
   "description": "schema defined graphql server",
-  "readmeFilename": "README.md",
   "main": "lib/index.js",
   "repository": {
     "type": "git",
