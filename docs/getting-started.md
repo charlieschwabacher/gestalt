@@ -9,7 +9,8 @@ Gestalt.
 Prerequisites:
 --------------
 
-You will need Node and NPM, and PostgreSQL to be installed and running.
+You will need Node, NPM, and PostgreSQL, and to make sure that postgres is
+running.
 
 If you don't have [postgres](https://www.postgresql.org/) already, the easiest
 way to install it on a mac is with [homebrew](http://brew.sh/).
@@ -255,8 +256,54 @@ export default {
 
 
 #### 9) create `SignIn` and `SignOut` mutations
+
 You can create mutations in the mutations directory, and your server will load
 them automatically.
+
+```javascript
+import bcrypt from 'bcrypt-as-promised';
+
+export default types => ({
+  name: 'SignIn',
+  inputFields: {
+    email: types.String,
+    password: types.String,
+  },
+  outputFields: {
+    session: types.Session,
+  },
+  mutateAndGetPayload: async (input, context) => {
+    const {email, password} = input;
+    const {db, session} = context;
+
+    try {
+      const user = await db.findBy('users', {email});
+      await bcrypt.compare(password, user.passwordHash);
+      session.currentUserID = user.id;
+      return {session};
+    } catch (e) {
+      throw 'Email or password is invalid';
+    }
+  },
+});
+```
+
+```javascript
+export default types => ({
+  name: 'SignOut',
+  inputFields: {},
+  outputFields: {
+    session: types.Session,
+  },
+  mutateAndGetPayload: (input, context) => {
+    const {session} = context;
+    session.currentUserID = null;
+    return {session};
+  },
+});
+```
+
+#### 10) create `SignUp` and `CreatePost` mutations
 
 ```js
 import bcrypt from 'bcrypt-as-promised';
@@ -290,9 +337,83 @@ export default types => ({
 });
 ```
 
-#### 10) create `SignUp` and `CreatePost` mutations
+```javascript
+import assert from 'assert';
+
+export default types => ({
+  name: 'CreatePost',
+  inputFields: {
+    title: types.String,
+    text: types.String,
+  },
+  outputFields: {
+    user: types.User,
+  },
+  mutateAndGetPayload: async (input, context) => {
+    const {title, text} = input;
+    const {db, session} = context;
+    const {currentUserID} = session;
+
+    assert(title.length > 0, 'Posts must have titles');
+    assert(text.length > 0, 'Posts must have text');
+
+    const user = await db.findBy('users', {id: currentUserID});
+
+    const post = await db.insert('posts', {
+      createdAt: new Date(),
+      authoredByUserID: currentUserID,
+      title,
+      text,
+    });
+
+    return {user};
+  },
+});
+```
 
 #### 11) Create `FollowUser` and `UnfollowUser` mutations
 
+```javascript
+export default types => ({
+  name: 'FollowUser',
+  inputFields: {
+    userID: types.ID,
+    follow: types.Boolean,
+  },
+  outputFields: {
+    user: types.User,
+    currentUser: types.User
+  },
+  mutateAndGetPayload: async (input, context) => {
+    const {follow, userID} = input;
+    const {db, session} = context;
+    const {currentUserID} = session;
+    const followedUserID = userID.split(':')[1];
+
+    if (follow) {
+      await db.exec(
+        'INSERT INTO user_followed_users (user_id, followed_user_id) ' +
+        'VALUES ($1, $2);',
+        [currentUserID, followedUserID]
+      );
+    } else {
+      await db.deleteBy(
+        'user_followed_users',
+        {userId: currentUserID, followedUserID}
+      );
+    }
+
+    const currentUser = await db.findBy('users', {id: currentUserID});
+    const user = await db.findBy('users', {id: followedUserID});
+
+    return {currentUser, user};
+  },
+});
+```
+
 #### 12) Create a front end
-.....
+
+This step is beyond the scope of this walkthrough..  Now that you have a
+complete API you could build a frontend (or many!) on any platform you like.  If
+you want to take a look at an example frontend built using react and relay, you
+can [find one here](//github.com/charlieschwabacher/gestalt/tree/master/packages/blogs-example).

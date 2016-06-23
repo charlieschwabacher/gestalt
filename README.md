@@ -90,6 +90,7 @@ If you want a hands on introduction, this
 [step by step tutorial](//github.com/charlieschwabacher/gestalt/blob/master/docs/getting-started.md).
 will walk you through creating a new project.
 
+
 Writing a schema
 ----------------
 The first step towards building an app with Gestalt is writing a schema.
