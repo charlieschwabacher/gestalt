@@ -97,7 +97,7 @@ export default class DB {
     const values = escapes.map((v, i) => `$${i + 1}`);
     const result = await this.exec(
       `INSERT INTO ${table} (id, ${columns}) ` +
-      `VALUES (uuid_generate_v4(), ${values}) RETURNING *;`,
+      `VALUES (gen_random_uuid(), ${values}) RETURNING *;`,
       escapes
     );
     return camelizeKeys(result.rows[0]);

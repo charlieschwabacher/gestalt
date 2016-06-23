@@ -1,5 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 INSERT INTO users (id, email, password_hash, first_name, last_name)
 VALUES
   ('00000000-0000-0000-0000-000000000001', 'test1@test.com', '$2a$10$INP2f5N10jopgqxZ1yITj.n0qkPuMRCUMzd4TsAOAFcfWxu2N2tA.', 'Chester', 'Tester'),

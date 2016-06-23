@@ -1,3 +1,3 @@
 export default [
-  'uuid-ossp',
+  'pgcrypto',
 ];
