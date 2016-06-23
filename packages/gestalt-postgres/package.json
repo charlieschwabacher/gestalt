@@ -1,6 +1,6 @@
 {
   "name": "gestalt-postgres",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "PostgreSQL database adapter for the gestalt framework",
   "main": "lib/index.js",
   "repository": {
@@ -19,14 +19,14 @@
     "dataloader": "^1.2.0",
     "pg": "^4.5.6",
     "pluralize": "^2.0.0",
-    "gestalt-utils": "^0.0.6"
+    "gestalt-utils": "^0.0.7"
   },
   "devDependencies": {
     "babel-cli": "^6.10.1",
     "babel-polyfill": "^6.7.2",
     "babel-register": "^6.7.2",
     "colors": "^1.1.2",
-    "gestalt-graphql": "^0.0.6",
+    "gestalt-graphql": "^0.0.7",
     "mocha": "^2.5.3"
   }
 }
