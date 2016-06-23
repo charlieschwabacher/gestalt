@@ -123,7 +123,7 @@ async function updateDatabaseSchema(
   });
 
   if (runMigration[0] === 'y') {
-    db.exec(sql);
+    await db.exec(sql);
     console.log('Ran migration');
   }
 
