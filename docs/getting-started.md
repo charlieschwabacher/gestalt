@@ -6,19 +6,11 @@ Gestalt.
 
 
 
-Prerequisites:
---------------
+#### Prerequisites:
 
-You will need Node, NPM, and PostgreSQL, and to make sure that postgres is
+You will need [Node](https://nodejs.org/), [NPM](https://www.npmjs.com/), and
+[PostgreSQL](https://www.postgresql.org/) installed, and should have postgres
 running.
-
-If you don't have [postgres](https://www.postgresql.org/) already, the easiest
-way to install it on a mac is with [homebrew](http://brew.sh/).
-
-
-
-Steps:
-------
 
 
 #### 1) Install gestalt-cli
@@ -62,8 +54,8 @@ type Session {
 }
 ```
 
-We will use `Session` later, but for now let's add some types to our schema to
-represent users and posts:
+We will use `Session` later, but for now let's ignore it and just add some types
+to our schema to represent users and posts:
 
 ```graphql
 type Session {
@@ -94,8 +86,8 @@ column in the database, but *not* a field in our GraphQL schema.
 When you run `gestalt-migrate` in the root directory of your project, Gestalt
 reads the existing database schema, compares it to what is defined in
 `schema.graphql`, and generates a migration to update the database.  This
-migration will only add (not drop) columns or tables for safety, and you can
-have the cli run it directly or write it to a file.
+migration will add any new tables or columns (it avoids dropping anything for
+safety), and you can have the cli run it directly or write it to a file.
 
 After our additions to `schema.graphql`, `gestalt migrate` will ask to confirm
 our database url, and then generate and print the following SQL migration:
@@ -119,16 +111,15 @@ CREATE TABLE posts (
 ```
 
 A couple things are going on here - first Gestalt needs to add the `'pgcrypto'`
-extension because we will use it to generate uuids (I'll explain more about this
-later), and then we are creating tables for the two types we added, `users` and
-`posts`.
+extension in order to generate uuids (I'll explain more about this later), and
+then we are creating tables for the two types we added, `users` and `posts`.
 
 Looking first at the `users` table, the email and password hash columns are
 straightforward. We can see that the `email` column is `UNIQUE` because we added
 the `@unique` directive, and that both of the columns have type `text`
 corresponding to `String` in our GraphQL schema.
 
-The `id` and `seq` columns could be a little surprising.  You might expect a
+The `id` and `seq` columns are a little more surprising.  You might expect a
 single column `id SERIAL PRIMARY KEY` for the `id` field.  Instead `id` has
 type `uuid`, and we have an additional column `seq` with type `SERIAL`.
 
@@ -181,12 +172,11 @@ directions.
 
 The 'fat' arrow using the `=` character on the `posts` field indicates that the
 field is plural (a user can author many posts) and the 'skinny' arrow (using
-`-`) on the `author` field indicates that that field is singular (a post has
-only one author).
+`-`) on the `author` field indicates that `author` is singular.
 
-Gestalt can figure out that best way to represent this one to many relationship
-is to add a foreign key to the `posts` table referencing `users` and storing the
-id of its author.
+Gestalt can figure out that best way to represent this 'one to many'
+relationship is to add a foreign key to the `posts` table referencing `users`
+and storing the id of its author.
 
 After making these changes to `schema.graphql`, run `gestalt-migrate` again. It
 will create the following migration:
