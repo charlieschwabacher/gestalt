@@ -1,4 +1,8 @@
 TODO:
+  - use defaults on primary key uuids
+  - make sure migrations add references constraints for foreign keys
+  - update database interface to use `prepareContext` instead of `db` and
+    `generateRelationshipLoaders`.
   - un-pend unit tests for generateRelationshipResolver
   - handle PageInfo / totalCount on connections w/ lookahead and better
     batching (would it be better to use stored procedures in PL/pgSQL?)
