@@ -35,9 +35,10 @@ type Human {
 
 The Schema Language can be used to define the types in a schema: Objects,
 Enums, Interfaces, etc., but it doesn't cover resolution.  To actually create a
-usable GraphQL API you end up writing a lot of code like this:
+usable GraphQL API that can load your data you end up writing a lot of code
+like this:
 
-```js
+```javascript
 import {
   GraphQLInt,
   GraphQLNonNull,
@@ -73,7 +74,7 @@ export default new GraphQLObjectType({
 
 It would be nice to just write the first thing!  If you use Gestalt and are
 willing to accept some reasonable defaults, you can.  Gestalt understands how
-your objects are related and is able to define resolution for you.
+your objects are related and is able to define the resolution for you.
 
 Gestalt is designed to make it really easy for small teams of 1-10 developers to
 build GraphQL APIs quickly.  Its also designed not to lock you in - you can
@@ -93,24 +94,16 @@ will walk you through creating a new project.
 
 Writing a schema
 ----------------
-The first step towards building an app with Gestalt is writing a schema.
+
+Gestalt apps are based on a `schema.graphql` file you write using the IDL.
 Gestalt defines the base mutation and query types, the Relay Node interface and
-connection types, and a few directives and additional scalar types for you.  In
-the `schema.graphql` file you provide, you only define types specific to your
-app.
+connection types, and a few directives and additional scalar types for you, so
+in `schema.graphql`, you only define types specific to your app.
 
 Any Objects you define implementing the Node interface result in database
 tables.  Other objects and arrays they reference are stored in PostgreSQL as
 JSON, and relationships between nodes are specified with directives.
 
-```GraphQL
-type User extends Node {
-  firstName: String
-  lastName: String
-  createdAt: Date
-  age: Int
-}
-```
 
 Object relationships
 --------------------
@@ -149,8 +142,7 @@ Based on the directives in the example above, Gestalt would create
 `PostsConnection` and `PostEdge` types, and update the type of the `posts`
 field to `PostsConnection`.  In addition to the relay connection arguments, if
 any scalar fields on the parent type are indexed, Gestalt will add an `order`
-argument to connection field and create a `PostsOrder` enum type allowing the
-connection to be sorted.
+argument to connection field (accepting a `PostsOrder` enum type).
 
 Gestalt will calculate how to store and query relationships efficiently -
 continuing with example above, Gestalt will add a foreign key
