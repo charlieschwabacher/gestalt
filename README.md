@@ -88,7 +88,7 @@ Getting started with Gestalt
 If you want to jump straight to the code, here is an
 [example project](//github.com/charlieschwabacher/gestalt/tree/master/packages/blogs-example).
 If you want a hands on introduction, this
-[step by step tutorial](//github.com/charlieschwabacher/gestalt/blob/master/docs/getting-started.md).
+[step by step tutorial](//github.com/charlieschwabacher/gestalt/blob/master/docs/getting-started.md)
 will walk you through creating a new project.
 
 
