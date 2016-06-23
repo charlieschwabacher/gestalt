@@ -22,6 +22,7 @@
     "gestalt-utils": "^0.0.6"
   },
   "devDependencies": {
+    "babel-cli": "^6.10.1",
     "babel-polyfill": "^6.7.2",
     "babel-register": "^6.7.2",
     "colors": "^1.1.2",

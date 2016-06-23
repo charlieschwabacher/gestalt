@@ -21,6 +21,7 @@
     "gestalt-graphql": "^0.0.6"
   },
   "devDependencies": {
+    "babel-cli": "^6.10.1",
     "express": "^4.13.4",
     "gestalt-utils": "^0.0.6"
   }
