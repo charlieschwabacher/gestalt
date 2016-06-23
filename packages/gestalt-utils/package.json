@@ -1,6 +1,6 @@
 {
   "name": "gestalt-utils",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Shared dependencies for the gestalt packages",
   "main": "lib/index.js",
   "repository": {
