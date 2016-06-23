@@ -2,6 +2,7 @@
   "name": "gestalt-graphql",
   "version": "0.0.8",
   "description": "generates a GraphQL schema with resolution based on a definition using the GraphQL schema language.",
+  "readmeFilename": "README.md",
   "main": "lib/index.js",
   "repository": {
     "type": "git",

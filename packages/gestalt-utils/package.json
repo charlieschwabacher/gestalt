@@ -2,6 +2,7 @@
   "name": "gestalt-utils",
   "version": "0.0.7",
   "description": "Shared dependencies for the gestalt packages",
+  "readmeFilename": "README.md",
   "main": "lib/index.js",
   "repository": {
     "type": "git",

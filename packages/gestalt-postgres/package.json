@@ -2,6 +2,7 @@
   "name": "gestalt-postgres",
   "version": "0.0.8",
   "description": "PostgreSQL database adapter for the gestalt framework",
+  "readmeFilename": "README.md",
   "main": "lib/index.js",
   "repository": {
     "type": "git",
