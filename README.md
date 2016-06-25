@@ -344,7 +344,9 @@ Other database adapters
 -----------------------
 I have written a backend using PostgreSQL, but Gestalt is designed for pluggable
 database adapters.  If Gestalt sounds cool to you, but you would like to use a
-different backend, please consider writing one!
+different backend, please consider writing one!  You can find information on the
+interface between database adapters and the other parts of Gestalt
+[here](//github.com/charlieschwabacher/gestalt/blob/master/docs/database-interfaces.md)
 
 
 The Gestalt modules
