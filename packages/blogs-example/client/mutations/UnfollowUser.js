@@ -1,6 +1,6 @@
 import Relay, {Mutation} from 'react-relay';
 
-export default class FollowUser extends Mutation {
+export default class UnfollowUser extends Mutation {
   static fragments = {
     user: () => Relay.QL`
       fragment on User { id }
@@ -12,13 +12,13 @@ export default class FollowUser extends Mutation {
 
   getMutation() {
     return Relay.QL`
-      mutation { followUser }
+      mutation { unfollowUser }
     `;
   }
 
   getFatQuery() {
     return Relay.QL`
-      fragment on FollowUserPayload {
+      fragment on UnfollowUserPayload {
         user {
           following
           followers

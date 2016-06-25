@@ -1,7 +1,8 @@
 export default types => ({
-  name: 'FollowUser',
+  name: 'UnfollowUser',
   inputFields: {
     userID: types.ID,
+    follow: types.Boolean,
   },
   outputFields: {
     user: types.User,
@@ -12,10 +13,9 @@ export default types => ({
     const {currentUserID} = session;
     const followedUserID = input.userID.split(':')[1];
 
-    await db.exec(
-      'INSERT INTO user_followed_users (user_id, followed_user_id) ' +
-      'VALUES ($1, $2);',
-      [currentUserID, followedUserID]
+    await db.deleteBy(
+      'user_followed_users',
+      {userId: currentUserID, followedUserID}
     );
 
     const currentUser = await db.findBy('users', {id: currentUserID});
