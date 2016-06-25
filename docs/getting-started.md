@@ -200,6 +200,9 @@ types for fields with plural `@relationship` directives to allow pagination.
 
 #### 7) Add the `FOLLOWED` relationship between users:
 
+The next relationship to add is `FOLLOWED`.  Users can follow and be followed by
+many other users.
+
 ```graphql
 type User implements Node {
   ...
@@ -208,7 +211,10 @@ type User implements Node {
  }
 ```
 
-this will result in the following migration:
+To represent this 'many to many' relationship, Gestalt will need to create a
+join table with columns for `user_id` and `followed_user_id`.  Because the
+unique constraint on the table implies an index on `user_id`, Gestalt only needs
+to create an index on `followed_user_id`.
 
 ```
 CREATE TABLE user_followed_users (
@@ -220,7 +226,12 @@ CREATE TABLE user_followed_users (
 CREATE INDEX ON user_followed_users (followed_user_id);
 ```
 
+
 #### 8) Add the `feed` field to `User`:
+
+We use a final relationship to create the `feed` field - a list of all the posts
+authored by users that a user follows.  We can express this really succinctly
+with the arrow syntax.
 
 ```graphql
 type User implements Node {
@@ -229,14 +240,30 @@ type User implements Node {
  }
 ```
 
+Gestalt understands that our schema already accommodates this relationship, so
+it won't add any tables or columns.
+
+
 #### 9) Add a `gravatar` field to `User` with custom resolution
+
+So, what if we have a field that needs some custom resolution?  Maybe we want to
+return the url for a [gravatar](http://en.gravatar.com/) image based on a user's
+email address.
+
+First, we will add the `profileImage` field to our user type.  We can use the
+`@virtual` directive to make sure that it will be included in the GraphQL
+schema, but *not* result in a column being added to the database.
 
 ```
 type User implements Node {
   ...
-  gravatar: String! @virtual
+  profileImage: String! @virtual
 }
 ```
+
+Now that we have the field, we can define custom resolution.  To do it, we
+create a file `User.js` in the `objects` directory.  Everything in objects will
+be imported automatically by the code in `server.js`.
 
 ```javascript
 import crypto from 'crypto';
@@ -245,16 +272,35 @@ export default {
   name: 'User',
   fields: {
     // get a user's gravatar image url using their email address
-    gravatar: (obj, args) => {
+    profileImage: (obj, args, ctx) => {
       const email = obj.email.toLowerCase();
       const hash = crypto.createHash('md5').update(email).digest('hex');
-      return `//www.gravatar.com/avatar/${hash}?d=mm&s=${args.size || 200}`;
+      return `//www.gravatar.com/avatar/${hash}`;
     },
   },
 };
 ```
 
-#### 8) Add `currentUser` to the `Session` type
+Here we export an object with two properties. The first, `name` is the name of
+the type we want to define resolution for.  The second `fields` is an object
+where the keys match names of fields on your type, and values are GraphQL
+resolution functions.
+
+To create a Gravatar url, we lowercase the user's email and take its md5 hash.
+We return it interpolated into a string, and thats it!  If you restart the
+server, you should see the `profileImage` field show up in GraphiQL.
+
+
+#### 10) Add `currentUser` to the `Session` type
+
+OK - so we have a working API that will users and posts from our database.  The
+next step is to allow users to sign in and out.
+
+Remember the `Session` type we were going to come back to?  This is where it
+comes in.  In addition to querying nodes by ID, we can add fields to `Session`,
+and resolve them based on values we store in a session cookie.
+
+Let's add a `currentUser` field to `Session`.
 
 ```
 type Session {
@@ -262,6 +308,19 @@ type Session {
   currentUser: User
 }
 ```
+
+Because `Session` is not stored in the database, we will need to define custom
+resolution for any fields we add to it.  Gestalt will have already created a
+`Session.js` file for us inside the `objects` directory, so we can just add the
+resolver for `currentUser`.
+
+When a user signs in, we will set their id on the session as `currentUserID`.
+We will write code for this next, but for now let's just assume it will be set
+when a user is signed in.
+
+First we will check if it has been set - if it has not, there is no
+`currentUser` and we can return null.  Otherwise, we find the user by id from
+the database using `context.db.findBy`.
 
 ```javascript
 export default {
@@ -279,8 +338,24 @@ export default {
 
 #### 9) create `SignIn` and `SignOut` mutations
 
-You can create mutations in the mutations directory, and your server will load
-them automatically.
+To actually set (and remove) `currentUserID` from the session object, we use
+mutations.  Mutations depend on the types we have defined in `schema.graphql`,
+so they are defined as a function that receives an object mapping all of the
+types in our schema by name.
+
+The function returns a [graphql-relay-js](//github.com/graphql/graphql-relay-js#mutations)
+mutation config.  The only change to the graphql-relay-js API is that
+inputFields and outputFields can accept types directly.
+
+To log in, we expect `email` and `password` as input strings, and we will output
+the updated `Session`.  We query for the user by id, compare the hashed
+password to the input using `bcrpyt`, and then update `currentUserID` and return
+the session.
+
+If the db threw an error because no row matched `email`, or if `bcrypt` threw
+one because the passwords didn't match, we catch the error and return a
+descriptive message.
+
 
 ```javascript
 import bcrypt from 'bcrypt-as-promised';
@@ -309,6 +384,8 @@ export default types => ({
   },
 });
 ```
+
+To sign out, we just set the session ID to null and return.
 
 ```javascript
 export default types => ({
