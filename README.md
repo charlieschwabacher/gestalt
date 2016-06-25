@@ -371,3 +371,10 @@ npm modules so that you can use only parts you need.
   the only database adapter (so far) for Gestalt.  `gestalt-postgres` generates
   a SQL schema and queries based on your `schema.graphql`.  It is used with
   either `gestalt-server` or `gestalt-graphql`.
+
+
+Contributing
+------------
+
+For instructions on how to build and test the project locally, see
+[CONTRIBUTING.md](//github.com/charlieschwabacher/gestalt/blob/master/CONTRIBUTING.md).
