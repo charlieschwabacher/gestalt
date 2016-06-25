@@ -2,7 +2,10 @@ Getting Started With Gestalt
 ============================
 
 This will walk you through creating a simple twitter clone from scratch using
-Gestalt.
+Gestalt.  It assumes you are familiar with the basic ideas of
+[GraphQL](http://graphql.org/) and [Relay](https://facebook.github.io/relay/),
+as well as relational databases.
+
 
 
 
@@ -18,8 +21,8 @@ running.
 `npm install --global gestalt-cli`
 
 `gestalt-cli` is a module that will help you scaffold new projects and run
-database migrations.  Installing it globally with npm will allow you to use
-the `gestalt` command on the command line.
+database migrations.  Installing it globally with `npm` will allow you to use
+the `gestalt` command from the command line.
 
 
 #### 2) Create your database
@@ -54,7 +57,7 @@ type Session {
 }
 ```
 
-We will use `Session` later, but for now let's ignore it and just add some types
+We will use `Session` later, but for now we can ignore it.  Let's add some types
 to our schema to represent users and posts:
 
 ```graphql
@@ -111,8 +114,8 @@ CREATE TABLE posts (
 ```
 
 A couple things are going on here - first Gestalt needs to add the `'pgcrypto'`
-extension in order to generate uuids (I'll explain more about this later), and
-then we are creating tables for the two types we added, `users` and `posts`.
+extension in order to generate uuids, and then we are creating tables for the
+two types we added, `users` and `posts`.
 
 Looking first at the `users` table, the email and password hash columns are
 straightforward. We can see that the `email` column is `UNIQUE` because we added
@@ -244,9 +247,9 @@ Gestalt understands that our schema already accommodates this relationship, so
 it won't add any tables or columns.
 
 
-#### 9) Add a `gravatar` field to `User` with custom resolution
+#### 9) Add a field to `User` with custom resolution
 
-So, what if we have a field that needs some custom resolution?  Maybe we want to
+What if we have a field that needs some custom resolution?  Maybe we want to
 return the url for a [gravatar](http://en.gravatar.com/) image based on a user's
 email address.
 
@@ -261,7 +264,7 @@ type User implements Node {
 }
 ```
 
-Now that we have the field, we can define custom resolution.  To do it, we
+Now that we have the field, we need to define custom resolution.  To do it, we
 create a file `User.js` in the `objects` directory.  Everything in objects will
 be imported automatically by the code in `server.js`.
 
@@ -339,13 +342,15 @@ export default {
 #### 9) create `SignIn` and `SignOut` mutations
 
 To actually set (and remove) `currentUserID` from the session object, we use
-mutations.  Mutations depend on the types we have defined in `schema.graphql`,
-so they are defined as a function that receives an object mapping all of the
-types in our schema by name.
+[mutations](https://facebook.github.io/relay/graphql/mutations.htm).  Mutations
+define the types of their inputs and the changed values they will return, and
+a function `mutateAndGetPayload`.  Because these definitions depend on the types
+we have defined in `schema.graphql`, they are defined as a function of an object
+mapping all of the types in our schema by name.
 
-The function returns a [graphql-relay-js](//github.com/graphql/graphql-relay-js#mutations)
-mutation config.  The only change to the graphql-relay-js API is that
-inputFields and outputFields can accept types directly.
+This function returns a [graphql-relay-js](//github.com/graphql/graphql-relay-js#mutations)
+mutation config (with ond modification, types can be passed as values directly
+in `inputFields` and `outputFields`).
 
 To log in, we expect `email` and `password` as input strings, and we will output
 the updated `Session`.  We query for the user by id, compare the hashed
@@ -353,7 +358,7 @@ password to the input using `bcrpyt`, and then update `currentUserID` and return
 the session.
 
 If the db threw an error because no row matched `email`, or if `bcrypt` threw
-one because the passwords didn't match, we catch the error and return a
+one because the passwords didn't match, we catch the error and rethrow with a
 descriptive message.
 
 
@@ -385,7 +390,8 @@ export default types => ({
 });
 ```
 
-To sign out, we just set the session ID to null and return.
+To sign out, we don't need any input, and will just set the session ID to null
+in `mutateAndGetPayload`.
 
 ```javascript
 export default types => ({
@@ -402,7 +408,12 @@ export default types => ({
 });
 ```
 
-#### 10) create `SignUp` and `CreatePost` mutations
+
+#### 10) create a `SignUp` mutation
+
+To create users, we need another mutation.  We can use `assert` to do some
+validation of our inputs, and then hash the password with `bcrypt` and insert
+the user into our database using `context.db.insert`.
 
 ```javascript
 import bcrypt from 'bcrypt-as-promised';
@@ -432,6 +443,73 @@ export default types => ({
 
     session.currentUserID = user.id;
     return {session};
+  },
+});
+```
+
+#### 11) Create `FollowUser`, `UnfollowUser`, and `CreatePost` mutations
+
+Finally, we need mutations to follow and unfollow users, and to create posts.
+
+```javascript
+export default types => ({
+  name: 'FollowUser',
+  inputFields: {
+    userID: types.ID,
+  },
+  outputFields: {
+    user: types.User,
+    currentUser: types.User,
+  },
+  mutateAndGetPayload: async (input, context) => {
+    const {db, session} = context;
+    const {currentUserID} = session;
+
+    // Node ids have the format `${type}:${databaseId}` - we split on ':' to
+    // grab the database id of the user to follow.
+    const followedUserID = input.userID.split(':')[1];
+
+    await db.exec(
+      'INSERT INTO user_followed_users (user_id, followed_user_id) ' +
+      'VALUES ($1, $2);',
+      [currentUserID, followedUserID]
+    );
+
+    const currentUser = await db.findBy('users', {id: currentUserID});
+    const user = await db.findBy('users', {id: followedUserID});
+
+    return {currentUser, user};
+  },
+});
+```
+
+```javascript
+export default types => ({
+  name: 'UnfollowUser',
+  inputFields: {
+    userID: types.ID,
+  },
+  outputFields: {
+    user: types.User,
+    currentUser: types.User,
+  },
+  mutateAndGetPayload: async (input, context) => {
+    const {db, session} = context;
+    const {currentUserID} = session;
+
+    // Node ids have the format `${type}:${databaseId}` - we split on ':' to
+    // grab the database id of the user to follow.
+    const followedUserID = input.userID.split(':')[1];
+
+    await db.deleteBy(
+      'user_followed_users',
+      {userId: currentUserID, followedUserID}
+    );
+
+    const currentUser = await db.findBy('users', {id: currentUserID});
+    const user = await db.findBy('users', {id: followedUserID});
+
+    return {currentUser, user};
   },
 });
 ```
@@ -470,50 +548,11 @@ export default types => ({
 });
 ```
 
-#### 11) Create `FollowUser` and `UnfollowUser` mutations
-
-```javascript
-export default types => ({
-  name: 'FollowUser',
-  inputFields: {
-    userID: types.ID,
-    follow: types.Boolean,
-  },
-  outputFields: {
-    user: types.User,
-    currentUser: types.User
-  },
-  mutateAndGetPayload: async (input, context) => {
-    const {follow, userID} = input;
-    const {db, session} = context;
-    const {currentUserID} = session;
-    const followedUserID = userID.split(':')[1];
-
-    if (follow) {
-      await db.exec(
-        'INSERT INTO user_followed_users (user_id, followed_user_id) ' +
-        'VALUES ($1, $2);',
-        [currentUserID, followedUserID]
-      );
-    } else {
-      await db.deleteBy(
-        'user_followed_users',
-        {userId: currentUserID, followedUserID}
-      );
-    }
-
-    const currentUser = await db.findBy('users', {id: currentUserID});
-    const user = await db.findBy('users', {id: followedUserID});
-
-    return {currentUser, user};
-  },
-});
-```
-
 #### 12) Create a front end
 
-This step is beyond the scope of this walkthrough..  Now that you have a
-complete API you could build a frontend (or many!) on any platform(s) you like.
+Now that you have a complete API you could build a frontend (or many!) on any
+platform(s) you like.
 
-If you want to take a look at an example frontend built using React and Relay,
-you can [find one here](//github.com/charlieschwabacher/gestalt/tree/master/packages/blogs-example).
+This step is beyond the scope of this walkthrough, but if you want to take a
+look at an example frontend built using React and Relay, you can
+[find one here](//github.com/charlieschwabacher/gestalt/tree/master/packages/blogs-example).
