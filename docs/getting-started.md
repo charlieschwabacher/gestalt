@@ -193,7 +193,9 @@ migration.  After running it, if you restart your server you should see the
 `posts` field on `User` and `author` field on `Posts` show up in GraphiQL.
 
 One thing you will notice is that the type of the `posts` field on `User` is
-`PostsConnection` and not `Post`.  
+`PostsConnection` and not `Post`.  Gestalt creates
+[connection and edge types](https://facebook.github.io/relay/graphql/connections.htm)
+types for fields with plural `@relationship` directives to allow pagination.
 
 
 #### 7) Add the `FOLLOWED` relationship between users:
@@ -434,6 +436,7 @@ export default types => ({
 #### 12) Create a front end
 
 This step is beyond the scope of this walkthrough..  Now that you have a
-complete API you could build a frontend (or many!) on any platform you like.  If
-you want to take a look at an example frontend built using react and relay, you
-can [find one here](//github.com/charlieschwabacher/gestalt/tree/master/packages/blogs-example).
+complete API you could build a frontend (or many!) on any platform(s) you like.
+
+If you want to take a look at an example frontend built using React and Relay,
+you can [find one here](//github.com/charlieschwabacher/gestalt/tree/master/packages/blogs-example).
