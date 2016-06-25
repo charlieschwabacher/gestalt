@@ -96,9 +96,9 @@ Writing a schema
 ----------------
 
 Gestalt apps are based on a `schema.graphql` file you write using the IDL.
-Gestalt defines the base mutation and query types, the Relay Node interface and
-connection types, and a few directives and additional scalar types for you, so
-in `schema.graphql`, you only define types specific to your app.
+Gestalt defines the base mutation and query types, the Relay Node interface, and
+a few directives and additional scalar types for you, so in `schema.graphql`,
+you only define types specific to your app.
 
 Any Objects you define implementing the Node interface result in database
 tables.  Other objects and arrays they reference are stored in PostgreSQL as
@@ -108,8 +108,8 @@ JSON, and relationships between nodes are specified with directives.
 Object relationships
 --------------------
 Gestalt needs information about the relationships between objects to generate a
-database schema and efficient queries for resolution.  You provide this using
-the `@relationship` directive and a syntax inspired by
+database schema and efficient queries.  You provide this using the
+`@relationship` directive and a syntax inspired by
 [Neo4j](//github.com/neo4j/neo4j)'s Cypher query language.
 
 ```GraphQL
