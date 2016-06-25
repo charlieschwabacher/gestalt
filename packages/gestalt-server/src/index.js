@@ -56,13 +56,10 @@ export default function gestaltServer(
 
     session({secret, name: 'gestalt'})(req, res, () => {
       graphqlHTTP(request => {
+        const {session} = request;
         return {
           schema,
-          context: {
-            db: databaseInterface.db,
-            session: request.session,
-            loaders: databaseInterface.generateRelationshipLoaders(),
-          },
+          context: databaseInterface.prepareQueryContext({session}),
           graphiql: development,
           formatError: error => {
             return {

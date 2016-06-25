@@ -76,11 +76,14 @@ export default function generateDatabaseInterface(
     generateRelationshipResolver: generateRelationshipResolver(
       segmentDescriptionsBySignature,
     ),
-    generateRelationshipLoaders: generateRelationshipLoaders(
-      db,
-      segmentDescriptionsBySignature,
-      relationships
-    ),
+    prepareQueryContext: ctx => {
+      const loaders = generateRelationshipLoaders(
+        db,
+        segmentDescriptionsBySignature,
+        relationships
+      );
+      return {...ctx, db, loaders};
+    },
   };
 }
 
