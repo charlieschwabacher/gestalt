@@ -1,6 +1,6 @@
 {
   "name": "gestalt-server",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "schema defined graphql server",
   "main": "lib/index.js",
   "repository": {
