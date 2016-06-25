@@ -378,5 +378,5 @@ npm modules so that you can use only parts you need.
 Contributing
 ------------
 
-For instructions on how to build and test the project locally, see
-[CONTRIBUTING.md](//github.com/charlieschwabacher/gestalt/blob/master/CONTRIBUTING.md).
+For instructions on how to build, run, and test the project for local
+development, see [CONTRIBUTING.md](//github.com/charlieschwabacher/gestalt/blob/master/CONTRIBUTING.md).
