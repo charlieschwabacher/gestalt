@@ -1,6 +1,6 @@
 import React from 'react';
 import Relay from 'react-relay';
-import {FollowUser} from '../../mutations';
+import {FollowUser, UnfollowUser} from '../../mutations';
 
 export default Relay.createContainer(
   ({currentUser, user}) =>
@@ -8,11 +8,9 @@ export default Relay.createContainer(
       style={{margin: '1rem 0'}}
       onClick={
         () => Relay.Store.commitUpdate(
-          new FollowUser({
-            user,
-            currentUser,
-            follow: !user.following
-          })
+          (user.following)
+          ? new UnfollowUser({user, currentUser})
+          : new FollowUser({user, currentUser})
         )
       }
     >
@@ -28,6 +26,7 @@ export default Relay.createContainer(
       user: () => Relay.QL`
         fragment on User {
           ${FollowUser.getFragment('user')}
+          ${UnfollowUser.getFragment('user')}
           firstName
           following
         }
@@ -35,6 +34,7 @@ export default Relay.createContainer(
       currentUser: () => Relay.QL`
         fragment on User {
           ${FollowUser.getFragment('currentUser')}
+          ${UnfollowUser.getFragment('currentUser')}
         }
       `
     }

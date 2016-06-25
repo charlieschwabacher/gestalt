@@ -44,7 +44,6 @@ export default class FollowUser extends Mutation {
   getVariables() {
     return {
       userID: this.props.user.id,
-      follow: this.props.follow,
     };
   }
 }
