@@ -1,5 +1,5 @@
-GraphQL database adapter interface
-----------------------------------
+Database Interfaces
+-------------------
 
 If you want to write your own database adapter for Gestalt, or just understand
 how the internals work, you are reading the right document.
@@ -55,8 +55,9 @@ the arguments `(obj, args, context, info)`, where args contains `{id}`. It
 should query and return the node object by ID.
 
 `prepareContext` runs once at the beginning of each query and allows you to add
-a database interface to the query context, or to do other work that should run
+query helpers to the query context, or to do other work that should run
 once per query like creating [DataLoaders](//github.com/facebook/dataloader).
 
 `generateRelationshipResolver` is a function that takes a relationship object,
-and returns a GraphQL resolve function.
+and returns a GraphQL resolve function that will be attached to the
+relationship's field.

@@ -39,54 +39,52 @@ export function generateRelationshipLoaders(
   db: DB,
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   relationships: Relationship[],
-): () => Map<Relationship, DataLoader> {
+): Map<Relationship, DataLoader> {
   // TODO: we should be able to pregenerate and store SQL queries so that they
   // are only calculated once, not re-calcualted on every request.
 
-  return () => {
-    // TODO: instead of using a native map here - we should wrap in something
-    // that creates loaders lazily.  It's likely that a single request will only
-    // use some small subset of the available loaders so will be worthwile to
-    // avoid generating the rest
+  // TODO: instead of using a native map here - we should wrap in something
+  // that creates loaders lazily.  It's likely that a single request will only
+  // use some small subset of the available loaders so will be worthwile to
+  // avoid generating the rest
 
-    const relationshipLoaderMap = new Map();
+  const relationshipLoaderMap = new Map();
 
-    relationships.forEach(relationship => {
-      const keyColumn = resolvedKeyColumnFromRelationship(
-        segmentDescriptionMap,
-        relationship
-      );
-      const query = queryFromRelationship(
-        segmentDescriptionMap,
+  relationships.forEach(relationship => {
+    const keyColumn = resolvedKeyColumnFromRelationship(
+      segmentDescriptionMap,
+      relationship
+    );
+    const query = queryFromRelationship(
+      segmentDescriptionMap,
+      relationship,
+    );
+
+    if (relationship.cardinality === 'singular') {
+      const sql = sqlStringFromQuery(query);
+      relationshipLoaderMap.set(
         relationship,
+        generateSingularRelationshipLoader(
+          db,
+          relationship,
+          keyColumn,
+          sql
+        )
       );
-
-      if (relationship.cardinality === 'singular') {
-        const sql = sqlStringFromQuery(query);
-        relationshipLoaderMap.set(
+    } else {
+      relationshipLoaderMap.set(
+        relationship,
+        generatePluralRelationshipLoader(
+          db,
           relationship,
-          generateSingularRelationshipLoader(
-            db,
-            relationship,
-            keyColumn,
-            sql
-          )
-        );
-      } else {
-        relationshipLoaderMap.set(
-          relationship,
-          generatePluralRelationshipLoader(
-            db,
-            relationship,
-            keyColumn,
-            query
-          )
-        );
-      }
-    });
+          keyColumn,
+          query
+        )
+      );
+    }
+  });
 
-    return relationshipLoaderMap;
-  };
+  return relationshipLoaderMap;
 }
 
 function generateSingularRelationshipLoader(

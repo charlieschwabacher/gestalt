@@ -14,7 +14,8 @@ Make sure you have PostgreSQL installed, and a database named 'blogs_example'
   - `brew install postgresql` to install PostgreSQL
   - `createdb blogs_example` to create a database named 'blogs_example'
 
-Load the seed data
+Migrate and load the seed data
+  - `gestalt migrate`
   - `psql -d blogs_example -f seeds.sql`
 
 Compile the client code
