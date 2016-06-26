@@ -4,7 +4,7 @@ import pg from 'pg';
 import {camelizeKeys, invariant} from 'gestalt-utils';
 import {snake} from 'change-case';
 
-function whereFromConditions(conditions: Object): [string, any[]] {
+function whereFromConditions(conditions: Object): [string, mixed[]] {
   const sql = `WHERE ${
     Object.keys(conditions)
       .map((key, i) => `${snake(key)} = $${i + 1}`)
@@ -32,7 +32,7 @@ export default class DB {
 
   exec(
     query: string,
-    escapes: ?any[]
+    escapes?: ?mixed[]
   ): Promise<Object> {
     if (this.log) {
       console.log(
@@ -59,7 +59,7 @@ export default class DB {
 
   async count(
     query: string,
-    escapes: ?any[],
+    escapes?: mixed[],
   ): Promise<number> {
     const result = await this.exec(query, escapes);
     invariant(result.rows.length === 1, 'count should select a single row');
@@ -70,7 +70,7 @@ export default class DB {
   // object, and raises if it receives more than one.
   async find(
     query: string,
-    escapes: ?any[]
+    escapes?: mixed[]
   ): Promise<Object> {
     const result = await this.exec(query, escapes);
     invariant(result.rows.length === 1, 'find should select a single row');
@@ -81,7 +81,7 @@ export default class DB {
   // objects
   async query(
     query: string,
-    escapes?: any[]
+    escapes?: mixed[]
   ): Promise<Object[]> {
     const result = await this.exec(query, escapes);
     return result.rows.map(camelizeKeys);
@@ -96,8 +96,7 @@ export default class DB {
     const columns = Object.keys(object).map(snake);
     const values = escapes.map((v, i) => `$${i + 1}`);
     const result = await this.exec(
-      `INSERT INTO ${table} (id, ${columns}) ` +
-      `VALUES (gen_random_uuid(), ${values}) RETURNING *;`,
+      `INSERT INTO ${table} (${columns}) VALUES ${values}) RETURNING *;`,
       escapes
     );
     return camelizeKeys(result.rows[0]);
@@ -125,17 +124,6 @@ export default class DB {
   ) {
     const [sql, escapes] = whereFromConditions(conditions);
     return this.query(`SELECT * FROM ${table} ${sql}`, escapes);
-  }
-
-  async reset(): Promise<true> {
-    await this.exec(`
-      DROP SCHEMA public CASCADE;
-      CREATE SCHEMA public;
-      GRANT ALL ON SCHEMA public TO postgres;
-      GRANT ALL ON SCHEMA public TO public;
-      COMMENT ON SCHEMA public IS 'standard public schema';
-    `);
-    return true;
   }
 
 }
