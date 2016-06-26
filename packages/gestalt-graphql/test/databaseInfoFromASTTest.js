@@ -1,10 +1,5 @@
 import assert from 'assert';
-import {relationshipFromPathString} from
-  '../src/databaseInfoFromAST';
-
-describe('databaseInfoFromAST', () => {
-  xit('generates correct info');
-});
+import {relationshipFromPathString} from '../src/databaseInfoFromAST';
 
 describe('relationshipFromPathString', () => {
 
