@@ -1,0 +1,24 @@
+language: node_js
+node_js:
+  - "stable"
+services:
+  - postgresql
+before_install:
+  - npm config set spin false --global
+before_script:
+  - psql -c 'create database gestalt_test;' -U postgres
+  - npm run bootstrap
+script:
+  - npm run build
+  - npm run lint
+  - npm run check
+  - npm test
+env:
+  - CXX=g++-4.8
+addons:
+  postgresql: "9.4"
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-4.8
