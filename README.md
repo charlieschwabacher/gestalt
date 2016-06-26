@@ -19,7 +19,7 @@ GraphQL schema language
 The GraphQL schema language (also called IDL for *interface definition
 language*) is a [proposed](https://github.com/facebook/graphql/pull/90) addition
 to the GraphQL spec adding a shorthand to describe types in a GraphQL schema.
-While it isn't officially part of the spec, the
+While it isn't yet officially part of the spec, the
 [reference implementation](https://github.com/graphql/graphql-js) of GraphQL
 already includes a parser for the IDL, and if you have spent much time with the
 GraphQL [docs](http://graphql.org/docs/typesystem/) you have probably

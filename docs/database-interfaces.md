@@ -40,6 +40,11 @@ type RelationshipSegment = {
 };
 ```
 
+`server config` will be included when the adapter is used with `gestalt-server`,
+and will include the configuration options passed when the server is created.
+It is useful to do things like log queries only when the server is in
+development mode.
+
 The database interface that your adapter should create and return has 3 keys:
 
 ```
