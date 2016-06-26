@@ -63,6 +63,7 @@ export type Column = {
     table: string,
     column: string,
   },
+  default?: string,
 };
 
 type Constraint = {
