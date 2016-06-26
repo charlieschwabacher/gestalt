@@ -7,9 +7,8 @@ import {databaseInfoFromAST} from 'gestalt-graphql';
 import generateDatabaseInterface, {relationshipFromPathString as r,
   segmentDescriptionsFromRelationships} from '../src/generateDatabaseInterface';
 import {keyMap} from 'gestalt-utils';
-import {objectKeyColumnFromRelationship, limitAndOffsetFromConnectionArgs,
-  sqlStringFromQuery, applyConnectionArgs, queryFromRelationship} from
-  '../src/generateRelationshipResolver';
+import {objectKeyColumnFromRelationship, sqlStringFromQuery,
+  queryFromRelationship} from '../src/generateRelationshipResolver';
 
 import type {Relationship, RelationshipSegmentDescriptionMap,
   ConnectionArguments} from 'gestalt-utils';

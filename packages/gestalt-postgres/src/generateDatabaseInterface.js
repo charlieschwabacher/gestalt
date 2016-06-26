@@ -341,7 +341,8 @@ export function segmentDescriptionsFromRelationships(
   });
 
   // create RelationshipSegmentDescription objects
-  return Object.entries(segmentMap).map(([signature, segments]) => {
+  return Object.keys(segmentMap).map(signature => {
+    const segments = segmentMap[signature];
     const pair = {};
     segments.forEach(segment => pair[segment.direction] = segment);
 
