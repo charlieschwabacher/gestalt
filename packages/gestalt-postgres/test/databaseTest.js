@@ -29,6 +29,45 @@ describe('postgres database interface', () => {
     );
   });
 
+  describe('find', () => {
+    it('returns a single result', async () => {
+      const result = await db.find(
+        'SELECT email FROM users WHERE id = $1;',
+        ['00000000-0000-0000-0000-000000000001']
+      );
+      assert.deepEqual(result, {email: 'test1@test.com'});
+    });
+
+    it('throws an error when zero rows are selected', async () => {
+      try {
+        await db.find(
+          'SELECT * FROM users WHERE id = $1;',
+          ['00000000-0000-0000-0000-000000000004'],
+        );
+      } catch (e) {
+        assert.equal(e.message, 'find should select a single row');
+        return;
+      }
+      throw 'db.find did not raise error as expected';
+    });
+
+    it('throws an error when more than one row is selected', async () => {
+      try {
+        await db.find(
+          'SELECT * FROM users WHERE id = ANY ($1);',
+          [[
+            '00000000-0000-0000-0000-000000000001',
+            '00000000-0000-0000-0000-000000000002',
+          ]],
+        );
+      } catch (e) {
+        assert.equal(e.message, 'find should select a single row');
+        return;
+      }
+      throw 'db.find did not raise error as expected';
+    });
+  });
+
   describe('query', () => {
     it('returns an array of results', async () => {
       const result = await db.query('SELECT id FROM users');
@@ -57,6 +96,13 @@ describe('postgres database interface', () => {
           {id: '00000000-0000-0000-0000-000000000005'},
         ]
       );
+    });
+  });
+
+  describe('count', () => {
+    it('counts rows', async () => {
+      const result = await db.count('SELECT count(*) FROM users;');
+      assert.equal(result, 3);
     });
   });
 
