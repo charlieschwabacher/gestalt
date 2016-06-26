@@ -1,8 +1,9 @@
 // @flow
 // TODO: I think its possible to load this data in the right format, or at least
 // something a lot closer to the right format, entirely w/ SQL.  It seems like
-// that could be a better approach. If anyone who knows how to do that reads
-// this, please help! 😊
+// that could be a better approach. If any postgres experts read this and feel
+// like refactoring or explaining why that isn't a good approach, it will be
+// appreciated! 😊
 
 import type {DatabaseSchema, Constraint, Index} from 'gestalt-utils';
 import {camelizeKeys, keyValMap, sortBy} from 'gestalt-utils';
@@ -25,7 +26,7 @@ export default async function readExistingDatabaseSchema(
 
   const tables = Object.values(
     columns.map(camelizeKeys).reduce(
-      (memo, {tableName, columnName, dataType, isNullable}) => {
+      (memo, {tableName, columnName, columnDefault, dataType, isNullable}) => {
         memo[tableName] = memo[tableName] || {
           name: tableName,
           columns: [],
@@ -39,8 +40,10 @@ export default async function readExistingDatabaseSchema(
 
         memo[tableName].columns.push(Object.assign({
           name: columnName,
+          defaultValue: columnName === 'seq' ? null : columnDefault,
           type: columnName === 'seq' ? 'SERIAL' : dataType,
           nonNull: isNullable === 'NO',
+          references: null,
         }, constraints));
 
         return memo;

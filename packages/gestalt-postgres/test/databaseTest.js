@@ -14,7 +14,15 @@ const db = new DB({
 
 describe('postgres database interface', () => {
   before(async () => {
-    await db.reset();
+    // reset database
+    await db.exec(`
+      DROP SCHEMA public CASCADE;
+      CREATE SCHEMA public;
+      GRANT ALL ON SCHEMA public TO postgres;
+      GRANT ALL ON SCHEMA public TO public;
+      COMMENT ON SCHEMA public IS 'standard public schema';
+    `);
+    // load schema and seeds
     await db.exec(
       fs.readFileSync(`${__dirname}/fixtures/schema.sql`) +
       fs.readFileSync(`${__dirname}/fixtures/seeds.sql`)

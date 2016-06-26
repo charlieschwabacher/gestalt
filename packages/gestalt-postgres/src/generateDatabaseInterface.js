@@ -131,6 +131,8 @@ export function tableFromObjectTypeDefinition(
       primaryKey: false,
       nonNull: true,
       unique: true,
+      defaultValue: null,
+      references: null,
     }
   ];
 
@@ -145,12 +147,15 @@ export function tableFromObjectTypeDefinition(
 }
 
 export function columnFromFieldDefintion(definition: FieldDefinition): Column {
+  const isId = definition.name.value === 'id';
   return {
     name: snake(definition.name.value),
     type: columnTypeFromGraphQLType(definition.type),
-    primaryKey: definition.name.value === 'id',
+    primaryKey: isId,
     nonNull: isNonNullType(definition.type),
     unique: definition.directives.some(d => d.name.value === 'unique'),
+    defaultValue: isId ? 'gen_random_uuid()' : null,
+    references: null,
   };
 }
 
@@ -435,6 +440,7 @@ export function joinTableFromDescription(
         nonNull: true,
         primaryKey: false,
         unique: false,
+        defaultValue: null,
         references: {
           table: leftTableName,
           column: 'id',
@@ -446,6 +452,7 @@ export function joinTableFromDescription(
         nonNull: true,
         primaryKey: false,
         unique: false,
+        defaultValue: null,
         references: {
           table: rightTableName,
           column: 'id',
@@ -535,6 +542,7 @@ export function columnFromForeignKeyDescription(
     primaryKey: false,
     nonNull: description.nonNull,
     unique: false,
+    defaultValue: null,
     references: {
       table: description.referencedTable,
       column: 'id'

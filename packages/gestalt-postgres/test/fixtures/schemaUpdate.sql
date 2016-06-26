@@ -10,7 +10,7 @@ ALTER TABLE posts ADD COLUMN images jsonb;
 
 CREATE TABLE pages (
   seq SERIAL NOT NULL UNIQUE,
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title text NOT NULL,
   content text,
   created_by_user_id uuid NOT NULL REFERENCES users (id)

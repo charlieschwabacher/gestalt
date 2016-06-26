@@ -59,11 +59,11 @@ export type Column = {
   primaryKey: boolean,
   nonNull: boolean,
   unique: boolean,
-  references?: {
+  defaultValue: ?string,
+  references: ?{
     table: string,
     column: string,
   },
-  default?: string,
 };
 
 type Constraint = {

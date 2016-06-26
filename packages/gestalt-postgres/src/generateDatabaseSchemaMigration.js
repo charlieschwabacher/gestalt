@@ -171,7 +171,8 @@ export function createTable(table: Table): string {
 
   const columnsRows = columns.map(
     column => {
-      const {name, type, primaryKey, nonNull, unique, references} = column;
+      const {name, type, primaryKey, nonNull, unique, references, defaultValue}
+        = column;
       const referencesClause = (
         references
         ? `REFERENCES ${references.table} (${references.column})`
@@ -183,6 +184,7 @@ export function createTable(table: Table): string {
         primaryKey ? 'PRIMARY KEY' : null,
         nonNull && !primaryKey ? 'NOT NULL' : null,
         unique ? 'UNIQUE' : null,
+        defaultValue ? `DEFAULT ${defaultValue}` : null,
         referencesClause,
       ].filter(p => p);
       return `  ${parts.join(' ')}`;
@@ -199,7 +201,9 @@ export function createTable(table: Table): string {
 }
 
 export function addColumn(table: Table, column: Column): string {
-  return `ALTER TABLE ${table.name} ADD COLUMN ${column.name} ${column.type};`;
+  return `ALTER TABLE ${table.name} ADD COLUMN ${column.name} ${column.type}${
+    column.default == null ? '' : ` DEFAULT ${column.default}`
+  };`;
 }
 
 export function createExtension(extension: string): string {

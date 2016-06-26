@@ -16,12 +16,12 @@ function loadSchema(path) {
 describe('generateDatabaseInterface', () => {
   it('generates a database schema definition from a GraphQL IDL AST', () => {
     assert.deepEqual(
-      expectedDatabaseSchema,
       loadSchema(`${__dirname}/fixtures/schema.graphql`),
+      expectedDatabaseSchema,
     );
     assert.deepEqual(
-      updatedDatabaseSchema,
       loadSchema(`${__dirname}/fixtures/updatedSchema.graphql`),
+      updatedDatabaseSchema,
     );
   });
 });

@@ -16,6 +16,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: true,
           nonNull: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'id',
@@ -23,6 +25,8 @@ const schema: DatabaseSchema = {
           primaryKey: true,
           unique: false,
           nonNull: true,
+          defaultValue: 'gen_random_uuid()',
+          references: null,
         },
         {
           name: 'email',
@@ -30,6 +34,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: true,
           nonNull: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'password_hash',
@@ -37,6 +43,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'created_at',
@@ -44,6 +52,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'location',
@@ -51,6 +61,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: false,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'favorite_food',
@@ -58,6 +70,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: false,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'first_name',
@@ -65,6 +79,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: false,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'last_name',
@@ -72,6 +88,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: false,
+          defaultValue: null,
+          references: null,
         },
       ],
       constraints: [],
@@ -85,6 +103,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: true,
           nonNull: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'id',
@@ -92,6 +112,8 @@ const schema: DatabaseSchema = {
           primaryKey: true,
           unique: false,
           nonNull: true,
+          defaultValue: 'gen_random_uuid()',
+          references: null,
         },
         {
           name: 'title',
@@ -99,6 +121,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'text',
@@ -106,6 +130,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'created_at',
@@ -113,6 +139,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'authored_by_user_id',
@@ -120,6 +148,7 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: true,
+          defaultValue: null,
           references: {
             table: 'users',
             column: 'id',
@@ -137,6 +166,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: true,
           nonNull: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'id',
@@ -144,6 +175,8 @@ const schema: DatabaseSchema = {
           primaryKey: true,
           unique: false,
           nonNull: true,
+          defaultValue: 'gen_random_uuid()',
+          references: null,
         },
         {
           name: 'text',
@@ -151,6 +184,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'created_at',
@@ -158,6 +193,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'authored_by_user_id',
@@ -165,6 +202,7 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: false,
+          defaultValue: null,
           references: {
             table: 'users',
             column: 'id',
@@ -176,6 +214,7 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: true,
+          defaultValue: null,
           references: {
             table: 'posts',
             column: 'id',
@@ -193,6 +232,7 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: true,
+          defaultValue: null,
           references: {
             table: 'users',
             column: 'id',
@@ -204,6 +244,7 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           unique: false,
           nonNull: true,
+          defaultValue: null,
           references: {
             table: 'users',
             column: 'id',

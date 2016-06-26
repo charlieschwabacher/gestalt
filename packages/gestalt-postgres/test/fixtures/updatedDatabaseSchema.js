@@ -15,56 +15,72 @@ const schema: DatabaseSchema = {
           type: 'SERIAL',
           primaryKey: false,
           nonNull: true,
-          unique: true
+          unique: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'id',
           type: 'uuid',
           primaryKey: true,
           nonNull: true,
-          unique: false
+          unique: false,
+          defaultValue: 'gen_random_uuid()',
+          references: null,
         },
         {
           name: 'email',
           type: 'text',
           primaryKey: false,
           nonNull: true,
-          unique: true
+          unique: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'password_hash',
           type: 'text',
           primaryKey: false,
           nonNull: true,
-          unique: false
+          unique: false,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'created_at',
           type: 'timestamp without time zone',
           primaryKey: false,
           nonNull: true,
-          unique: false
+          unique: false,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'location',
           type: 'jsonb',
           primaryKey: false,
           nonNull: false,
-          unique: false
+          unique: false,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'first_name',
           type: 'text',
           primaryKey: false,
           nonNull: false,
-          unique: false
+          unique: false,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'last_name',
           type: 'text',
           primaryKey: false,
           nonNull: false,
-          unique: false
+          unique: false,
+          defaultValue: null,
+          references: null,
         }
       ],
       constraints: []
@@ -77,49 +93,63 @@ const schema: DatabaseSchema = {
           type: 'SERIAL',
           primaryKey: false,
           nonNull: true,
-          unique: true
+          unique: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'id',
           type: 'uuid',
           primaryKey: true,
           nonNull: true,
-          unique: false
+          unique: false,
+          defaultValue: 'gen_random_uuid()',
+          references: null,
         },
         {
           name: 'title',
           type: 'text',
           primaryKey: false,
           nonNull: true,
-          unique: true
+          unique: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'subtitle',
           type: 'text',
           primaryKey: false,
           nonNull: false,
-          unique: false
+          unique: false,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'text',
           type: 'text',
           primaryKey: false,
           nonNull: false,
-          unique: false
+          unique: false,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'images',
           type: 'jsonb',
           primaryKey: false,
           nonNull: false,
-          unique: false
+          unique: false,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'created_at',
           type: 'timestamp without time zone',
           primaryKey: false,
           nonNull: true,
-          unique: false
+          unique: false,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'authored_by_user_id',
@@ -127,6 +157,7 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           nonNull: true,
           unique: false,
+          defaultValue: null,
           references: {
             table: 'users',
             column: 'id'
@@ -144,6 +175,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           nonNull: true,
           unique: true,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'id',
@@ -151,6 +184,8 @@ const schema: DatabaseSchema = {
           primaryKey: true,
           nonNull: true,
           unique: false,
+          defaultValue: 'gen_random_uuid()',
+          references: null,
         },
         {
           name: 'title',
@@ -158,6 +193,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           nonNull: true,
           unique: false,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'content',
@@ -165,6 +202,8 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           nonNull: false,
           unique: false,
+          defaultValue: null,
+          references: null,
         },
         {
           name: 'created_by_user_id',
@@ -172,6 +211,7 @@ const schema: DatabaseSchema = {
           primaryKey: false,
           nonNull: true,
           unique: false,
+          defaultValue: null,
           references: {
             table: 'users',
             column: 'id',
@@ -189,6 +229,7 @@ const schema: DatabaseSchema = {
           nonNull: true,
           primaryKey: false,
           unique: false,
+          defaultValue: null,
           references: {
             table: 'users',
             column: 'id',
@@ -200,6 +241,7 @@ const schema: DatabaseSchema = {
           nonNull: true,
           primaryKey: false,
           unique: false,
+          defaultValue: null,
           references: {
             table: 'users',
             column: 'id',

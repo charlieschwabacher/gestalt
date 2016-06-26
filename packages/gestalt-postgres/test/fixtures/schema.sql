@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE users (
   seq SERIAL NOT NULL UNIQUE,
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email text NOT NULL UNIQUE,
   password_hash text NOT NULL,
   created_at timestamp without time zone NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE users (
 
 CREATE TABLE posts (
   seq SERIAL NOT NULL UNIQUE,
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title text NOT NULL,
   text text NOT NULL,
   created_at timestamp without time zone NOT NULL,
@@ -27,7 +27,7 @@ CREATE INDEX ON posts (authored_by_user_id);
 
 CREATE TABLE comments (
   seq SERIAL NOT NULL UNIQUE,
-  id uuid PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   text text NOT NULL,
   created_at timestamp without time zone NOT NULL,
   authored_by_user_id uuid REFERENCES users (id),
