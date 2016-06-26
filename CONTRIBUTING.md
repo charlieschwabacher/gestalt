@@ -17,13 +17,13 @@ link the individual packages.
 Compiling Source:
 -----------------
 
-To compile source for all packages run `npm run build` from the project root.
+To compile source for all packages `npm run build` from the project root.
 
-To compile source for an individual package, run `npm run build` from the
-package root.
+To compile source for an individual package, `npm run build` from the package
+root.
 
 To watch source files within a package and compile any time they are changed,
-run `npm run watch` from the package root.
+`npm run watch` from the package root.
 
 
 Running Tests:
