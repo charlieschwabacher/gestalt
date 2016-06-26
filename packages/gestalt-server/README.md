@@ -1,6 +1,8 @@
 gestalt-server
 --------------
 
+[![npm version](https://badge.fury.io/js/gestalt-server.svg)](https://badge.fury.io/js/gestalt-server)
+
 Connect middleware based on `express-graphql` to create a GraphQL API server
 using the Gestalt framework.  Accepts the following options:
 

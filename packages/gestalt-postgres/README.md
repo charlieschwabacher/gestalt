@@ -1,6 +1,8 @@
 gestalt-postgres
 ----------------
 
+[![npm version](https://badge.fury.io/js/gestalt-postgres.svg)](https://badge.fury.io/js/gestalt-postgres)
+
 A PostgreSQL database adapter for the Gestalt framework
 
 ```js

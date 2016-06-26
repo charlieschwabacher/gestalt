@@ -13,6 +13,8 @@ Gestalt lets you use the [GraphQL](http://graphql.org/) schema language and a
 small set of directives to define an API with a PostgreSQL backend
 declaratively, *really quickly*, and with a *tiny* amount of code.
 
+[![Build Status](https://travis-ci.org/charlieschwabacher/gestalt.svg?branch=master)](https://travis-ci.org/charlieschwabacher/gestalt?branch=master)
+
 
 GraphQL schema language
 -----------------------

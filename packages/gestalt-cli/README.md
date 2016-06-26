@@ -1,6 +1,8 @@
 gestalt-cli
 -----------
 
+[![npm version](https://badge.fury.io/js/gestalt-cli.svg)](https://badge.fury.io/js/gestalt-cli)
+
 Gestalt CLI includes the command line tools for using Gestalt:
 
 `npm install -g gestalt-cli`
