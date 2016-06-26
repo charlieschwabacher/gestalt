@@ -1,5 +1,5 @@
-// exports the AST of a base schema
 // @flow
+// exports the AST of a base schema
 
 import {parse} from 'graphql';
 

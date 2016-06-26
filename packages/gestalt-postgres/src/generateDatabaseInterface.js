@@ -1,6 +1,6 @@
+// @flow
 // Generates an internal representation of a PostgreSQL schema from a GraphQL
 // type definition AST.
-// @flow
 
 import type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
   Type, NamedType, DatabaseInterface, DatabaseSchema, Table, Index, Column,

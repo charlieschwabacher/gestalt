@@ -1,6 +1,6 @@
+// @flow
 // Creates a resolve function for a GraphQL schema given a source type, target
 // type, and relationship information.
-// @flow
 
 import type {Relationship, RelationshipSegmentDescriptionMap,
   RelationshipSegmentDescription, RelationshipSegment, Query, Join, Condition,
