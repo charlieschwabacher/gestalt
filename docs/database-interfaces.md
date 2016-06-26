@@ -15,8 +15,9 @@ return your database interface object.
     DatabaseInterface
 ```
 
-`objectDefinitions` will be an array of GraphQL TypeSystemDefiniton AST nodes
-produced by the `graphql-js` parser.  You can find their flow types
+`objectDefinitions` will be an array of GraphQL ObjectTypeDefinition AST nodes
+produced by the `graphql-js` parser.  The array will include definitions for any
+objects implementing the Node interface. You can find their flow types
 [here](//github.com/graphql/graphql-js/blob/master/src/language/ast.js).
 
 `relationships` will be an array of objects describing relationship directives
@@ -40,7 +41,8 @@ type RelationshipSegment = {
 };
 ```
 
-`server config` will be included when the adapter is used with `gestalt-server`,
+`server config` will be included when the adapter is used with
+[gestalt-server](//github.com/charlieschwabacher/gestalt/tree/master/packages/gestalt-server),
 and will include the configuration options passed when the server is created.
 It is useful to do things like log queries only when the server is in
 development mode.
