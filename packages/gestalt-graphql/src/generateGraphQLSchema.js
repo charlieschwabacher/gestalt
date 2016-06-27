@@ -3,7 +3,7 @@
 
 import path from 'path';
 import fs from 'fs';
-import {camel} from 'change-case';
+import camel from 'camel-case';
 import {parse, buildASTSchema, concatAST, printSchema, GraphQLObjectType,
   getNamedType, GraphQLSchema} from 'graphql';
 import {mutationWithClientMutationId} from 'graphql-relay';

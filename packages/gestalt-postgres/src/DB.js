@@ -2,7 +2,7 @@
 import {red, green, blue} from 'colors/safe';
 import pg from 'pg';
 import {camelizeKeys, invariant} from 'gestalt-utils';
-import {snake} from 'change-case';
+import snake from 'snake-case';
 
 function whereFromConditions(conditions: Object): [string, mixed[]] {
   const sql = `WHERE ${

@@ -8,7 +8,7 @@ import type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
   JoinTableDescription, ForeignKeyDescription, RelationshipSegmentDescription,
   GestaltServerConfig} from 'gestalt-utils';
 import {plural} from 'pluralize';
-import {snake} from 'change-case';
+import snake from 'snake-case';
 import generateNodeResolver from './generateNodeResolver';
 import {generateRelationshipResolver, generateRelationshipLoaders} from
   './generateRelationshipResolver';

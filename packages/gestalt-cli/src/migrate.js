@@ -8,7 +8,7 @@ import importAll from 'import-all';
 import prompt from 'prompt';
 import semver from 'semver';
 import {blue} from 'colors/safe';
-import {snake} from 'change-case';
+import snake from 'snake-case';
 import {graphql, parse} from 'graphql';
 import {introspectionQuery} from 'graphql/utilities';
 import {generateGraphQLSchemaWithoutResolution, databaseInfoFromAST} from

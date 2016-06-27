@@ -4,7 +4,7 @@ import type {Document, ObjectTypeDefinition, TypeDefinition, FieldDefinition}
   from 'gestalt-utils';
 import {baseType, keyMap, setMap} from 'gestalt-utils';
 import {plural} from 'pluralize';
-import {constantCase} from 'change-case';
+import constantCase from 'constant-case';
 
 export default function insertConnectionTypes(ast: Document): void {
   const newDefinitions = [];

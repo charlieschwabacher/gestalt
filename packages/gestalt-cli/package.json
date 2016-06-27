@@ -20,7 +20,7 @@
   "dependencies": {
     "babel-polyfill": "^6.9.1",
     "babel-register": "^6.9.0",
-    "change-case": "^2.3.1",
+    "camel-case": "^3.0.0",
     "colors": "^1.1.2",
     "commander": "^2.9.0",
     "ejs": "^2.4.2",
@@ -31,7 +31,8 @@
     "import-all": "^1.0.1",
     "prompt": "^1.0.0",
     "rimraf": "^2.5.2",
-    "semver": "^5.1.0"
+    "semver": "^5.1.0",
+    "snake-case": "^2.1.0"
   },
   "devDependencies": {
     "babel-cli": "^6.10.1"

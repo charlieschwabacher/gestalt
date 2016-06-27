@@ -8,7 +8,8 @@ import rimraf from 'rimraf';
 import ejs from 'ejs';
 import {get, exec, copy} from './cli';
 import {invariant} from 'gestalt-utils';
-import {snake, camel} from 'change-case';
+import snake from 'snake-case';
+import camel from 'camel-case';
 
 export default async function(name: string): Promise {
   try {

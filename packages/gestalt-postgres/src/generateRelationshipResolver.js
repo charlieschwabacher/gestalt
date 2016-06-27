@@ -10,7 +10,8 @@ import type DB from './DB';
 import {pairingSignatureFromRelationshipSegment, tableNameFromTypeName} from
   './generateDatabaseInterface';
 import DataLoader from 'dataloader';
-import {camel, snake} from 'change-case';
+import camel from 'camel-case';
+import snake from 'snake-case';
 import {invariant, keyMap, group} from 'gestalt-utils';
 
 
