@@ -1,6 +1,7 @@
 type Session {
   id: ID!
   currentUser: User
+  suggestedUsers: [User]
 }
 
 type User implements Node {

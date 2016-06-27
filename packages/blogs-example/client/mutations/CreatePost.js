@@ -16,7 +16,10 @@ export default class CreatePost extends Mutation {
   getFatQuery() {
     return Relay.QL`
       fragment on CreatePostPayload {
-        user { posts }
+        user {
+          posts,
+          feed
+        }
       }
     `;
   }

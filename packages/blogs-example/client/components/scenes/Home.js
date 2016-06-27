@@ -1,6 +1,6 @@
 import React from 'react';
 import Relay from 'react-relay';
-import {SignInForm, SignUpForm, Posts} from '../shared';
+import {SignInForm, SignUpForm, Posts, User} from '../shared';
 
 const PAGE_SIZE = 10;
 
@@ -10,17 +10,33 @@ export default Relay.createContainer(
       {
         (session.currentUser)
         ?
-          <div>
-            <h3>Your Feed:</h3>
-            <hr/>
-            <Posts
-              posts={session.currentUser.feed}
-              loadMore={
-                () => relay.setVariables({
-                  count: relay.variables.count + PAGE_SIZE
-                })
+          <div className='row'>
+            <div className='flex'>
+              <h3>Who to follow</h3>
+              <hr/>
+              {
+                session.suggestedUsers.map((user, i) =>
+                  <div
+                    key={i}
+                    style={{marginBottom: '0.5rem'}}
+                  >
+                    <User user={user}/>
+                  </div>
+                )
               }
-            />
+            </div>
+            <div className='flex-2' style={{marginLeft: '3rem'}}>
+              <h3>Your Feed:</h3>
+              <hr/>
+              <Posts
+                posts={session.currentUser.feed}
+                loadMore={
+                  () => relay.setVariables({
+                    count: relay.variables.count + PAGE_SIZE
+                  })
+                }
+              />
+            </div>
           </div>
         :
           <div className='row'>
@@ -47,6 +63,9 @@ export default Relay.createContainer(
             feed(last: $count) {
               ${Posts.getFragment('posts')}
             }
+          }
+          suggestedUsers {
+            ${User.getFragment('user')}
           }
         }
       `

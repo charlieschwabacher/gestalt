@@ -21,7 +21,6 @@ export default types => ({
 
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await db.insert('users', {
-      createdAt: new Date(),
       email,
       passwordHash,
       firstName,
