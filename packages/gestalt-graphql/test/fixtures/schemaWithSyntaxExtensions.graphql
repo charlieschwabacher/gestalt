@@ -1,0 +1,36 @@
+type Session {
+  id: ID!
+  currentUser: User
+}
+
+type User implements Node {
+  id: ID!
+  email: String! @unique @hidden @index
+  passwordHash: String! @hidden
+  createdAt: Date!
+  firstName: String
+  lastName: String
+  fullName: String @virtual
+  followedUsers: =FOLLOWED=> User
+  followers: <=FOLLOWED= User
+  posts: =AUTHORED=> Post
+  comments: =AUTHORED=> Comment
+  feed: =FOLLOWED=> User =AUTHORED=> Post
+}
+
+type Post implements Node {
+  id: ID!
+  title: String! @index
+  text: String!
+  createdAt: Date!
+  author: <-AUTHORED- User!
+  comments: =INSPIRED=> Comment
+}
+
+type Comment implements Node {
+  id: ID!
+  text: String!
+  createdAt: Date!
+  author: <-AUTHORED- User
+  subject: <-INSPIRED- Post!
+}

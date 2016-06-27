@@ -7,6 +7,7 @@ import camel from 'camel-case';
 import {parse, buildASTSchema, concatAST, printSchema, GraphQLObjectType,
   getNamedType, GraphQLSchema} from 'graphql';
 import {mutationWithClientMutationId} from 'graphql-relay';
+import translateSyntaxExtensions from './translateSyntaxExtensions';
 import {insertConnectionTypes, removeHiddenNodes} from './ASTTransforms';
 import databaseInfoFromAST from './databaseInfoFromAST';
 import scalarTypeDefinitions from './scalarTypeDefinitions';
@@ -25,7 +26,8 @@ export default function generateGraphQLSchema(
   databaseInterfaceDefinitionFn: DatabaseInterfaceDefinitionFn,
   config?: GestaltServerConfig,
 ): {schema: GraphQLSchema, databaseInterface: DatabaseInterface} {
-  const ast = parse(schemaText);
+  const translatedText = translateSyntaxExtensions(schemaText);
+  const ast = parse(translatedText);
 
   // we take inventory of object definitions and relationships before the ast
   // is modified
