@@ -168,42 +168,36 @@ function sqlFromOperation(operation: DatabaseSchemaMigrationOperation): string {
 
 export function createTable(table: Table): string {
   const {name, columns, constraints = []} = table;
-
-  const columnsRows = columns.map(
-    column => {
-      const {name, type, primaryKey, nonNull, unique, references, defaultValue}
-        = column;
-      const referencesClause = (
-        references
-        ? `REFERENCES ${references.table} (${references.column})`
-        : null
-      );
-      const parts = [
-        name,
-        type,
-        primaryKey ? 'PRIMARY KEY' : null,
-        nonNull && !primaryKey ? 'NOT NULL' : null,
-        unique ? 'UNIQUE' : null,
-        defaultValue ? `DEFAULT ${defaultValue}` : null,
-        referencesClause,
-      ].filter(p => p);
-      return `  ${parts.join(' ')}`;
-    }
-  );
-
+  const columnsRows = columns.map(column => `  ${describeColumn(column)}`);
   const constraintsRows = constraints.map(constraint =>
     `  UNIQUE (${constraint.columns.join(', ')})`
   );
-
   const columnsAndConstraints = columnsRows.concat(constraintsRows).join(',\n');
-
   return `CREATE TABLE ${name} (\n${columnsAndConstraints}\n);`;
 }
 
+export function describeColumn(column: Column): string {
+  const {name, type, primaryKey, nonNull, unique, references, defaultValue}
+    = column;
+  const referencesClause = (
+    references
+    ? `REFERENCES ${references.table} (${references.column})`
+    : null
+  );
+  const parts = [
+    name,
+    type,
+    primaryKey ? 'PRIMARY KEY' : null,
+    nonNull && !primaryKey ? 'NOT NULL' : null,
+    unique ? 'UNIQUE' : null,
+    defaultValue ? `DEFAULT ${defaultValue}` : null,
+    referencesClause,
+  ].filter(p => p);
+  return parts.join(' ');
+}
+
 export function addColumn(table: Table, column: Column): string {
-  return `ALTER TABLE ${table.name} ADD COLUMN ${column.name} ${column.type}${
-    column.default == null ? '' : ` DEFAULT ${column.default}`
-  };`;
+  return `ALTER TABLE ${table.name} ADD COLUMN ${describeColumn(column)};`;
 }
 
 export function createExtension(extension: string): string {

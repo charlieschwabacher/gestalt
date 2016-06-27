@@ -486,7 +486,7 @@ export function joinTableIndicesFromDescription(
 // foreign key using the following rules:
 
 // missing + singular:
-//   - add the column to the out type of the existing segment
+//   - add the column to the existing segment
 // singular + plural:
 //   - add the column to the fromType of the singular segment
 // singular + singular:
@@ -496,15 +496,25 @@ export function joinTableIndicesFromDescription(
 export function foreignKeyDescriptionFromRelationshipSegmentPair(
   pair: RelationshipSegmentPair
 ): ForeignKeyDescription {
-  const normalType = (
-    pair.in && (
-      (pair.out == null) ||
-      (pair.in.cardinality === 'plural') ||
-      (pair.out.nonNull && !pair.in.nonNull)
-    )
-    ? pair.in
-    : pair.out
-  );
+  let normalType;
+  if (pair.in == null) {
+    normalType = {
+      ...pair.out,
+      direction: 'in',
+      fromType: pair.out.toType,
+      toType: pair.out.fromType,
+    };
+  } else {
+    normalType = (
+      (
+        (pair.out == null) ||
+        (pair.in.cardinality === 'plural') ||
+        (pair.out.nonNull && !pair.in.nonNull)
+      )
+      ? pair.in
+      : pair.out
+    );
+  }
 
   invariant(normalType, 'input pair does not require a foreign key');
   const {label, fromType, toType, direction} = normalType;

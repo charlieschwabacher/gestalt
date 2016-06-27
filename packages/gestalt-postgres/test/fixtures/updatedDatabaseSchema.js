@@ -81,6 +81,18 @@ const schema: DatabaseSchema = {
           unique: false,
           defaultValue: null,
           references: null,
+        },
+        {
+          name: 'pinned_post_id',
+          type: 'uuid',
+          primaryKey: false,
+          nonNull: false,
+          unique: false,
+          defaultValue: null,
+          references: {
+            table: 'posts',
+            column: 'id',
+          },
         }
       ],
       constraints: []
@@ -160,7 +172,7 @@ const schema: DatabaseSchema = {
           defaultValue: null,
           references: {
             table: 'users',
-            column: 'id'
+            column: 'id',
           }
         }
       ],
@@ -288,6 +300,12 @@ const schema: DatabaseSchema = {
       table: 'pages',
       columns: [
         'created_by_user_id',
+      ],
+    },
+    {
+      table: 'users',
+      columns: [
+        'pinned_post_id',
       ],
     },
   ],

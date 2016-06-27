@@ -26,6 +26,7 @@ type User implements Node {
   posts: Post @relationship(path: "=AUTHORED=>")
   pages: Page @relationship(path: "=CREATED=>")
   feed: Post @relationship(path: "=FOLLOWED=>User=AUTHORED=>")
+  pinnedPost: Post @relationship(path: "-PINNED->")
 }
 
 type Location {

@@ -1,4 +1,8 @@
+ALTER TABLE users ADD COLUMN pinned_post_id uuid REFERENCES posts (id);
+
 CREATE INDEX ON users (first_name);
+
+CREATE INDEX ON users (pinned_post_id);
 
 ALTER TABLE posts ADD UNIQUE (title);
 

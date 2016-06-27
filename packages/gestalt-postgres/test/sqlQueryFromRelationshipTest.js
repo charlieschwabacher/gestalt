@@ -191,7 +191,7 @@ describe('sqlQueryFromRelationship', () => {
     });
   });
 
-  describe('one sided outward one segment relationship', () => {
+  describe('one sided outward plural one segment relationship', () => {
     it('generates correct SQL', () => {
       testRelationship(
         r('posts', 'User', 'Post', false, '=AUTHORED=>'),
@@ -207,7 +207,7 @@ describe('sqlQueryFromRelationship', () => {
     });
   });
 
-  describe('one sided inward one segment relationship', () => {
+  describe('one sided inward singular one segment relationship', () => {
     it('generates correct SQL', () => {
       testRelationship(
         null,
@@ -220,6 +220,21 @@ describe('sqlQueryFromRelationship', () => {
       );
     });
   });
+
+  describe('one sided outward singular one segment relationship', () => {
+    it('generates correct SQL', () => {
+      testRelationship(
+        null,
+
+        r('pinnedPost', 'User', 'Post', false, '-PINNED->'),
+
+        null,
+
+        'SELECT posts.* FROM posts WHERE posts.id = ANY ($1);'
+      );
+    });
+  });
+
 
   describe('one sided two segment relationship', () => {
     it('generates correct SQL', () => {
