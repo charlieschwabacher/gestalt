@@ -96,7 +96,7 @@ export default class DB {
     const columns = Object.keys(object).map(snake);
     const values = escapes.map((v, i) => `$${i + 1}`);
     const result = await this.exec(
-      `INSERT INTO ${table} (${columns}) VALUES ${values}) RETURNING *;`,
+      `INSERT INTO ${table} (${columns}) VALUES (${values}) RETURNING *;`,
       escapes
     );
     return camelizeKeys(result.rows[0]);
