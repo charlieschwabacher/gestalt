@@ -222,7 +222,7 @@ join table with columns for `user_id` and `followed_user_id`.  Because the
 unique constraint on the table implies an index on `user_id`, Gestalt only needs
 to create an index on `followed_user_id`.
 
-```
+```sql
 CREATE TABLE user_followed_users (
   user_id uuid NOT NULL REFERENCES users (id),
   followed_user_id uuid NOT NULL REFERENCES users (id),
