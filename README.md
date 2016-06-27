@@ -49,28 +49,27 @@ import {
 } from 'graphql';
 
 export default new GraphQLObjectType({
-    name: 'Human',
-    fields: {
-      id: {
-        type: new GraphQLNonNull(GraphQLString),
-        resolve(obj) {
-          return obj.id;
-        }
-      },
-      name: {
-        type: GraphQLString,
-        resolve(obj) {
-          return obj.name;
-        }
-      },
-      age: {
-        type: GraphQLInt,
-        resolve(obj) {
-          return obj.age;
-        }
+  name: 'Human',
+  fields: {
+    id: {
+      type: new GraphQLNonNull(GraphQLString),
+      resolve(obj) {
+        return obj.id;
+      }
+    },
+    name: {
+      type: GraphQLString,
+      resolve(obj) {
+        return obj.name;
+      }
+    },
+    age: {
+      type: GraphQLInt,
+      resolve(obj) {
+        return obj.age;
       }
     }
-  })
+  }
 });
 ```
 
