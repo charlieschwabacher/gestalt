@@ -84,7 +84,9 @@ uniqueness, and the `@hidden` directive to the `passwordHash` field to create a
 column in the database, but *not* a field in our GraphQL schema.
 
 
-#### 5) Run database migrations: `cd your-project` and `gestalt migrate`
+#### 5) Run migrations
+
+`gestalt migrate`
 
 When you run `gestalt-migrate` in the root directory of your project, Gestalt
 reads the existing database schema, compares it to what is defined in
@@ -137,7 +139,8 @@ order that rows were created so that we can order them chronologically.
 You can type `'yes'` to run the migration, and then `'no'` to skip writing it to
 a file.  At this point, you should be able to start the server and explore your
 schema in the GraphiQL IDE.  Run `npm start` and navigate to
-`localhost:3000/graphql`.
+`localhost:3000/graphql`.  You can find the types you created by opening the
+'docs' sidebar and clicking on `QueryRoot`, and then `Node`.
 
 
 #### 6) Add the `AUTHORED` relationship between users and posts:
