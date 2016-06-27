@@ -47,8 +47,6 @@ export default async function migrate() {
     await updateJSONSchema(localPackage, schemaText);
     await updateDatabaseSchema(localPackage, schemaText);
 
-    console.log('migration complete');
-
   } catch (err) {
 
     console.log('migration failed with the error:', err);
