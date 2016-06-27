@@ -1,5 +1,5 @@
-// Retreives a Node given its global ID
 // @flow
+// Retreives a Node given its global ID
 
 import {tableNameFromTypeName} from './generateDatabaseInterface';
 import type {GraphQLResolveInfo, GraphQLFieldResolveFn} from 'gestalt-utils';
