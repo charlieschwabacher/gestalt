@@ -188,7 +188,7 @@ After making these changes to `schema.graphql`, run `gestalt-migrate` again. It
 will create the following migration:
 
 ```SQL
-ALTER TABLE posts ADD COLUMN authored_by_user_id uuid;
+ALTER TABLE posts ADD COLUMN authored_by_user_id uuid REFERENCES users (id);
 
 CREATE INDEX ON posts (authored_by_user_id);
 ```
