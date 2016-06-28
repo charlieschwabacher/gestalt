@@ -362,7 +362,7 @@ npm modules so that you can use only parts you need.
 
 
 - [gestalt-server](//github.com/charlieschwabacher/gestalt/tree/master/packages/gestalt-server) -
-  connect middleware that loads your `schema.graphql` file and
+  connect middleware that loads your `schema.graphql` file and serves your GraphQL API.
 
 
 - [gestalt-graphql](//github.com/charlieschwabacher/gestalt/tree/master/packages/gestalt-graphql) -
@@ -374,7 +374,8 @@ npm modules so that you can use only parts you need.
   the only database adapter (so far) for Gestalt.  `gestalt-postgres` generates
   a SQL schema and queries based on your `schema.graphql`.  It is used with
   either `gestalt-server` or `gestalt-graphql`.  Gestalt postgres adds sql query
-  helpers to the graphql query context, you can find more information on these [here](//github.com/charlieschwabacher/gestalt/tree/master/packages/gestalt-postgres#query-helper-api).
+  helpers to the graphql query context, you can find more information on these
+  [here](//github.com/charlieschwabacher/gestalt/tree/master/packages/gestalt-postgres#query-helper-api).
 
 
 Contributing
