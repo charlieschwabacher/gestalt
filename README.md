@@ -9,9 +9,9 @@
 Gestalt
 =======
 
-Gestalt lets you use the [GraphQL](http://graphql.org/) schema language and a
-small set of directives to define an API with a PostgreSQL backend
-declaratively, *really quickly*, and with a *tiny* amount of code.
+Gestalt lets you use an extended version of the [GraphQL](http://graphql.org/)
+schema language to define an API with a PostgreSQL backend declaratively,
+*really quickly*, and with a *tiny* amount of code.
 
 [![Build Status](https://travis-ci.org/charlieschwabacher/gestalt.svg?branch=master)](https://travis-ci.org/charlieschwabacher/gestalt?branch=master)
 
@@ -106,21 +106,20 @@ tables.  Other objects and arrays they reference are stored in PostgreSQL as
 JSON, and relationships between nodes are specified with directives.
 
 
-Object relationships
---------------------
+Language Extensions
+-------------------
 Gestalt needs information about the relationships between objects to generate a
-database schema and efficient queries.  You provide this using the
-`@relationship` directive and a syntax inspired by
-[Neo4j](//github.com/neo4j/neo4j)'s Cypher query language.
+database schema and efficient queries.  You provide this using a syntax inspired
+by [Neo4j](//github.com/neo4j/neo4j)'s Cypher query language.
 
 ```GraphQL
 type User implements Node {
   name: String
-  posts: Post @relationship(path: "=AUTHORED=>")
+  posts: =AUTHORED=> Post
 }
 type Post implements Node {
   text: String
-  author: User @relationship(path: "<-AUTHORED-")
+  author: <-AUTHORED- User
 }
 ```
 
@@ -157,14 +156,14 @@ complex relationships between types:
 ```GraphQL
 type User implements Node {
   name: String
-  posts: Post @relationship(path: "=AUTHORED=>")
-  followedUsers: User @relationship(path: "=FOLLOWED=>")
-  followers: User @relationship(path: "<=FOLLOWED=")
-  feed: Post @relationship(path: "=FOLLOWED=>User=AUTHORED=>")
+  posts: =AUTHORED=> Post
+  followedUsers: =FOLLOWED=> User
+  followers: <=FOLLOWED= User
+  feed: =FOLLOWED=> User =AUTHORED=> Post
 }
 type Post implements Node {
   text: String
-  author: User @relationship(path: "<-AUTHORED-")
+  author: <-AUTHORED- User
 }
 ```
 
@@ -187,10 +186,10 @@ user' and does not.  Following these two rules will lead to a semantic database
 schema, and readable code in `schema.graphql`.
 
 
-Other directives
-----------------
-There are a few more directives used by Gestalt to provide extra information
-about how to create the database and GraphQL schemas.
+Directives
+----------
+There are a few directives used by Gestalt to provide extra information about
+how to create the database and GraphQL schemas.
 
 - `@hidden` is used to define fields that should become part of the database
   schema but not be exposed as part of the GraphQL schema.  It can be used for
