@@ -132,24 +132,24 @@ Arrows with identical labels and types at their head and tail are matched, and
 the combination of their cardinalities determines how the relationship between
 their types will be stored in the database.
 
-In the example above the relationship 'user authored post' is represented with
+In the example above, the relationship `User AUTHORED Post` is represented with
 an arrow pointing out from `User` and in to `Post`.  Because a user can author
-many posts, but each post has only one author, the arrow on the posts field of
-the User type is plural (`=`) and the arrow on the author field of the Post type
-is singular (`-`).
+many posts, but each post has only one author, the arrow on the `posts` field of
+the `User` type is plural (`=`) and the arrow on the `author` field of the
+`Post` type is singular (`-`).
 
 A plural arrow also indicates that a field should be a Relay connection -
-Based on the directives in the example above, Gestalt would create
+based on the directives in the example above, Gestalt would create
 `PostsConnection` and `PostEdge` types, and update the type of the `posts`
 field to `PostsConnection`.  In addition to the relay connection arguments, if
 any scalar fields on the parent type are indexed, Gestalt will add an `order`
 argument to connection field (accepting a `PostsOrder` enum type).
 
-Gestalt will calculate how to store and query relationships efficiently -
-continuing with example above, Gestalt will add a foreign key
-`authored_by_user_id` to the `posts` table.
+Gestalt will calculate how to store and query relationships efficiently - with
+the relationships above, Gestalt will add a foreign key `authored_by_user_id` to
+the `posts` table.
 
-Relationships can be extended to represent more complex relationships:
+Paths can be extended to represent more complex relationships between types:
 
 ```GraphQL
 type User implements Node {
@@ -193,7 +193,8 @@ schemas.
   different datastore.
 
 - `@index` marks fields that should be indexed in the database.  They can be
-  used to sort
+  used to sort connection fields, or can be used to make custom queries
+  efficiently.
 
 - `@unique` marks fields that should have a guarantee of uniqueness by
   constraint in the database.
@@ -205,8 +206,8 @@ Gestalt defines two fields on the query root, `node` and `session` - you are
 expected to define the Session type as the entry point to your schema.  Session
 is not a Node, so it won't be stored in the database and you will need to define
 custom resolution for its fields.  A session object is made accessible in the
-query context.  It is both readable and writable, and any changes are persisted
-between requests.
+query context.  This object is both readable and writable - if it is modified,
+any changes are persisted between requests.
 
 ```GraphQL
 type Session {
@@ -254,8 +255,8 @@ export default {
 ```
 
 Custom resolution is defined using the name of the Type, and then providing
-resolution functions `(obj, args, context) => value`.  It isn't required for
-every object, and when it is present for an object, it doesn't need to be
+resolution functions `(object, arguments, context) => value`.  It isn't required
+for every object, and when it is present for an object, it doesn't need to be
 defined for every field.
 
 
@@ -263,8 +264,8 @@ Defining mutations
 ------------------
 Mutation definitions depend on the types you define with the schema language,
 so you create them as functions of an object mapping type names to GraphQL
-Types. Mutations are added to the schema in a second pass after object types are
-fully defined.
+Types. Mutations are added to the schema in a second pass after object types
+have been fully defined.
 
 ```javascript
 export default types => ({
@@ -357,8 +358,9 @@ npm modules so that you can use only parts you need.
 
 
 - [gestalt-cli](//github.com/charlieschwabacher/gestalt/tree/master/packages/gestalt-cli) -
-  a command line tool to scaffold new projects, run database migrations, and
-  update your `schema.json` file.
+  a command line tool to scaffold new projects using `gestalt-server` and
+  `gestalt-postgres`, run database migrations, and update your `schema.json`
+  file.
 
 
 - [gestalt-server](//github.com/charlieschwabacher/gestalt/tree/master/packages/gestalt-server) -
