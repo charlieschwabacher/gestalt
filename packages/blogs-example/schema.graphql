@@ -13,10 +13,10 @@ type User implements Node {
   fullName: String @virtual
   profileImage(size: Int): String! @virtual
   following: Boolean! @virtual
-  followedUsers: User @relationship(path: "=FOLLOWED=>")
-  followers: User @relationship(path: "<=FOLLOWED=")
-  posts: Post @relationship(path: "=AUTHORED=>")
-  feed: Post @relationship(path: "=FOLLOWED=>User=AUTHORED=>")
+  followedUsers: =FOLLOWED=> User
+  followers: <=FOLLOWED= User
+  posts: =AUTHORED=> Post
+  feed: =FOLLOWED=> User =AUTHORED=> Post
 }
 
 type Post implements Node {
@@ -24,5 +24,5 @@ type Post implements Node {
   title: String! @index
   text: String!
   createdAt: Date!
-  author: User @relationship(path: "<-AUTHORED-")
+  author: <-AUTHORED- User
 }
