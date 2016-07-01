@@ -225,6 +225,7 @@ export type Query = {
 
 export type Join = {
   table: string,
+  alias: ?string,
   condition: {
     left: {table: string, column: string},
     right: {table: string, column: string},
@@ -233,6 +234,7 @@ export type Join = {
 
 export type Condition = {
   table: string,
+  alias: ?string,
   column: string,
   operator: string,
   value: string,

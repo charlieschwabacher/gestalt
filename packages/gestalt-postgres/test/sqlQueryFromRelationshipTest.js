@@ -293,10 +293,11 @@ describe('sqlQueryFromRelationship', () => {
         r('grandchild', 'Human', 'Human', false, '=RAISED=>Human=RAISED=>'),
 
         'SELECT humans.* FROM humans JOIN humans humans2 ON ' +
-        'humans.raised_by_human_id = humans2.id WHERE humans.id = ANY ($1)',
+        'humans2.raised_by_human_id = humans.id WHERE humans2.id = ANY ($1);',
 
-        'SELECT humans.* FROM humans JOIN humans humans2 ON humans.id = ' +
-        'humans2.raised_by_human_id WHERE humans.raised_by_human_id = ANY ($1)',
+        'SELECT humans.* FROM humans JOIN humans humans2 ON ' +
+        'humans2.id = humans.raised_by_human_id WHERE ' +
+        'humans2.raised_by_human_id = ANY ($1);',
       );
     });
   });

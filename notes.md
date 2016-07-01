@@ -1,8 +1,4 @@
 TODO:
-  - make sure migrations add references constraints for foreign keys
-  - handle singular relationship to same table / joining to the same table
-    multiple times (need to keep track of table names used, name them if
-    repeated)
   - un-pend unit tests for generateRelationshipResolver
   - handle PageInfo / totalCount on connections w/ lookahead and better
     batching (would it be better to use stored procedures in PL/pgSQL?)

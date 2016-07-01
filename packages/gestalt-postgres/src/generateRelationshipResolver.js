@@ -285,21 +285,34 @@ export function queryFromRelationship(
 ): Query {
   const initialSegment = relationship.path[0];
   const finalSegment = relationship.path[relationship.path.length - 1];
+  const table = tableNameFromTypeName(finalSegment.toType);
+  const joins = aliasJoins(table, compactJoins(joinsFromPath(
+    segmentDescriptionMap,
+    relationship.path
+  )));
+  const finalJoin = joins[joins.length - 1];
+  const conditionAlias = finalJoin && finalJoin.alias;
+  const conditions = [
+    conditionFromSegment(segmentDescriptionMap, initialSegment, conditionAlias)
+  ];
 
-  return {
-    table: tableNameFromTypeName(finalSegment.toType),
-    joins: compactJoins(
-      joinsFromPath(segmentDescriptionMap, relationship.path)
-    ),
-    conditions: [conditionFromSegment(segmentDescriptionMap, initialSegment)],
-    batched: true,
-  };
+  return {table, joins, conditions};
 }
 
+function aliasJoins(table: string, joins: Join[]): Join[] {
+  const usedTables = {[table]: 1};
+  return joins.map(join => {
+    const usage = usedTables[join.table];
+    const alias = usage && `${join.table}${usage + 1}`;
+    usedTables[join.table] = (usage || 0) + 1;
+    return {...join, alias};
+  });
+}
 
 function conditionFromSegment(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
-  segment: RelationshipSegment
+  segment: RelationshipSegment,
+  alias: string,
 ): Condition {
   const description = descriptionFromSegment(segmentDescriptionMap, segment);
   const operator = '=';
@@ -308,17 +321,17 @@ function conditionFromSegment(
   if (description.type === 'foreignKey') {
     const {table, referencedTable, column, direction} = description.storage;
     if (segment.direction === direction) {
-      return {table, column, operator, value};
+      return {table, alias, column, operator, value};
     } else {
-      return {table: referencedTable, column: 'id', operator, value};
+      return {table: referencedTable, column: 'id', alias, operator, value};
     }
   } else {
     const {name, leftTableName, rightTableName, leftColumnName,
       rightColumnName} = description.storage;
     if (segment.direction === 'in') {
-      return {table: name, column: rightColumnName, operator, value};
+      return {table: name, column: rightColumnName, alias, operator, value};
     } else {
-      return {table: name, column: leftColumnName, operator, value};
+      return {table: name, column: leftColumnName, alias, operator, value};
     }
   }
 }
@@ -487,16 +500,22 @@ export function sqlStringFromQuery(
     : `${table}.*`
   } FROM ${table}${
     joins.map(join => {
-      const {table, condition} = join;
+      const {table, alias, condition} = join;
       const {left, right} = condition;
+
       return (
-        ` JOIN ${table} ON ${left.table}.${left.column} = ` +
-        `${right.table}.${right.column}`
+        alias == null
+        ?
+          ` JOIN ${table} ON ${left.table}.${left.column} = ` +
+          `${right.table}.${right.column}`
+        :
+          ` JOIN ${table} ${alias} ON ${alias}.${left.column} = ` +
+          `${right.table}.${right.column}`
       );
     }).join('')
   } WHERE ${
-    conditions.map(({table, column, operator, value}) =>
-      `${table}.${column} ${operator} ${value}`
+    conditions.map(({table, alias, column, operator, value}) =>
+      `${alias || table}.${column} ${operator} ${value}`
     ).join(' AND ')
   }${
     (order != null)
