@@ -193,8 +193,8 @@ schemas.
   different datastore.
 
 - `@index` marks fields that should be indexed in the database.  They can be
-  used to sort connection fields, or can be used to make custom queries
-  efficiently.
+  used to sort connection fields, or just to make custom queries efficiently
+  from javascript.
 
 - `@unique` marks fields that should have a guarantee of uniqueness by
   constraint in the database.
@@ -364,7 +364,8 @@ npm modules so that you can use only parts you need.
 
 
 - [gestalt-server](//github.com/charlieschwabacher/gestalt/tree/master/packages/gestalt-server) -
-  connect middleware that loads your `schema.graphql` file and serves your GraphQL API.
+  connect middleware that loads your `schema.graphql` file and serves your
+  GraphQL API.
 
 
 - [gestalt-graphql](//github.com/charlieschwabacher/gestalt/tree/master/packages/gestalt-graphql) -
