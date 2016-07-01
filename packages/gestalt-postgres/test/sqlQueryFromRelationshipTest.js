@@ -285,4 +285,19 @@ describe('sqlQueryFromRelationship', () => {
       );
     });
   });
+
+  describe('relationship joining the same table twice', () => {
+    it('generates correct SQL', () => {
+      testRelationship(
+        r('grandfather', 'Human', 'Human', false, '<-RAISED-Human<-RAISED-'),
+        r('grandchild', 'Human', 'Human', false, '=RAISED=>Human=RAISED=>'),
+
+        'SELECT humans.* FROM humans JOIN humans humans2 ON ' +
+        'humans.raised_by_human_id = humans2.id WHERE humans.id = ANY ($1)',
+
+        'SELECT humans.* FROM humans JOIN humans humans2 ON humans.id = ' +
+        'humans2.raised_by_human_id WHERE humans.raised_by_human_id = ANY ($1)',
+      );
+    });
+  });
 });
