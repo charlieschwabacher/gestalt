@@ -126,6 +126,7 @@ function generatePluralRelationshipLoader(
         pageInfo: {
           hasPreviousPage: await resolveHasPreviousPage(
             db,
+            key,
             args,
             slicedQuery,
             nodes.length,
@@ -133,6 +134,7 @@ function generatePluralRelationshipLoader(
           ),
           hasNextPage: await resolveHasNextPage(
             db,
+            key,
             args,
             slicedQuery,
             nodes.length,
@@ -146,6 +148,7 @@ function generatePluralRelationshipLoader(
 
 async function resolveHasPreviousPage(
   db: DB,
+  key: string,
   args: Object,
   slicedQuery: Query,
   nodesLength: number,
@@ -157,11 +160,17 @@ async function resolveHasPreviousPage(
   if (args.before == null) {
     return totalCount > nodesLength;
   }
-  return (await db.count(slicedQuery)) > nodesLength;
+
+  const count = await db.count(
+    sqlStringFromQuery(slicedQuery, true),
+    [[key], args.before]
+  );
+  return count > nodesLength;
 }
 
 async function resolveHasNextPage(
   db: DB,
+  key: string,
   args: Object,
   slicedQuery: Query,
   nodesLength: number,
@@ -173,7 +182,12 @@ async function resolveHasNextPage(
   if (args.after == null) {
     return totalCount > nodesLength;
   }
-  return (await db.count(slicedQuery) > nodesLength);
+
+  const count = await db.count(
+    sqlStringFromQuery(slicedQuery, true),
+    [[key], args.after]
+  );
+  return count > nodesLength;
 }
 
 export function validateConnectionArgs(
@@ -518,7 +532,7 @@ export function sqlStringFromQuery(
       `${alias || table}.${column} ${operator} ${value}`
     ).join(' AND ')
   }${
-    (order != null)
+    (order != null && !count)
     ? ` ORDER BY ${table}.${order.column} ${order.direction}`
     : ''
   }${
