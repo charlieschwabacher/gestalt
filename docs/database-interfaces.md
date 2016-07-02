@@ -4,10 +4,10 @@ Database Interfaces
 If you want to write your own database adapter for Gestalt, or just understand
 how the internals work, you are reading the right document.
 
-Gestalt database adapters are functions that takes any database specific
-configuration they will need as an argument, and then returns a function to
-which Gestalt will pass information on your schema.  This inner function will
-return your database interface object.
+Gestalt database adapters are functions that take any database specific
+configuration they will need as an argument, and return a function to which
+Gestalt will pass information on your schema.  This inner function will
+return a database interface object.
 
 ```javascript
 (databaseSpecificConfig) =>
