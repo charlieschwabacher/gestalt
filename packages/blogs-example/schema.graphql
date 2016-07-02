@@ -1,4 +1,4 @@
-type Session {
+type Session implements Node {
   id: ID!
   currentUser: User
   suggestedUsers: [User]

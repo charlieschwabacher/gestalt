@@ -7,7 +7,7 @@
 # remove Comment type, related fields
 # add Page type, add pages field to User
 
-type Session {
+type Session implements Node {
   id: ID!
   currentUser: User
 }

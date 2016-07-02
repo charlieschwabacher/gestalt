@@ -10,6 +10,11 @@ export default function generateNodeResolver(
 ): GraphQLFieldResolveFn {
   return async (source, args, context, info) => {
     const [typeName, id] = args.id.split(':');
+
+    if (typeName === 'Session') {
+      return {...context.session, _type: 'Session'};
+    }
+
     const tableName = tableNameFromTypeName(typeName);
     const result = await db.findBy(tableName, {id});
     result._type = typeName;

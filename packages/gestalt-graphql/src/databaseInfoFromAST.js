@@ -150,6 +150,7 @@ export function isDatabaseType(definition: Object): boolean {
   // Only ObjectTypes implementing the Node interface are recorded
   return (
     definition.kind === 'ObjectTypeDefinition' &&
-    definition.interfaces.some(type => type.name.value === 'Node')
+    definition.interfaces.some(type => type.name.value === 'Node') &&
+    definition.name.value !== 'Session'
   );
 }

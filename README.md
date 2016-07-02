@@ -203,14 +203,21 @@ schemas.
 Session type
 ------------
 Gestalt defines two fields on the query root, `node` and `session` - you are
-expected to define the Session type as the entry point to your schema.  Session
-is not a Node, so it won't be stored in the database and you will need to define
-custom resolution for its fields.  A session object is made accessible in the
-query context.  This object is both readable and writable - if it is modified,
-any changes are persisted between requests.
+expected to define the Session type in `schema.graphql` as the entry point to
+your schema.
+
+Session is a `Node`, but it is a special case that is **not** stored in the
+database. The value of the `id` field on `Session` will be defined
+automatically, but you will need to define custom resolution for any other
+fields you add.
+
+A session object is made accessible in the query context.  This object is both
+readable and writable - if it is modified, any changes are persisted between
+requests.
 
 ```GraphQL
-type Session {
+type Session implements Node {
+  id: ID!
   currentUser: User
 }
 ```

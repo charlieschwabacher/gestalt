@@ -86,6 +86,7 @@ function defineBaseSchemaResolution(
 ): void {
   defineFieldResolve(schema, 'QueryRoot', 'node', database.resolveNode);
   defineFieldResolve(schema, 'QueryRoot', 'session', resolveSession);
+  defineFieldResolve(schema, 'Session', 'id', () => 'Session:!');
 }
 
 // generate resolve functions for connection fields

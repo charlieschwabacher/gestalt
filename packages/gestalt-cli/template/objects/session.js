@@ -1,6 +1,6 @@
 export default {
   name: 'Session',
   fields: {
-    id: () => '!',
+    // define entry points to your schema here
   },
 };
