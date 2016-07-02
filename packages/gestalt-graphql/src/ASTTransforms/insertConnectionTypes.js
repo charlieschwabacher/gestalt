@@ -102,18 +102,17 @@ export function addConnectionArgumentsToField(
         name: {kind: 'Name', value: 'String'}
       },
     },
-  );
-
-  if (isOrderable) {
-    field.arguments.push({
+    {
       kind: 'InputValueDefinition',
       name: {kind: 'Name', value: 'order'},
+
+      // TODO: make this a list, allow ordering on multiple columns
       type: {
         kind: 'NamedType',
         name: {kind: 'Name', value: orderEnumTypeName}
       },
-    });
-  }
+    },
+  );
 }
 
 export function generateConnectionTypeDefintions(
@@ -189,18 +188,38 @@ export function generateConnectionTypeDefintions(
       ],
       interfaces: [],
     },
-  ];
 
-  if (orderEnumValues.length > 0) {
-    definitions.push({
+    // order enum type
+    {
       kind: 'EnumTypeDefinition',
       name: {kind: 'name', value: orderEnumTypeName},
-      values: orderEnumValues.map(value => ({
-        kind: 'EnumValueDefinition',
-        name: {kind: 'Name', value},
-      }))
-    });
-  }
+      values: orderEnumValues.reduce(
+        (memo, value) => {
+          memo.push(
+            {
+              kind: 'EnumValueDefinition',
+              name: {kind: 'Name', value: `${value}_ASC`},
+            },
+            {
+              kind: 'EnumValueDefinition',
+              name: {kind: 'Name', value: `${value}_DESC`},
+            }
+          );
+          return memo;
+        },
+        [
+          {
+            kind: 'EnumValueDefinition',
+            name: {kind: 'Name', value: 'ASC'},
+          },
+          {
+            kind: 'EnumValueDefinition',
+            name: {kind: 'Name', value: 'DESC'},
+          },
+        ],
+      )
+    },
+  ];
 
   return definitions;
 }

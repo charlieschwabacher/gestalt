@@ -4,7 +4,7 @@
 
 import type {Relationship, RelationshipSegmentDescriptionMap,
   RelationshipSegmentDescription, RelationshipSegment, Query, Join, Condition,
-  GraphQLFieldResolveFn, ConnectionArguments, ForeignKeyDescription,
+  Order, GraphQLFieldResolveFn, ConnectionArguments, ForeignKeyDescription,
   JoinTableDescription} from 'gestalt-utils';
 import type DB from './DB';
 import {pairingSignatureFromRelationshipSegment, tableNameFromTypeName} from
@@ -120,6 +120,9 @@ function generatePluralRelationshipLoader(
       const nodes = await db.query(sql, params);
       const totalCount = await db.count(countSql, [[key]]);
       const edges = nodes.map(node => ({node, cursor: node.id}));
+
+
+
       return {
         edges,
         totalCount,
@@ -208,36 +211,47 @@ export function applyCursorsToQuery(
   args: ConnectionArguments
 ): Query {
   const {before, after, first, last} = args;
-  const column = args.order == null ? 'seq' : snake(args.order);
+  const order = orderFromOrderArgument(args.order);
+
+  // for reverse pagination, we need to flip the ordering in order to use LIMIT,
+  // and then reverse the results
+  let reverseResults = false;
+  if (before != null || last != null) {
+    order.direction = order.direction === 'ASC' ? 'DESC' : 'ASC';
+    reverseResults = true;
+  }
+
   const {table} = query;
+  const {column, direction} = order;
   const value = `(SELECT ${column} FROM ${table} WHERE id = $2)`;
+  const operator = direction === 'ASC' ? '>' : '<';
   let {conditions} = query;
 
-  const order = {
-    column,
-    direction: (last != null || before != null) ? 'DESC' : 'ASC',
-  };
-
-  if (after != null) {
+  if (before != null || after != null) {
     conditions = conditions.concat({
       table,
       column,
       value,
-      operator: '>',
-    });
-  } else if (before != null) {
-    conditions = conditions.concat({
-      table,
-      column,
-      value,
-      operator: '<',
+      operator,
     });
   }
 
   return {
     ...query,
-    order,
     conditions,
+    order,
+    reverseResults,
+  };
+}
+
+export function orderFromOrderArgument(order: string): Order {
+  return {
+    column: (
+      order == null || order === 'ASC' || order === 'DESC'
+      ? 'seq'
+      : snake(order.replace(/_ASC$|_DESC$/, ''))
+    ),
+    direction: order && order.match(/DESC$/) ? 'DESC' : 'ASC',
   };
 }
 
@@ -506,9 +520,9 @@ export function sqlStringFromQuery(
   query: Query,
   count: boolean = false
 ): string {
-  const {table, joins, conditions, limit, order} = query;
+  const {table, joins, conditions, limit, order, reverseResults} = query;
 
-  return `SELECT ${
+  let sql = `SELECT ${
     count
     ? `COUNT(${table}.*)`
     : `${table}.*`
@@ -537,5 +551,13 @@ export function sqlStringFromQuery(
     : ''
   }${
     (limit != null) ? ` LIMIT ${limit}` : ''
-  };`;
+  }`;
+
+  if (reverseResults && !count) {
+    const column = order.column;
+    const direction = order.direction === 'ASC' ? 'DESC' : 'ASC';
+    sql = `SELECT * FROM (${sql}) ${table} ORDER BY ${column} ${direction}`;
+  }
+
+  return `${sql};`;
 }

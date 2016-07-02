@@ -31,7 +31,7 @@ function testConnectionArgs(
         args
       )
     ),
-    sql
+    sql,
   );
 }
 
@@ -45,67 +45,147 @@ describe('connection query generation', () => {
   it('handles none', () => {
     testConnectionArgs(
       relationships,
-      {order: 'created_at'},
+      {},
       'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1) ' +
-      'ORDER BY posts.created_at ASC;'
+      'ORDER BY posts.seq ASC;'
     );
   });
 
   it('handles first', () => {
     testConnectionArgs(
       relationships,
-      {order: 'created_at', first: 3},
+      {first: 3},
       'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1) ' +
-      'ORDER BY posts.created_at ASC LIMIT 3;'
+      'ORDER BY posts.seq ASC LIMIT 3;'
     );
   });
 
   it('handles after', () => {
     testConnectionArgs(
       relationships,
-      {order: 'created_at', after: 'a'},
+      {after: 'a'},
       'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1) ' +
-      'AND posts.created_at > (SELECT created_at FROM posts WHERE id = $2) ' +
-      'ORDER BY posts.created_at ASC;'
+      'AND posts.seq > (SELECT seq FROM posts WHERE id = $2) ' +
+      'ORDER BY posts.seq ASC;'
     );
   });
 
   it('handles first and after', () => {
     testConnectionArgs(
       relationships,
-      {order: 'created_at', first: 7, after: 'a'},
+      {first: 7, after: 'a'},
       'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1) ' +
-      'AND posts.created_at > (SELECT created_at FROM posts WHERE id = $2) ' +
-      'ORDER BY posts.created_at ASC LIMIT 7;'
+      'AND posts.seq > (SELECT seq FROM posts WHERE id = $2) ' +
+      'ORDER BY posts.seq ASC LIMIT 7;'
     );
   });
 
   it('handles last', () => {
     testConnectionArgs(
       relationships,
-      {order: 'created_at', last: 4},
-      'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1) ' +
-      'ORDER BY posts.created_at DESC LIMIT 4;'
+      {last: 4},
+      'SELECT * FROM (SELECT posts.* FROM posts WHERE ' +
+      'posts.authored_by_user_id = ANY ($1) ORDER BY posts.seq DESC LIMIT 4) ' +
+      'posts ORDER BY seq ASC;'
     );
   });
 
   it('handles before', () => {
     testConnectionArgs(
       relationships,
-      {order: 'created_at', before: 'a'},
-      'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1) ' +
-      'AND posts.created_at < (SELECT created_at FROM posts WHERE id = $2) ' +
-      'ORDER BY posts.created_at DESC;'
+      {before: 'z'},
+      'SELECT * FROM (SELECT posts.* FROM posts WHERE ' +
+      'posts.authored_by_user_id = ANY ($1) AND posts.seq < (SELECT seq FROM ' +
+      'posts WHERE id = $2) ORDER BY posts.seq DESC) posts ORDER BY seq ASC;'
     );
   });
 
   it('handles last and before', () => {
     testConnectionArgs(
       relationships,
-      {order: 'created_at', last: 2, before: 'a'},
+      {last: 2, before: 'a'},
+      'SELECT * FROM (SELECT posts.* FROM posts WHERE ' +
+      'posts.authored_by_user_id = ANY ($1) AND posts.seq < (SELECT seq FROM ' +
+      'posts WHERE id = $2) ORDER BY posts.seq DESC LIMIT 2) posts ORDER BY ' +
+      'seq ASC;'
+    );
+  });
+
+  it('handles ASC order', () => {
+    testConnectionArgs(
+      relationships,
+      {order: 'ASC'},
       'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1) ' +
-      'AND posts.created_at < (SELECT created_at FROM posts WHERE id = $2) ' +
-      'ORDER BY posts.created_at DESC LIMIT 2;'
+      'ORDER BY posts.seq ASC;'
+    );
+  });
+
+  it('handles DESC order', () => {
+    testConnectionArgs(
+      relationships,
+      {order: 'DESC'},
+      'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1) ' +
+      'ORDER BY posts.seq DESC;'
+    );
+  });
+
+  it('handles ASC order on column', () => {
+    testConnectionArgs(
+      relationships,
+      {order: 'TITLE_ASC'},
+      'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1) ' +
+      'ORDER BY posts.title ASC;'
+    );
+  });
+
+  it('handles DESC order on column', () => {
+    testConnectionArgs(
+      relationships,
+      {order: 'TITLE_DESC'},
+      'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1) ' +
+      'ORDER BY posts.title DESC;'
+    );
+  });
+
+  it('handles ASC order and forward paging', () => {
+    testConnectionArgs(
+      relationships,
+      {order: 'TITLE_ASC', first: 3, after: 'a'},
+      'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1) ' +
+      'AND posts.title > (SELECT title FROM posts WHERE id = $2) ' +
+      'ORDER BY posts.title ASC LIMIT 3;'
+    );
+  });
+
+  it('handles ASC order and reverse paging', () => {
+    testConnectionArgs(
+      relationships,
+      {order: 'TITLE_ASC', last: 3, before: 'z'},
+      'SELECT * FROM (SELECT posts.* FROM posts WHERE ' +
+      'posts.authored_by_user_id = ANY ($1) AND posts.title < (SELECT title ' +
+      'FROM posts WHERE id = $2) ORDER BY posts.title DESC LIMIT 3) posts ' +
+      'ORDER BY title ASC;'
+    );
+  });
+
+  it('handles DESC order and forward paging', () => {
+    testConnectionArgs(
+      relationships,
+      {order: 'TITLE_DESC', first: 3, after: 'a'},
+      'SELECT posts.* FROM posts WHERE posts.authored_by_user_id = ANY ($1) ' +
+      'AND posts.title < (SELECT title FROM posts WHERE id = $2) ' +
+      'ORDER BY posts.title DESC LIMIT 3;'
+    );
+  });
+
+  it('handles DESC order and reverse paging', () => {
+    testConnectionArgs(
+      relationships,
+      {order: 'TITLE_DESC', last: 3, before: 'z'},
+      'SELECT * FROM (SELECT posts.* FROM posts WHERE ' +
+      'posts.authored_by_user_id = ANY ($1) AND posts.title > (SELECT title ' +
+      'FROM posts WHERE id = $2) ORDER BY posts.title ASC LIMIT 3) posts ' +
+      'ORDER BY title DESC;'
     );
   });
 });

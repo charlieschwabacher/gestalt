@@ -141,9 +141,9 @@ the `User` type is plural (`=`) and the arrow on the `author` field of the
 A plural arrow also indicates that a field should be a Relay connection -
 based on the directives in the example above, Gestalt would create
 `PostsConnection` and `PostEdge` types, and update the type of the `posts`
-field to `PostsConnection`.  In addition to the relay connection arguments, if
-any scalar fields on the parent type are indexed, Gestalt will add an `order`
-argument to connection field (accepting a `PostsOrder` enum type).
+field to `PostsConnection`.  In addition to the relay connection arguments,
+Gestalt will add an `order` argument to connection field (accepting a
+`PostsOrder` enum type).
 
 Gestalt will calculate how to store and query relationships efficiently - with
 the relationships above, Gestalt will add a foreign key `authored_by_user_id` to

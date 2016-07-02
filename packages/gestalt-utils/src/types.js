@@ -221,6 +221,7 @@ export type Query = {
   conditions: Condition[],
   order?: Order,
   limit?: number,
+  reverseResults?: boolean,
 };
 
 export type Join = {
