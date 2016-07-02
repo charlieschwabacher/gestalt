@@ -1,6 +1,6 @@
 {
   "name": "gestalt-server",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "schema defined graphql server",
   "main": "lib/index.js",
   "repository": {
@@ -18,11 +18,11 @@
     "colors": "^1.1.2",
     "cookie-session": "^1.2.0",
     "express-graphql": "^0.5.3",
-    "gestalt-graphql": "^0.0.14"
+    "gestalt-graphql": "^0.0.15"
   },
   "devDependencies": {
     "babel-cli": "^6.10.1",
     "express": "^4.13.4",
-    "gestalt-utils": "^0.0.14"
+    "gestalt-utils": "^0.0.15"
   }
 }
