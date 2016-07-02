@@ -63,14 +63,14 @@ export default Relay.createContainer(
           firstName
           ${FollowButton.getFragment('user')}
           ${User.getFragment('user')}
-          posts(last: $count) {
+          posts(first: $count, order: DESC) {
             ${Posts.getFragment('posts')}
           }
-          followers(last: 5) {
+          followers(first: 5, order: DESC) {
             ${Users.getFragment('users')}
             totalCount
           }
-          followedUsers(last: 5) {
+          followedUsers(first: 5, order: DESC) {
             ${Users.getFragment('users')}
             totalCount
           }

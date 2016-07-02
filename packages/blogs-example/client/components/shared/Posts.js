@@ -14,7 +14,7 @@ export default Relay.createContainer(
         )
       }
       {
-        posts.pageInfo.hasPreviousPage &&
+        posts.pageInfo.hasNextPage &&
         <a onClick={loadMore}>More</a>
       }
     </div>
@@ -29,7 +29,7 @@ export default Relay.createContainer(
             }
           }
           pageInfo {
-            hasPreviousPage
+            hasNextPage
           }
         }
       `

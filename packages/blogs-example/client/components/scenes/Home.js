@@ -60,7 +60,7 @@ export default Relay.createContainer(
           ${SignInForm.getFragment('session')}
           ${SignUpForm.getFragment('session')}
           currentUser {
-            feed(last: $count) {
+            feed(first: $count, order: DESC) {
               ${Posts.getFragment('posts')}
             }
           }
