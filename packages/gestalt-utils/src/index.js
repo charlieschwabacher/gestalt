@@ -8,5 +8,6 @@ export {default as keyValMap} from './keyValMap';
 export {default as resolveMaybeThunk} from './resolveMaybeThunk';
 export {default as setMap} from './setMap';
 export {default as sortBy} from './sortBy';
+export {default as spyOn} from './spyOn';
 export {default as warn} from './warn';
 export * from './types';

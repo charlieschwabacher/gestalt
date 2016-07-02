@@ -14,19 +14,16 @@ const db = new DB({
 
 describe('postgres database interface', () => {
   before(async () => {
-    // reset database
-    await db.exec(`
-      DROP SCHEMA public CASCADE;
-      CREATE SCHEMA public;
-      GRANT ALL ON SCHEMA public TO postgres;
-      GRANT ALL ON SCHEMA public TO public;
-      COMMENT ON SCHEMA public IS 'standard public schema';
-    `);
-    // load schema and seeds
-    await db.exec(
+    // reset database, load schema and seeds
+    await db.exec([
+      'DROP SCHEMA public CASCADE;',
+      'CREATE SCHEMA public;',
+      'GRANT ALL ON SCHEMA public TO postgres;',
+      'GRANT ALL ON SCHEMA public TO public;',
+      'COMMENT ON SCHEMA public IS \'standard public schema\';',
       fs.readFileSync(`${__dirname}/fixtures/schema.sql`) +
       fs.readFileSync(`${__dirname}/fixtures/seeds.sql`)
-    );
+    ].join('\n'));
   });
 
   describe('find', () => {
@@ -94,6 +91,10 @@ describe('postgres database interface', () => {
         [
           {id: '00000000-0000-0000-0000-000000000004'},
           {id: '00000000-0000-0000-0000-000000000005'},
+          {id: '00000000-0000-0000-0000-000000000007'},
+          {id: '00000000-0000-0000-0000-000000000008'},
+          {id: '00000000-0000-0000-0000-000000000010'},
+          {id: '00000000-0000-0000-0000-000000000011'},
         ]
       );
     });
