@@ -6,7 +6,7 @@ const PAGE_SIZE = 10;
 
 export default Relay.createContainer(
   ({session, relay}) => (
-    <div>
+    <div style={{marginBottom: '4rem'}}>
       {
         (session.currentUser)
         ?
