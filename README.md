@@ -74,11 +74,11 @@ export default new GraphQLObjectType({
 ```
 
 It would be nice to just write the first thing!  If you use Gestalt and are
-willing to accept some reasonable defaults, you can.  Gestalt understands how
+willing to accept some reasonable defaults, you can - gestalt understands how
 your objects are related and is able to define the resolution for you.
 
 Gestalt is designed to make it really easy for small teams of 1-10 developers to
-build GraphQL APIs quickly.  Its also designed not to lock you in - you can
+build GraphQL APIs quickly.  It's also designed not to lock you in - you can
 build an API with Gestalt, make changes quickly, and drop down to javascript
 whenever you need to do something your own way.
 
@@ -150,7 +150,8 @@ Gestalt will calculate how to store and query relationships efficiently - with
 the relationships above, Gestalt will add a foreign key `authored_by_user_id` to
 the `posts` table.
 
-Paths can be extended to represent more complex relationships between types:
+In addition to simple relationships, paths can be extended to represent more
+complex relationships between types:
 
 ```GraphQL
 type User implements Node {
@@ -177,12 +178,18 @@ and `AUTHORED` relationships between users and posts, but it does require a more
 complex query.  Gestalt will generate an efficient query to resolve the field
 by joining the `user_followed_users` and `posts` tables.
 
+Its a good practice to use past tense verbs like `AUTHORED` when choosing
+labels, and to make sure that the relationship makes sense when read in the
+direction of the arrow.  For example `Post <-AUTHORED- User` reads as 'user
+authored post' and works, while `Post -AUTHORED-> User` reads as 'post authored
+user' and does not.  Following these two rules will lead to a semantic database
+schema, and readable code in `schema.graphql`.
+
 
 Other directives
 ----------------
-In addition to `@relationship`, there are a few more directives used by Gestalt
-to provide extra information about how to create the database and GraphQL
-schemas.
+There are a few more directives used by Gestalt to provide extra information
+about how to create the database and GraphQL schemas.
 
 - `@hidden` is used to define fields that should become part of the database
   schema but not be exposed as part of the GraphQL schema.  It can be used for
@@ -190,8 +197,8 @@ schemas.
 
 - `@virtual` marks fields that should be part of the GraphQL schema, but should
   not be stored in the database.  These require custom resolution to be
-  defined - they could be computed from existing fields or are stored in a
-  different datastore.
+  defined - they could be computed from existing fields or stored in a different
+  datastore.
 
 - `@index` marks fields that should be indexed in the database.  They can be
   used to sort connection fields, or just to make custom queries efficiently
@@ -204,7 +211,7 @@ schemas.
 Session type
 ------------
 Gestalt defines two fields on the query root, `node` and `session` - you are
-expected to define the Session type in `schema.graphql` as the entry point to
+expected to define the `Session` type in `schema.graphql` as the entry point to
 your schema.
 
 Session is a `Node`, but it is a special case that is **not** stored in the
@@ -226,8 +233,9 @@ type Session implements Node {
 
 Defining custom resolution
 --------------------------
-Sometimes more processing is needed for fields in your API.  Its easy to define
-custom resolvers using gestalt.  Given the following User type:
+Sometimes fields in your API need to do more than just read values from the
+database.  It's easy to do this in gestalt by defining custom resolvers.  Given
+the following User type:
 
 ```GraphQL
 type User extends Node {
@@ -294,8 +302,9 @@ export default types => ({
 
 The configuration object returned by mutation definition functions is nearly the
 same as what you would pass to `graphql-relay-js`'s
-`mutationWithClientMutationId`.  The only difference is that types can be passed
-directly as values in the `inputFields` and `outputFields` objects.
+`mutationWithClientMutationId`.  The only difference is that types can
+optionally be passed directly as values in the `inputFields` and `outputFields`
+objects.
 
 
 Creating an API server
