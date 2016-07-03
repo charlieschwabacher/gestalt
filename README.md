@@ -132,11 +132,12 @@ Arrows with identical labels and types at their head and tail are matched, and
 the combination of their cardinalities determines how the relationship between
 their types will be stored in the database.
 
-In the example above, the relationship `User AUTHORED Post` is represented with
-an arrow pointing out from `User` and in to `Post`.  Because a user can author
-many posts, but each post has only one author, the arrow on the `posts` field of
-the `User` type is plural (`=`) and the arrow on the `author` field of the
-`Post` type is singular (`-`).
+You can think of the path as having the type being defined at its left, and the
+type of the field at its right.  In the example above, the relationship
+`User AUTHORED Post` is represented with an arrow pointing out from `User` and
+in to `Post`.  Because a user can author many posts, but each post has only one
+author, the arrow on the `posts` field of the `User` type is plural (`=`) and
+the arrow on the `author` field of the `Post` type is singular (`-`).
 
 A plural arrow also indicates that a field should be a Relay connection -
 based on the directives in the example above, Gestalt would create
