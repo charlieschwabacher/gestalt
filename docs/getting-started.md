@@ -52,7 +52,7 @@ to use the default url (`'postgres://localhost/blogs'`).
 type named 'Session'.
 
 ```graphql
-type Session {
+type Session implements Node {
   id: ID!
 }
 ```
@@ -61,7 +61,7 @@ We will use `Session` later, but for now we can ignore it.  Let's add some types
 to our schema to represent users and posts:
 
 ```graphql
-type Session {
+type Session implements Node {
   id: ID!
 }
 
@@ -116,8 +116,8 @@ CREATE TABLE posts (
 ```
 
 A couple things are going on here - first Gestalt needs to add the `'pgcrypto'`
-extension in order to generate uuids, and then we are creating tables for the
-two types we added, `users` and `posts`.
+extension in order to generate secure uuids, and then we are creating tables for
+the two types we added, `users` and `posts`.
 
 Looking first at the `users` table, the email and password hash columns are
 straightforward. We can see that the `email` column is `UNIQUE` because we added
@@ -146,7 +146,7 @@ schema in the GraphiQL IDE.  Run `npm start` and navigate to
 #### 6) Add the `AUTHORED` relationship between users and posts:
 
 We will also want to record the author of each post, and be able to see all of
-the posts that any user authored.  We can add this to our schema using the
+the posts authored by any user.  We can add this to our schema using the
 `@relationship` directive.
 
 ```graphql
@@ -195,10 +195,15 @@ CREATE INDEX ON posts (authored_by_user_id);
 
 We can see that it's adding the foreign key column we expect,
 `authored_by_user_id`, and adding an index on it.  Type `'yes'` to run the
-migration.  After running it, if you restart your server you should see the
-`posts` field on `User` and `author` field on `Posts` show up in GraphiQL.
+migration.
 
-One thing you will notice is that the type of the `posts` field on `User` is
+We didn't need to run these migrations separately - we could have
+written the whole schema up front and ran `gestalt migrate` only once - but for
+the purposes of this introduction it's easier to present things one at a time.
+
+After running the migration, if you restart your server you should see the
+`posts` field on `User` and `author` field on `Posts` show up in GraphiQL.  One
+last thing you will notice is that the type of the `posts` field on `User` is
 `PostsConnection` and not `Post`.  Gestalt creates
 [connection and edge types](https://facebook.github.io/relay/graphql/connections.htm)
 types for fields with plural `@relationship` directives to allow pagination.
@@ -309,7 +314,7 @@ and resolve them based on values we store in a session cookie.
 Let's add a `currentUser` field to `Session`.
 
 ```
-type Session {
+type Session implements Node {
   id: ID!
   currentUser: User
 }
@@ -332,7 +337,6 @@ the database using `context.db.findBy`.
 export default {
   name: 'Session',
   fields: {
-    id: () => '!',
     currentUser: (obj, args, context) => {
       if (obj.currentUserID == null) { return null; }
       return context.db.findBy('users', {id: obj.currentUserID});
@@ -553,9 +557,9 @@ export default types => ({
 
 #### 12) Create a front end
 
-Now that you have a complete API you could build a frontend (or many!) on any
+Now that you have a complete API you could build a front end (or many!) on any
 platform(s) you like.
 
 This step is beyond the scope of this walkthrough, but if you want to take a
-look at an example frontend built using React and Relay, you can
+look at an example front end built using React and Relay, you can
 [find one here](//github.com/charlieschwabacher/gestalt/tree/master/packages/blogs-example).
