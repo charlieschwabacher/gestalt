@@ -115,7 +115,8 @@ function defineNodeIDResolution(schema: GraphQLSchema): void {
   Object.values(typeMap).forEach((type: GraphQLType): void => {
     if (
       type.getInterfaces &&
-      type.getInterfaces().includes(nodeInterface)
+      type.getInterfaces().includes(nodeInterface) &&
+      type.name !== 'Session'
     ) {
       defineFieldResolve(
         schema,
