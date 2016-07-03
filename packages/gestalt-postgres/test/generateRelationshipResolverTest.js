@@ -49,6 +49,21 @@ const resolverMap = relationships.reduce(
   new Map,
 );
 
+const completeInfo = {
+  fieldASTs: [{
+    selectionSet: {
+      selections: [
+        {name: {value: 'totalCount'}},
+        {name: {value: 'pageInfo'}},
+      ],
+    },
+  }],
+};
+
+const emptyInfo = {
+  fieldASTs: [{selectionSet: {selections: []}}],
+};
+
 function getRelationship(typeName: string, fieldName: string): Relationship {
   return relationshipMap[`${typeName}|${fieldName}`];
 }
@@ -57,8 +72,9 @@ function resolveRelationship(
   relationship: Relationship,
   object: Object,
   args: Object = {},
+  info: Object = completeInfo
 ): Promise<Object> {
-  return resolverMap.get(relationship)(object, args, context);
+  return resolverMap.get(relationship)(object, args, context, info);
 }
 
 describe('generateRelationshipResolver', () => {
@@ -208,6 +224,19 @@ describe('generateRelationshipResolver', () => {
         hasNextPage: false,
         hasPreviousPage: true,
       });
+    });
+
+    it('does not resolve count or pageInfo when not selected', async () => {
+      const spy = spyOn(db, 'exec');
+      const posts = await resolveRelationship(
+        getRelationship('User', 'posts'),
+        {id: '00000000-0000-0000-0000-000000000001'},
+        {},
+        emptyInfo,
+      );
+      console.log(spy.calls);
+      assert.equal(spy.calls.length, 1);
+      spy.stop();
     });
   });
 });

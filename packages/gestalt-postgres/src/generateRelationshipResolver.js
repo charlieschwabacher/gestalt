@@ -4,8 +4,8 @@
 
 import type {Relationship, RelationshipSegmentDescriptionMap,
   RelationshipSegmentDescription, RelationshipSegment, Query, Join, Condition,
-  Order, GraphQLFieldResolveFn, ConnectionArguments, ForeignKeyDescription,
-  JoinTableDescription} from 'gestalt-utils';
+  Order, GraphQLFieldResolveFn, GraphQLResolveInfo, ConnectionArguments,
+  ForeignKeyDescription, JoinTableDescription} from 'gestalt-utils';
 import type DB from './DB';
 import {pairingSignatureFromRelationshipSegment, tableNameFromTypeName} from
   './generateDatabaseInterface';
@@ -13,7 +13,6 @@ import DataLoader from 'dataloader';
 import camel from 'camel-case';
 import snake from 'snake-case';
 import {invariant, keyMap, group} from 'gestalt-utils';
-
 
 export function generateRelationshipResolver(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
@@ -23,17 +22,32 @@ export function generateRelationshipResolver(
       segmentDescriptionMap,
       relationship
     );
-    return (object, args, context) => {
+    return (object, args, context, info) => {
       const loader = context.loaders.get(relationship);
       const key = object[keyColumn];
       if (relationship.cardinality === 'singular') {
         return loader.load(key);
       } else {
         validateConnectionArgs(args);
-        return loader.load({key, args});
+        return loader.load({key, args, info});
       }
     };
   };
+}
+
+// TODO: this doesn't yet check inside fragments - if there are any present we
+// assume all fields are selected
+export function selectsField(
+  info: GraphQLResolveInfo,
+  fieldName: string,
+): boolean {
+  const field = info.fieldASTs[0];
+  return (
+    (info.fragments && Object.keys(info.fragments).length > 0) ||
+    field && field.selectionSet.selections.some(
+      selection => selection.name.value === fieldName
+    )
+  );
 }
 
 export function generateRelationshipLoaders(
@@ -108,42 +122,54 @@ function generatePluralRelationshipLoader(
   baseQuery: Query,
 ): DataLoader {
   return new DataLoader(loadKeys => {
-    return Promise.all(loadKeys.map(async ({key, args}) => {
+    return Promise.all(loadKeys.map(async ({key, args, info}) => {
+
+      // resolve edges
       const slicedQuery = applyCursorsToQuery(baseQuery, args);
       const connectionQuery = applyLimitToQuery(slicedQuery, args);
       const sql = sqlStringFromQuery(connectionQuery);
-      const countSql = sqlStringFromQuery(baseQuery, true);
-      const params = [[key]];
+      const params: mixed[] = [[key]];
       if (args.before || args.after) {
         params.push(args.before || args.after);
       }
       const nodes = await db.query(sql, params);
-      const totalCount = await db.count(countSql, [[key]]);
       const edges = nodes.map(node => ({node, cursor: node.id}));
 
+      // look ahead in query AST to determine wether to resolve totalCount and
+      // pageInfo
+      const selectsCount = selectsField(info, 'totalCount');
+      const selectsPageInfo = selectsField(info, 'pageInfo');
 
+      let totalCount, pageInfo;
+      if (selectsCount || selectsPageInfo) {
+        const countSql = sqlStringFromQuery(baseQuery, true);
+        totalCount = await db.count(countSql, [[key]]);
+        if (selectsPageInfo) {
+          pageInfo = {
+            hasPreviousPage: await resolveHasPreviousPage(
+              db,
+              key,
+              args,
+              slicedQuery,
+              nodes.length,
+              totalCount
+            ),
+            hasNextPage: await resolveHasNextPage(
+              db,
+              key,
+              args,
+              slicedQuery,
+              nodes.length,
+              totalCount
+            ),
+          };
+        }
+      }
 
       return {
         edges,
         totalCount,
-        pageInfo: {
-          hasPreviousPage: await resolveHasPreviousPage(
-            db,
-            key,
-            args,
-            slicedQuery,
-            nodes.length,
-            totalCount
-          ),
-          hasNextPage: await resolveHasNextPage(
-            db,
-            key,
-            args,
-            slicedQuery,
-            nodes.length,
-            totalCount
-          ),
-        },
+        pageInfo,
       };
     }));
   });
