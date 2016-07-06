@@ -234,7 +234,6 @@ describe('generateRelationshipResolver', () => {
         {},
         emptyInfo,
       );
-      console.log(spy.calls);
       assert.equal(spy.calls.length, 1);
       spy.stop();
     });

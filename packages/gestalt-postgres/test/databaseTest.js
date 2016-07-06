@@ -107,6 +107,64 @@ describe('postgres database interface', () => {
     });
   });
 
+  describe('insert', () => {
+    it('adds rows', async () => {
+      const input = {
+        email: 'a@test.com',
+        passwordHash: 'abcd',
+        createdAt: new Date,
+        favoriteFood: '"SALAD"',
+        location: {
+          city: 'Los Angeles',
+          state: 'CA',
+        }
+      };
+      const result = await db.insert('users', input);
+      assert.equal(await db.count('SELECT count(*) FROM users;'), 4);
+      assert.notEqual(result.id, null);
+      assert.equal(result.email, 'a@test.com');
+    });
+  });
+
+  describe('update', () => {
+    it('updates rows', async () => {
+      const result = await db.update(
+        'users',
+        {email: 'a@test.com'},
+        {firstName: 'Jane'}
+      );
+      assert.equal(result.length, 1);
+      assert.notEqual(result[0].id, null);
+      assert.equal(result[0].firstName, 'Jane');
+    });
+  });
+
+  describe('deleteBy', async () => {
+    const result = await db.deleteBy('users', {email: 'a@test.com'});
+    assert.equal(await db.count('SELECT count(*) FROM users;'), 3);
+  });
+
+  describe('findBy', async () => {
+    const id = '00000000-0000-0000-0000-000000000001';
+    const result = await db.findBy('users', {id});
+    assert.equal(result.id, id);
+    assert.equal(result.email, 'test1@test.com');
+  });
+
+  describe('queryBy', async () => {
+    const id = '00000000-0000-0000-0000-000000000001';
+    const result = await db.findBy('users', {lastName: 'Tester'});
+    assert.equal(result.length, 3);
+    assert.deepEqual(
+      result.map(row => row.id),
+      [
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000002',
+        '00000000-0000-0000-0000-000000000003',
+      ],
+    );
+  });
+
   describe('readExistingDatabaseSchema', () => {
     it('reads the existing schema', async () => {
       assert.deepEqual(

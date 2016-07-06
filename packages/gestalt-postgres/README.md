@@ -50,6 +50,13 @@ This helper has the following API:
   `{camelCaseColumnName: value}`.
 
 
+- `update(table: string, conditions: Object, updates: Object):
+  Promise<Object[]>` converts camel case keys in the `conditions` and `updates`
+  objects to column names.  Updates rows matching `conditions` using columns and
+  values from `updates`, and returns the updated rows as a promised array of
+  objects formatted `{camelCaseColumnName: value}`.
+
+
 - `deleteBy(table: string, conditions: Object): Promise<Object>` converts camel
   case keys in the `conditions` argument to column names, and deletes matching
   rows.  Returns the result from `node-postgres` directly with no formatting.
@@ -66,3 +73,8 @@ This helper has the following API:
   camel case keys in the `conditions` argument to column names, and runs a query
   selecting matching rows.  Returns the result as a promised array of objects
   formatted `{camelCaseColumnName: value}`.
+
+
+When these methods take objects as arguments, values are escaped but column
+names are not.  It is important to ensure that the keys in these objects are not
+unexamined user input to prevent SQL injection attacks.
