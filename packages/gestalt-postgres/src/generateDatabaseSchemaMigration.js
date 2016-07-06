@@ -111,10 +111,64 @@ export default function generateDatabaseSchemaMigration(
         }
       });
     }
+  });
 
-    // create indices for table
+  // add or update foreign key constraints
+  // this needs to run after all tables have been created to avoid the
+  // possibility of referencing a non existant table
+  expectedSchema.tables.forEach(expectedTable => {
+    const existingTable = existingTables[expectedTable.name];
+    const existingColumns = existingTable && keyMap(
+      existingTable.columns,
+      c => c.name
+    );
+
+    expectedTable.columns.forEach(column => {
+      const existingColumn = existingColumns && existingColumns[column.name];
+      const existingReferences = existingColumn && existingColumn.references;
+      const {references} = column;
+
+      if (references == null && existingReferences == null) {
+        // do nothing
+      } else if (existingReferences == null) {
+        // add foreign key constraint
+        operations.push({
+          type: 'AddForeignKeyConstraint',
+          table: expectedTable,
+          column,
+          references,
+        });
+      } else if (references == null) {
+        // remove existing foreign key constraint
+        operations.push({
+          type: 'RemoveForeignKeyConstraint',
+          table: existingTable,
+          constraintName: existingReferences.constraintName,
+        });
+      } else if (
+        existingReferences.table !== references.table ||
+        existingReferences.column !== references.column
+      ) {
+        // replace existing foreign key constraint
+        operations.push({
+          type: 'RemoveForeignKeyConstraint',
+          table: existingTable,
+          constraintName: existingReferences.constraintName,
+        }, {
+          type: 'AddForeignKeyConstraint',
+          table: expectedTable,
+          column,
+          references,
+        });
+      }
+    });
+  });
+
+  // add indices
+  expectedSchema.tables.forEach(expectedTable => {
     const expectedTableIndices = expectedIndices[expectedTable.name];
     if (expectedTableIndices != null) {
+      const existingTable = existingTables[expectedTable.name];
       const existingTableIndices = (
         existingTable &&
         existingIndices[existingTable.name]
@@ -151,6 +205,14 @@ function sqlFromOperation(operation: DatabaseSchemaMigrationOperation): string {
       return addUniquenessConstraint(operation.table, operation.column);
     case 'RemoveUniquenessConstraint':
       return removeUniquenessConstraint(operation.table, operation.column);
+    case 'AddForeignKeyConstraint':
+      return addForeignKeyConstraint(
+        operation.table,
+        operation.column,
+        operation.references
+      );
+    case 'RemoveForeignKeyConstraint':
+      return removeForeignKeyConstraint(operation.table, operation.name);
     case 'MakeNullable':
       return makeNullable(operation.table, operation.column);
     case 'MakeNonNullable':
@@ -177,13 +239,8 @@ export function createTable(table: Table): string {
 }
 
 export function describeColumn(column: Column): string {
-  const {name, type, primaryKey, nonNull, unique, references, defaultValue}
+  const {name, type, primaryKey, nonNull, unique, defaultValue}
     = column;
-  const referencesClause = (
-    references
-    ? `REFERENCES ${references.table} (${references.column})`
-    : null
-  );
   const parts = [
     name,
     type,
@@ -191,7 +248,6 @@ export function describeColumn(column: Column): string {
     nonNull && !primaryKey ? 'NOT NULL' : null,
     unique ? 'UNIQUE' : null,
     defaultValue ? `DEFAULT ${defaultValue}` : null,
-    referencesClause,
   ].filter(p => p);
   return parts.join(' ');
 }
@@ -218,6 +274,26 @@ export function removeUniquenessConstraint(
   column: Column
 ): string {
   return `ALTER TABLE ${table.name} DROP UNIQUE (${column.name});`;
+}
+
+export function addForeignKeyConstraint(
+  table: Table,
+  column: Column,
+  references: {table: string, column: string}
+): string {
+  const constraintName = `${table.name}_${column.name}_fkey`;
+  return (
+    `ALTER TABLE ${table.name} ADD CONSTRAINT ${constraintName} FOREIGN KEY ` +
+    `(${column.name}) REFERENCES ${references.table} (${references.column}) ` +
+    'MATCH FULL;'
+  );
+}
+
+export function removeForeignKeyConstraint(
+  table: Table,
+  name: string
+): string {
+  return `ALTER TABLE ${table.name} DROP CONSTRAINT ${name};`;
 }
 
 export function makeNullable(table: Table, column: Column): string {

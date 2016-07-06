@@ -1,8 +1,4 @@
-ALTER TABLE users ADD COLUMN pinned_post_id uuid REFERENCES posts (id);
-
-CREATE INDEX ON users (first_name);
-
-CREATE INDEX ON users (pinned_post_id);
+ALTER TABLE users ADD COLUMN pinned_post_id uuid;
 
 ALTER TABLE posts ADD UNIQUE (title);
 
@@ -17,8 +13,16 @@ CREATE TABLE pages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title text NOT NULL,
   content text,
-  created_by_user_id uuid NOT NULL REFERENCES users (id)
+  created_by_user_id uuid NOT NULL
 );
+
+ALTER TABLE users ADD CONSTRAINT users_pinned_post_id_fkey FOREIGN KEY (pinned_post_id) REFERENCES posts (id) MATCH FULL;
+
+ALTER TABLE pages ADD CONSTRAINT pages_created_by_user_id_fkey FOREIGN KEY (created_by_user_id) REFERENCES users (id) MATCH FULL;
+
+CREATE INDEX ON users (first_name);
+
+CREATE INDEX ON users (pinned_post_id);
 
 CREATE INDEX ON pages (title);
 

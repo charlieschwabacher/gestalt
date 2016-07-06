@@ -108,6 +108,7 @@ async function loadColumnConstraints(db: DB) {
         memo[table][column].references = {
           table: foreignTable,
           column: foreignColumn,
+          constraintName: name
         };
       } else {
         throw `unrecognized constraint type for ${name} on ${table}, ${column}`;
@@ -207,6 +208,13 @@ export function normalizeSchemaForComparison(
     tables: sortBy(schema.tables, t => t.name).map(table => (
       {
         ...table,
+        columns: table.columns.map(column => ({
+          ...column,
+          references: column.references && {
+            ...column.references,
+            constraintName: null
+          },
+        })),
         constraints: table.constraints.map(constraint => {
           const c = {...constraint};
           delete c.name;

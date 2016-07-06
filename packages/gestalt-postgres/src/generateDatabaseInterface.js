@@ -556,7 +556,7 @@ export function columnFromForeignKeyDescription(
     defaultValue: null,
     references: {
       table: description.referencedTable,
-      column: 'id'
+      column: 'id',
     },
   };
 }

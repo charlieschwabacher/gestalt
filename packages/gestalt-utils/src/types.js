@@ -63,6 +63,7 @@ export type Column = {
   references: ?{
     table: string,
     column: string,
+    name?: string,
   },
 };
 
@@ -82,7 +83,8 @@ export type DatabaseSchemaMigration = {
 
 export type DatabaseSchemaMigrationOperation = CreateTable | AddColumn |
   ChangeColumnType | CreateIndex | AddUniquenessConstraint |
-  RemoveUniquenessConstraint | MakeNullable | MakeNonNullable | CreateExtension;
+  RemoveUniquenessConstraint | AddForeignKeyConstraint |
+  RemoveForeignKeyConstraint | MakeNullable | MakeNonNullable | CreateExtension;
 
 export type CreateTable = {
   type: 'CreateTable',
@@ -117,6 +119,22 @@ export type RemoveUniquenessConstraint = {
   type: 'RemoveUniquenessConstraint',
   table: Table,
   constraint: Constraint,
+};
+
+export type AddForeignKeyConstraint = {
+  type: 'AddForeignKeyConstraint',
+  table: Table,
+  column: Column,
+  references?: {
+    table: string,
+    column: string,
+  },
+};
+
+export type RemoveForeignKeyConstraint = {
+  type: 'RemoveForeignKeyConstraint',
+  table: Table,
+  constraintName: string,
 };
 
 export type MakeNullable = {
