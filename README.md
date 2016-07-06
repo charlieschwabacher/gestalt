@@ -1,7 +1,6 @@
 <p align='center'>
   <img
-    width=58
-    height=50
+    width=96
     src='https://cdn.rawgit.com/charlieschwabacher/gestalt/master/logo.svg'
   />
 </p>
