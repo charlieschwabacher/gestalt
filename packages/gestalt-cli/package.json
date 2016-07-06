@@ -27,6 +27,7 @@
     "gestalt-graphql": "^0.0.17",
     "gestalt-postgres": "^0.0.17",
     "gestalt-utils": "^0.0.17",
+    "glob": "^7.0.5",
     "graphql": "^0.6.0",
     "import-all": "^1.0.1",
     "prompt": "^1.0.0",

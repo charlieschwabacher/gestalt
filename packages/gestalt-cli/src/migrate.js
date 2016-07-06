@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import importAll from 'import-all';
+import importGlob from './import-glob';
 import prompt from 'prompt';
 import semver from 'semver';
 import {blue} from 'colors/safe';
@@ -19,7 +20,8 @@ import {invariant} from 'gestalt-utils';
 import {get} from './cli';
 import 'babel-register';
 
-export default async function migrate() {
+export default async function migrate({directory = 'mutations', glob, url}: {directory: string, glob: string, url: string}) {
+  // directory: string, glob: string, url: string
   prompt.start();
   try {
 
@@ -44,8 +46,8 @@ export default async function migrate() {
 
     console.log('migrating..');
 
-    await updateJSONSchema(localPackage, schemaText);
-    await updateDatabaseSchema(localPackage, schemaText);
+    await updateJSONSchema(localPackage, schemaText, { directory, glob });
+    await updateDatabaseSchema(localPackage, schemaText, { url });
 
   } catch (err) {
 
@@ -58,9 +60,12 @@ export default async function migrate() {
 
 async function updateJSONSchema(
   localPackage: Object,
-  schemaText: string
+  schemaText: string,
+  {directory, glob}
 ): Promise {
-  const mutations = importAll(path.join(process.cwd(), './mutations'));
+  const mutations = glob
+      ? importGlob(path.join(process.cwd(), glob))
+      : importAll(path.join(process.cwd(), directory));
   const ast = parse(schemaText);
   const schema = generateGraphQLSchemaWithoutResolution(ast, mutations);
 
@@ -82,19 +87,27 @@ async function updateJSONSchema(
 async function updateDatabaseSchema(
   localPackage: Object,
   schemaText: string,
+  {url}
 ): Promise {
-  const {databaseURL} = await get({
-    name: 'databaseURL',
-    message: 'what is the url to your database?',
-    default: `postgres://localhost/${snake(localPackage.name)}`,
-  });
+  let databa;
 
-  const existingSchema = await readExistingDatabaseSchema(databaseURL);
+  if (url) {
+    databa = url;
+  } else {
+    const prompt = await get({
+      name: 'databa',
+      message: 'what is th to your database?',
+      default: `postgres://localhost/${snake(localPackage.name)}`,
+    });
+    databa = prompt.databa;
+  }
+
+  const existingSchema = await readExistingDatabaseSchema(databa);
 
   const ast = parse(schemaText);
   const {objectDefinitions, relationships} = databaseInfoFromAST(ast);
   const {db, schema} = generateDatabaseInterface(
-    databaseURL,
+    databa,
     objectDefinitions,
     relationships
   );
