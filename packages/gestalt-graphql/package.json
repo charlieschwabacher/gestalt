@@ -1,6 +1,6 @@
 {
   "name": "gestalt-graphql",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "generates a GraphQL schema with resolution based on a definition using the GraphQL schema language.",
   "main": "lib/index.js",
   "repository": {
@@ -19,7 +19,7 @@
     "constant-case": "^2.0.0",
     "graphql": "^0.6.0",
     "graphql-relay": "^0.4.2",
-    "gestalt-utils": "^0.0.15"
+    "gestalt-utils": "^0.0.17"
   },
   "devDependencies": {
     "babel-polyfill": "^6.7.2",
