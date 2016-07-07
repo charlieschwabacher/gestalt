@@ -30,9 +30,11 @@ commander
     'update schema.json and create a database migration based on changes to ' +
     'schema.graphql in a Gestalt project directory.'
   )
-  .option('-u', '--url <url>', 'the url to your local database')
-  .action(async () => {
-    await migrate();
+  .option('-d, --mutations-directory <path>', 'the directory of your mutation files')
+  .option('-g, --mutations-glob <pattern>', 'a glob pattern for selecting mutation files')
+  .option('-u, --url <path>', 'the url to your local database')
+  .action(async options => {
+    await migrate(options);
     process.exit(0);
   });
 

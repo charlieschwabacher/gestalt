@@ -14,3 +14,7 @@ and then
   - updates `schema.json` from `schema.graphql`
   - generates and runs database schema migrations based on changes to your
     `schema.graphql` file.
+  - options
+    - `--url <path>` sets database url
+    - `--mutations-directory <path>` sets the directory of your mutation files
+    - `--mutations-glob <pattern>` sets a glob pattern for selecting mutation files
