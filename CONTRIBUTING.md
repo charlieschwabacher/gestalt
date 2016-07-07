@@ -37,3 +37,17 @@ To run tests against all packages `npm test` from the project root.
 To lint all packages, `npm run lint` from the project root.
 
 To type check all packages, `npm run check` from the project root.
+
+
+Coding Style:
+-------------
+
+- 2 spaces for indentation (no tabs)
+- 80 character line length strongly preferred.
+- Prefer `'` over `"`
+- ES6 syntax when possible.
+- Use [Flow types](http://flowtype.org/).
+- Use semicolons;
+- Trailing commas,
+- Avd abbr wrds.
+- Other rules in .eslintrc
