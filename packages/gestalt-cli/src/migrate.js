@@ -11,8 +11,8 @@ import {blue} from 'colors/safe';
 import snake from 'snake-case';
 import {graphql, parse} from 'graphql';
 import {introspectionQuery} from 'graphql/utilities';
-import {generateGraphQLSchemaWithoutResolution, databaseInfoFromAST} from
-  'gestalt-graphql';
+import {generateGraphQLSchemaWithoutResolution, databaseInfoFromAST,
+  translateSyntaxExtensions} from 'gestalt-graphql';
 import {generateDatabaseInterface, generateDatabaseSchemaMigration,
   readExistingDatabaseSchema} from 'gestalt-postgres';
 import {invariant} from 'gestalt-utils';
@@ -30,6 +30,7 @@ export default async function migrate() {
     );
 
     const schemaText = fs.readFileSync('schema.graphql', 'utf8');
+    const translatedText = translateSyntaxExtensions(schemaText);
     const localPackage = JSON.parse(fs.readFileSync('package.json', 'utf8'));
     const localVersion = localPackage.dependencies['gestalt-server'];
     const cliVersion = require('../package.json').version;
@@ -44,8 +45,8 @@ export default async function migrate() {
 
     console.log('migrating..');
 
-    await updateJSONSchema(localPackage, schemaText);
-    await updateDatabaseSchema(localPackage, schemaText);
+    await updateJSONSchema(localPackage, translatedText);
+    await updateDatabaseSchema(localPackage, translatedText);
 
   } catch (err) {
 

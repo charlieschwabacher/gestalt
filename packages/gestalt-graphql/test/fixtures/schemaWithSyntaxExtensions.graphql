@@ -1,21 +1,20 @@
-type Session implements Node {
+type Session {
   id: ID!
   currentUser: User
-  suggestedUsers: [User]
 }
 
 type User implements Node {
   id: ID!
-  email: String! @hidden @index
+  email: String! @unique @hidden @index
   passwordHash: String! @hidden
+  createdAt: Date!
   firstName: String
   lastName: String
   fullName: String @virtual
-  profileImage(size: Int): String! @virtual
-  following: Boolean! @virtual
   followedUsers: =FOLLOWED=> User
   followers: <=FOLLOWED= User
   posts: =AUTHORED=> Post
+  comments: =AUTHORED=> Comment
   feed: =FOLLOWED=> User =AUTHORED=> Post
 }
 
@@ -24,5 +23,14 @@ type Post implements Node {
   title: String! @index
   text: String!
   createdAt: Date!
+  author: <-AUTHORED- User!
+  comments: =INSPIRED=> Comment
+}
+
+type Comment implements Node {
+  id: ID!
+  text: String!
+  createdAt: Date!
   author: <-AUTHORED- User
+  subject: <-INSPIRED- Post!
 }
