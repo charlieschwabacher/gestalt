@@ -147,7 +147,10 @@ async function updateDatabaseSchema(
 
   if (writeFile[0] === 'y') {
     const hash = crypto.createHash('md5').update(sql).digest('hex');
-    fs.writeFileSync(`migration-${hash}.graphql`, sql, 'utf8');
+    if (!fs.existsSync('migrations')) {
+      fs.mkdirSync('migrations');
+    }
+    fs.writeFileSync(`migrations/migration-${hash}.graphql`, sql, 'utf8');
     console.log(`Wrote migration to file (migration-${hash}.graphql)`);
   }
 }
