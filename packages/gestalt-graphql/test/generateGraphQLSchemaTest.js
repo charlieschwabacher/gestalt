@@ -3,10 +3,11 @@ import fs from 'fs';
 import {graphql, parse} from 'graphql';
 import generateGraphQLSchema from '../src/generateGraphQLSchema';
 
+// create mock database interface
 const databaseInterface = (objectDefinitions, relationships) => ({
   resolveNode: () => null,
   generateRelationshipResolver: () => () => null,
-  generateRelationshipLoaders: () => new Map(),
+  prepareQueryContext: ctx => ctx,
 });
 
 const schemaPath = `${__dirname}/fixtures/schema.graphql`;

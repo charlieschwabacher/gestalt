@@ -24,8 +24,7 @@ export type DatabaseInterface = {
   resolveNode: GraphQLFieldResolveFn,
   generateRelationshipResolver: (relationship: Relationship) =>
     GraphQLFieldResolveFn,
-  generateRelationshipLoaders: (relationships: Relationship[]) =>
-    Map<Relationship, DataLoader>,
+  prepareQueryContext?: (context: mixed) => mixed,
   db?: any,
 };
 
