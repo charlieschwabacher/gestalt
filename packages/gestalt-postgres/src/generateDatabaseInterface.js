@@ -6,7 +6,7 @@ import type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
   Type, NamedType, DatabaseInterface, DatabaseSchema, Table, Index, Column,
   ColumnType, Relationship, RelationshipSegment, RelationshipSegmentPair,
   JoinTableDescription, ForeignKeyDescription, RelationshipSegmentDescription,
-  GestaltServerConfig} from 'gestalt-utils';
+  DatabaseRelevantSchemaInfo, GestaltServerConfig} from 'gestalt-utils';
 import {plural} from 'pluralize';
 import snake from 'snake-case';
 import generateNodeResolver from './generateNodeResolver';
@@ -18,10 +18,11 @@ import REQUIRED_EXTENSIONS from './REQUIRED_EXTENSIONS';
 
 export default function generateDatabaseInterface(
   databaseURL: string,
-  definitions: ObjectTypeDefinition[],
-  relationships: Relationship[],
+  schemaInfo: DatabaseRelevantSchemaInfo,
   config?: GestaltServerConfig,
 ): DatabaseInterface {
+  const {objectTypes, relationships} = schemaInfo;
+
   const db = new DB({
     url: databaseURL,
     log: config != null && config.development,
@@ -32,7 +33,7 @@ export default function generateDatabaseInterface(
   const indices: Index[] = [];
 
   // create tables and indexes for object types, take inventory of relationships
-  definitions.forEach(definition => {
+  Object.values(objectTypes).forEach(definition => {
     const table = tableFromObjectTypeDefinition(definition);
     tablesByName[table.name] = table;
     tables.push(table);
@@ -201,130 +202,6 @@ export function indicesFromObjectTypeDefinition(
     }
   });
   return indices;
-}
-
-export function relationshipsFromObjectTypeDefinition(
-  definition: ObjectTypeDefinition,
-): [Relationship] {
-  const fromType = definition.name.value;
-  const relationships = [];
-
-  definition.fields.forEach(field => {
-    if (field.directives) {
-      const relationshipDirective = field.directives.find(
-        d => d.name.value === 'relationship'
-      );
-      if (relationshipDirective) {
-        invariant(
-          !isListType(field.type),
-          'relationships cannot be list types'
-        );
-        const fieldName = field.name.value;
-        const nonNull = isNonNullType(field.type);
-        const toType = baseType(field.type).name.value;
-        relationships.push(
-          relationshipFromDirective(
-            fieldName,
-            fromType,
-            toType,
-            nonNull,
-            relationshipDirective
-          )
-        );
-      }
-    }
-  });
-
-  return relationships;
-}
-
-export function relationshipFromDirective(
-  fieldName: string,
-  fromType: string,
-  toType: string,
-  nonNull: boolean,
-  directive: Directive
-): Relationship {
-  const pathArgument = directive.arguments.find(
-    argument => argument.name.value === 'path'
-  );
-
-  return relationshipFromPathString(
-    fieldName,
-    fromType,
-    toType,
-    nonNull,
-    pathArgument.value.value
-  );
-}
-
-export function relationshipFromPathString(
-  fieldName: string,
-  initialType: string,
-  finalType: string,
-  nonNull: boolean,
-  pathString: string,
-): Relationship {
-  const parts = pathString.split(/([A-Za-z_]+)/);
-  const path = [];
-  let fromType = initialType;
-
-  while (parts.length > 3) {
-    const [left, label, right, toType] = parts.splice(0, 4);
-    path.push(
-      relationshipSegmentFromParts(fromType, left, label, right, toType)
-    );
-    fromType = toType;
-  }
-
-  const [left, label, right] = parts;
-  path.push(
-    relationshipSegmentFromParts(
-      fromType,
-      left,
-      label,
-      right,
-      finalType,
-      nonNull
-    )
-  );
-
-  invariant(
-    !nonNull || path.length === 1 && path[0].cardinality === 'singular',
-    'Only singular relationships with one segment can be non null'
-  );
-
-  const cardinality = (
-    path.some(segment => segment.cardinality === 'plural')
-    ? 'plural'
-    : 'singular'
-  );
-
-  return {
-    fieldName,
-    path,
-    cardinality,
-  };
-}
-
-const ARROWS = {
-  '-->': {cardinality: 'singular', direction: 'out'},
-  '<--': {cardinality: 'singular', direction: 'in'},
-  '==>': {cardinality: 'plural', direction: 'out'},
-  '<==': {cardinality: 'plural', direction: 'in'},
-};
-
-export function relationshipSegmentFromParts(
-  fromType: string,
-  left: string,
-  label: string,
-  right: string,
-  toType: string,
-  nonNull: boolean = false
-): RelationshipSegment {
-  const arrow = ARROWS[left + right];
-  invariant(arrow, 'invalid path string');
-  return Object.assign({fromType, toType, label, nonNull}, arrow);
 }
 
 export function segmentDescriptionsFromRelationships(

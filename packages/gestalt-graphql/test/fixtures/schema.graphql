@@ -11,6 +11,7 @@ type User implements Node {
   firstName: String
   lastName: String
   fullName: String @virtual
+  profileImage: Image
   followedUsers: User @relationship(path: "=FOLLOWED=>")
   followers: User @relationship(path: "<=FOLLOWED=")
   posts: Post @relationship(path: "=AUTHORED=>")
@@ -18,19 +19,40 @@ type User implements Node {
   feed: Post @relationship(path: "=FOLLOWED=>User=AUTHORED=>")
 }
 
-type Post implements Node {
+type Post implements Node, Text {
   id: ID!
   title: String! @index
+  image: Image
+  type: PostType
   text: String!
   createdAt: Date!
   author: User! @relationship(path: "<-AUTHORED-")
   comments: Comment @relationship(path: "=INSPIRED=>")
 }
 
-type Comment implements Node {
+type Comment implements Node, Text {
   id: ID!
   text: String!
   createdAt: Date!
   author: User @relationship(path: "<-AUTHORED-")
   subject: Post! @relationship(path: "<-INSPIRED-")
 }
+
+interface Text {
+  text: String!
+}
+
+type Image {
+  url: String
+  width: Int
+  height: Int
+}
+
+enum PostType {
+  ESSAY
+  REVIEW
+  STORY
+  POEM
+}
+
+union Content = Post | Comment

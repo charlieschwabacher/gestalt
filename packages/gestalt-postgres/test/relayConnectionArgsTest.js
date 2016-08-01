@@ -1,8 +1,9 @@
 // @flow
 
 import assert from 'assert';
-import {relationshipFromPathString as r, segmentDescriptionsFromRelationships}
-  from '../src/generateDatabaseInterface';
+import {relationshipFromPathString as r} from 'gestalt-graphql';
+import {segmentDescriptionsFromRelationships} from
+  '../src/generateDatabaseInterface';
 import {sqlStringFromQuery, applyCursorsToQuery, applyLimitToQuery,
   queryFromRelationship} from '../src/generateRelationshipResolver';
 import {keyMap} from 'gestalt-utils';

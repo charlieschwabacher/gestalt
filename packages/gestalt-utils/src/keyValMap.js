@@ -1,6 +1,6 @@
 // @flow
 
-export default function keyMap<T>(
+export default function keyValMap<T>(
   list: Array<T>,
   keyFn: (item: T) => string,
   valFn: (item: T) => any,

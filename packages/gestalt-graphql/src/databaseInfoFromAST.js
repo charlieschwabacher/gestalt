@@ -1,28 +1,101 @@
 // @flow
-import {invariant, isListType, baseType} from 'gestalt-utils';
-import type {Document, Relationship, ObjectTypeDefinition, Directive,
-  RelationshipSegment} from 'gestalt-utils';
+import {invariant, isListType, baseType, keyValMap, keyMap} from
+  'gestalt-utils';
+import type {Document, Relationship, ObjectTypeDefinition, UnionTypeDefinition,
+  EnumTypeDefinition, Directive, RelationshipSegment, EnumTypeMap,
+  PolymorphicTypeMap, DatabaseRelevantSchemaInfo} from 'gestalt-utils';
 
 export default function databaseInfoFromAST(
   ast: Document,
-): {
-  objectDefinitions: ObjectTypeDefinition[],
-  relationships: Relationship[]
-} {
+): DatabaseRelevantSchemaInfo {
   const objectDefinitions = [];
+  const interfaceMembers = [];
+  const enumDefinitions = [];
+  const unionDefinitions = [];
   const relationships = [];
 
   ast.definitions.forEach(definition => {
-    if (isDatabaseType(definition)) {
-      objectDefinitions.push(definition);
-      relationships.push(...relationshipsFromObjectTypeDefinition(definition));
+    switch (definition.kind) {
+      case 'ObjectTypeDefinition':
+        if (isDatabaseType(definition)) {
+          objectDefinitions.push(definition);
+          if (isNonNodeInterfaceMember(definition)) {
+            interfaceMembers.push(definition);
+          }
+        }
+        break;
+      case 'EnumTypeDefinition':
+        enumDefinitions.push(definition);
+        break;
+      case 'UnionTypeDefinition':
+        unionDefinitions.push(definition);
+        break;
     }
   });
 
-  return {objectDefinitions, relationships};
+  return {
+    relationships: relationshipsFromObjectDefinitions(objectDefinitions),
+    objectTypes: objectTypesByName(objectDefinitions),
+    enumTypes: enumTypeMapFromEnumDefinitions(enumDefinitions),
+    polymorphicTypes: polymorphicTypeMapFromUnionsAndInterfaceMembers(
+      unionDefinitions,
+      interfaceMembers
+    ),
+  };
 }
 
-export function relationshipsFromObjectTypeDefinition(
+export function objectTypesByName(
+  definitions: ObjectTypeDefinition[]
+): {[key: string]: ObjectTypeDefinition} {
+  return keyMap(definitions, definition => definition.name.value);
+}
+
+export function enumTypeMapFromEnumDefinitions(
+  enumDefinitions: EnumTypeDefinition[]
+): EnumTypeMap {
+  return keyValMap(
+    enumDefinitions,
+    definition => definition.name.value,
+    definition => definition.values.map(enumValue => enumValue.name.value),
+  );
+}
+
+export function polymorphicTypeMapFromUnionsAndInterfaceMembers(
+  unionDefinitions: UnionTypeDefinition[],
+  interfaceMembers: ObjectTypeDefinition[],
+): PolymorphicTypeMap {
+  const polymorphicTypes = {};
+
+  unionDefinitions.forEach(definition => {
+    const typeName = definition.name.value;
+    const members = definition.types.map(member => member.name.value);
+    polymorphicTypes[typeName] = members;
+  });
+
+  interfaceMembers.forEach(definition => {
+    const typeName = definition.name.value;
+    definition.interfaces.forEach(ifce => {
+      const interfaceName = ifce.name.value;
+      if (interfaceName !== 'Node') {
+        polymorphicTypes[interfaceName] = polymorphicTypes[interfaceName] || [];
+        polymorphicTypes[interfaceName].push(typeName);
+      }
+    });
+  });
+
+  return polymorphicTypes;
+}
+
+export function relationshipsFromObjectDefinitions(
+  definitions: ObjectTypeDefinition[],
+): Relationship[] {
+  return definitions.reduce((memo, definition) => {
+    memo.push(...relationshipsFromObjectDefinition(definition));
+    return memo;
+  }, []);
+}
+
+export function relationshipsFromObjectDefinition(
   definition: ObjectTypeDefinition,
 ): Relationship[] {
   const fromType = definition.name.value;
@@ -149,8 +222,11 @@ export function relationshipSegmentFromParts(
 export function isDatabaseType(definition: Object): boolean {
   // Only ObjectTypes implementing the Node interface are recorded
   return (
-    definition.kind === 'ObjectTypeDefinition' &&
     definition.interfaces.some(type => type.name.value === 'Node') &&
     definition.name.value !== 'Session'
   );
+}
+
+export function isNonNodeInterfaceMember(definition: Object): boolean {
+  return definition.interfaces.some(type => type.name.value !== 'Node');
 }

@@ -2,8 +2,9 @@
 
 import assert from 'assert';
 import {keyMap} from 'gestalt-utils';
-import {relationshipFromPathString as r, segmentDescriptionsFromRelationships}
-  from '../src/generateDatabaseInterface';
+import {relationshipFromPathString as r} from 'gestalt-graphql';
+import {segmentDescriptionsFromRelationships} from
+  '../src/generateDatabaseInterface';
 import {objectKeyColumnFromRelationship} from
   '../src/generateRelationshipResolver';
 

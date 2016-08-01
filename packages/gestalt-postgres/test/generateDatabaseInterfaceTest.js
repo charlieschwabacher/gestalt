@@ -9,8 +9,8 @@ import updatedDatabaseSchema from './fixtures/updatedDatabaseSchema';
 function loadSchema(path) {
   const schema = fs.readFileSync(path, 'utf8');
   const schemaAST = parse(schema);
-  const {objectDefinitions, relationships} = databaseInfoFromAST(schemaAST);
-  return generateDatabaseInterface('', objectDefinitions, relationships).schema;
+  const schemaInfo = databaseInfoFromAST(schemaAST);
+  return generateDatabaseInterface('', schemaInfo).schema;
 }
 
 describe('generateDatabaseInterface', () => {

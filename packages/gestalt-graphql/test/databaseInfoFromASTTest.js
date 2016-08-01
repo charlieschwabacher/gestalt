@@ -1,68 +1,45 @@
 import assert from 'assert';
-import {relationshipFromPathString} from '../src/databaseInfoFromAST';
+import fs from 'fs';
+import databaseInfoFromAST from '../src/databaseInfoFromAST';
+import {parse} from 'graphql';
+import expectedRelationships from './fixtures/expectedRelationships';
 
-describe('relationshipFromPathString', () => {
+const schemaPath = `${__dirname}/fixtures/schema.graphql`;
+const schemaText = fs.readFileSync(schemaPath, 'utf8');
+const ast = parse(schemaText);
+const schemaInfo = databaseInfoFromAST(ast);
 
-  it('parses a long relationship', () => {
+describe('databaseInfoFromAST', () => {
+  it('should include object mapping node types by name', () => {
     assert.deepEqual(
-      relationshipFromPathString(
-        'posts',
-        'User',
-        'Post',
-        false,
-        '=FOLLOWED=>User=FOLLOWED=>User=AUTHORED=>'
-      ),
-      {
-        fieldName: 'posts',
-        cardinality: 'plural',
-        path: [
-          {
-            fromType: 'User',
-            toType: 'User',
-            label: 'FOLLOWED',
-            cardinality: 'plural',
-            direction: 'out',
-            nonNull: false
-          },
-          {
-            fromType: 'User',
-            toType: 'User',
-            label: 'FOLLOWED',
-            cardinality: 'plural',
-            direction: 'out',
-            nonNull: false
-          },
-          {
-            fromType: 'User',
-            toType: 'Post',
-            label: 'AUTHORED',
-            cardinality: 'plural',
-            direction: 'out',
-            nonNull: false
-          },
-        ]
-      }
+      Object.keys(schemaInfo.objectTypes),
+      ['User', 'Post', 'Comment'],
     );
   });
 
-  it('parses a short relationship', () => {
+  it('should include object mapping enum values by type name', () => {
     assert.deepEqual(
-      relationshipFromPathString('user', 'Post', 'User', true, '<-AUTHORED-'),
+      schemaInfo.enumTypes,
       {
-        fieldName: 'user',
-        cardinality: 'singular',
-        path: [
-          {
-            fromType: 'Post',
-            toType: 'User',
-            label: 'AUTHORED',
-            direction: 'in',
-            cardinality: 'singular',
-            nonNull: true,
-          },
-        ]
-      }
+        PostType: ['ESSAY', 'REVIEW', 'STORY', 'POEM'],
+      },
     );
   });
 
+  it('should include object mapping members by polymorphic type name', () => {
+    assert.deepEqual(
+      schemaInfo.polymorphicTypes,
+      {
+        Text: ['Post', 'Comment'],
+        Content: ['Post', 'Comment'],
+      },
+    );
+  });
+
+  it('should include array of relationships', () => {
+    assert.deepEqual(
+      schemaInfo.relationships,
+      expectedRelationships,
+    );
+  });
 });

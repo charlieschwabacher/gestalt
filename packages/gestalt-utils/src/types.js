@@ -28,9 +28,21 @@ export type DatabaseInterface = {
   db?: any,
 };
 
-export type DatabaseInterfaceDefinitionFn = (
-  objectTypes: ObjectTypeDefinition[],
+export type DatabaseRelevantSchemaInfo = {
   relationships: Relationship[],
+  objectTypes: {[key: string]: ObjectTypeDefinition},
+  enumTypes: EnumTypeMap,
+  polymorphicTypes: PolymorphicTypeMap,
+};
+
+// maps union or interface type name to array of member type names
+export type PolymorphicTypeMap = {[key: string]: string[]};
+
+// maps enum type name to array of values
+export type EnumTypeMap = {[key: string]: string[]};
+
+export type DatabaseInterfaceDefinitionFn = (
+  schemaInfo: DatabaseRelevantSchemaInfo,
   config: GestaltServerConfig,
 ) => DatabaseInterface;
 
@@ -166,7 +178,6 @@ export type RelationshipSegment = {
   direction: 'in' | 'out',
   cardinality: 'singular' | 'plural',
   nonNull: boolean,
-  signature: string,
 };
 
 export type RelationshipSegmentPair = {

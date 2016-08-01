@@ -15,11 +15,10 @@ export default function gestaltPostgres(databaseAdapterConfig: {
 }): DatabaseInterfaceDefinitionFn {
   const {databaseURL} = databaseAdapterConfig;
 
-  return (objectDefinitions, relationships, serverConfig) =>
+  return (schemaInfo, serverConfig) =>
     generateDatabaseInterface(
       databaseURL,
-      objectDefinitions,
-      relationships,
+      schemaInfo,
       serverConfig,
     );
 }
