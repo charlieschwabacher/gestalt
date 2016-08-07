@@ -69,7 +69,7 @@ async function updateJSONSchema(
   localPackage: Object,
   schemaText: string,
   {mutationsDirectory, mutationsGlob}: {mutationsDirectory: string, mutationsGlob: string}
-): Promise {
+): Promise<void> {
   const mutations = mutationsGlob
       ? importGlob(path.join(process.cwd(), mutationsGlob))
       : importAll(path.join(process.cwd(), mutationsDirectory));
@@ -95,7 +95,7 @@ async function updateDatabaseSchema(
   localPackage: Object,
   schemaText: string,
   {url}: {url: string}
-): Promise {
+): Promise<void> {
   let databaseUrl;
 
   if (url) {

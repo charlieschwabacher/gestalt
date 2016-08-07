@@ -11,7 +11,7 @@ import {invariant} from 'gestalt-utils';
 import snake from 'snake-case';
 import camel from 'camel-case';
 
-export default async function(name: string): Promise {
+export default async function(name: string): Promise<void> {
   try {
     invariant(
       name.match(/^[$A-Z_][0-9A-Z_$]*$/i),
