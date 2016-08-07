@@ -13,3 +13,7 @@ TODO:
     tables instead of as fields on Column objects?
   - refactor: code cleanup in CLI, move code into main package allowing globally
     installed CLI module to be updated less frequently
+  - refactor: move non shared flow types into individual packages from
+    gestalt-utils
+  - CLI command for gestalt postgres to run EXPLAIN and print cost of queries to
+    resolve all relationships
