@@ -6,6 +6,7 @@ const schema: DatabaseSchema = {
   extensions: [
     'pgcrypto',
   ],
+  enums: [],
   tables: [
     {
       name: 'users',

@@ -5,56 +5,68 @@
 // like refactoring or explaining why that isn't a good approach, it will be
 // appreciated! 😊
 
-import type {DatabaseSchema, Constraint, Index} from 'gestalt-utils';
+import type {DatabaseSchema, Table, Constraint, Index, Enum} from
+  'gestalt-utils';
 import {camelizeKeys, keyValMap, sortBy} from 'gestalt-utils';
 import DB from './DB';
+import REQUIRED_EXTENSIONS from './REQUIRED_EXTENSIONS';
 
 export default async function readExistingDatabaseSchema(
   databaseUrl: string,
-): DatabaseSchema {
+): Promise<DatabaseSchema> {
   const db = new DB({url: databaseUrl, log: false});
 
-  const [extensions, columns, columnConstraints, tableConstraints, indices] = (
+  const [
+    columns,
+    columnConstraints,
+    tableConstraints,
+    indices,
+    enums,
+    extensions
+  ] = (
     await Promise.all([
-      loadExtensions(db),
       loadColumns(db),
       loadColumnConstraints(db),
       loadTableConstraints(db),
       loadIndices(db),
+      loadEnums(db),
+      loadExtensions(db),
     ])
   );
 
-  const tables = Object.values(
-    columns.map(camelizeKeys).reduce(
-      (memo, {tableName, columnName, columnDefault, dataType, isNullable}) => {
-        memo[tableName] = memo[tableName] || {
-          name: tableName,
-          columns: [],
-          constraints: tableConstraints[tableName] || [],
-        };
+  const tablesByName: {[key: string]: Table} = columns.map(camelizeKeys).reduce(
+    (memo, {tableName, columnName, columnDefault, dataType, isNullable}) => {
+      memo[tableName] = memo[tableName] || {
+        name: tableName,
+        columns: [],
+        constraints: tableConstraints[tableName] || [],
+      };
 
-        const constraints = columnConstraints[tableName][columnName] || {
-          primaryKey: false,
-          unique: false,
-        };
+      const constraints = columnConstraints[tableName][columnName] || {
+        primaryKey: false,
+        unique: false,
+      };
 
-        memo[tableName].columns.push(Object.assign({
-          name: columnName,
-          defaultValue: columnName === 'seq' ? null : columnDefault,
-          type: columnName === 'seq' ? 'SERIAL' : dataType,
-          nonNull: isNullable === 'NO',
-          references: null,
-        }, constraints));
+      memo[tableName].columns.push({
+        name: columnName,
+        defaultValue: columnName === 'seq' ? null : columnDefault,
+        type: columnName === 'seq' ? 'SERIAL' : dataType,
+        nonNull: isNullable === 'NO',
+        references: null,
+        ...constraints,
+      });
 
-        return memo;
-      },
-      {}
-    )
+      return memo;
+    },
+    {}
   );
+
+  const tables = Object.keys(tablesByName).map(name => tablesByName[name]);
 
   return {
     tables,
     indices,
+    enums,
     extensions,
   };
 }
@@ -108,7 +120,6 @@ async function loadColumnConstraints(db: DB) {
         memo[table][column].references = {
           table: foreignTable,
           column: foreignColumn,
-          constraintName: name
         };
       } else {
         throw `unrecognized constraint type for ${name} on ${table}, ${column}`;
@@ -201,6 +212,11 @@ export async function loadExtensions(db: DB): Promise<string[]> {
   return rows.map(({extname}) => extname);
 }
 
+// TODO: load enums from db
+export async function loadEnums(db: DB): Promise<Enum[]> {
+  return [];
+}
+
 export function normalizeSchemaForComparison(
   schema: DatabaseSchema
 ): DatabaseSchema {
@@ -215,11 +231,10 @@ export function normalizeSchemaForComparison(
             constraintName: null
           },
         })),
-        constraints: table.constraints.map(constraint => {
-          const c = {...constraint};
-          delete c.name;
-          return c;
-        })
+        constraints: table.constraints.map(constraint => ({
+          ...constraint,
+          name: ''
+        }))
       }
     )),
     indices: sortBy(schema.indices, i => [i.table, i.columns]).map(index => {
@@ -227,5 +242,9 @@ export function normalizeSchemaForComparison(
       delete i.name;
       return i;
     }),
+    enums: sortBy(schema.enums, e => e.name),
+    extensions: schema.extensions.filter(
+      extension => REQUIRED_EXTENSIONS.indexOf(extension) >= 0
+    ).sort(),
   };
 }

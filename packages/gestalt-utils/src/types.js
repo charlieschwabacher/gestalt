@@ -11,8 +11,9 @@ import type DataLoader from 'dataloader';
 export type {GraphQLSchema, GraphQLObjectType, GraphQLField} from 'graphql';
 export type {GraphQLFieldResolveFn, GraphQLResolveInfo, GraphQLFieldConfig,
   GraphQLType} from 'graphql/type/definition';
-export type {Document, Node, ObjectTypeDefinition, TypeDefinition,
-  FieldDefinition, Directive, Type, NamedType} from 'graphql/language/ast';
+export type {Document, Node, ObjectTypeDefinition, UnionTypeDefinition,
+  EnumTypeDefinition, TypeDefinition, FieldDefinition, Directive, Type,
+  NamedType} from 'graphql/language/ast';
 export type {ConnectionArguments} from
   'graphql-relay/lib/connection/connectiontypes';
 
@@ -43,11 +44,12 @@ export type EnumTypeMap = {[key: string]: string[]};
 
 export type DatabaseInterfaceDefinitionFn = (
   schemaInfo: DatabaseRelevantSchemaInfo,
-  config: GestaltServerConfig,
+  config?: ?GestaltServerConfig,
 ) => DatabaseInterface;
 
 export type DatabaseSchema = {
   tables: Table[],
+  enums: Enum[],
   indices: Index[],
   extensions: string[],
 };
@@ -56,6 +58,11 @@ export type Table = {
   name: string,
   columns: Column[],
   constraints: Constraint[],
+};
+
+export type Enum = {
+  name: string,
+  values: string[],
 };
 
 export type Index = {
@@ -70,22 +77,22 @@ export type Column = {
   primaryKey: boolean,
   nonNull: boolean,
   unique: boolean,
-  defaultValue: ?string,
-  references: ?{
+  defaultValue?: ?string,
+  references?: ?{
     table: string,
     column: string,
-    name?: string,
+    name?: ?string,
   },
 };
 
-type Constraint = {
+export type Constraint = {
   name?: string,
   type: 'UNIQUE',
   columns: string[],
 };
 
-export type ColumnType = 'uuid' | 'jsonb' | 'timestamp' | 'text' | 'integer' |
-  'double precision' | 'money' | 'SERIAL';
+export type ColumnType = 'uuid' | 'jsonb' | 'timestamp without time zone' |
+  'text' | 'integer' | 'double precision' | 'money' | 'SERIAL';
 
 export type DatabaseSchemaMigration = {
   sql: string,
@@ -120,23 +127,25 @@ export type CreateIndex = {
   index: Index,
 };
 
+// TODO: this should handle multi column constraints
 export type AddUniquenessConstraint = {
   type: 'AddUniquenessConstraint',
   table: Table,
-  constraint: Constraint,
+  column: Column,
 };
 
+// TODO: this should handle removing constraints by name
 export type RemoveUniquenessConstraint = {
   type: 'RemoveUniquenessConstraint',
   table: Table,
-  constraint: Constraint,
+  column: Column,
 };
 
 export type AddForeignKeyConstraint = {
   type: 'AddForeignKeyConstraint',
   table: Table,
   column: Column,
-  references?: {
+  references: {
     table: string,
     column: string,
   },
@@ -246,7 +255,7 @@ export type MutationDefinition = {
 export type Query = {
   table: string,
   joins: Join[],
-  conditions: Condition[],
+  conditions: QueryCondition[],
   order?: Order,
   limit?: number,
   reverseResults?: boolean,
@@ -254,16 +263,18 @@ export type Query = {
 
 export type Join = {
   table: string,
-  alias: ?string,
-  condition: {
-    left: {table: string, column: string},
-    right: {table: string, column: string},
-  },
+  alias?: ?string,
+  conditions: JoinCondition[],
 };
 
-export type Condition = {
+export type JoinCondition = {
+  left: {table: string, column: string},
+  right: {table: string, column: string},
+};
+
+export type QueryCondition = {
   table: string,
-  alias: ?string,
+  alias?: ?string,
   column: string,
   operator: string,
   value: string,

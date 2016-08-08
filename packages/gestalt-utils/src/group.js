@@ -1,7 +1,7 @@
 // @flow
 
 export default function group<T>(
-  list: Array<T>,
+  list: T[],
   keyFn: (item: T) => string
 ): {[key: string]: T[]} {
   return list.reduce((map, item) => {

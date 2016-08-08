@@ -23,16 +23,16 @@ export default function generateGraphQLSchema(
   objects: ObjectTypeFieldResolutionDefinition[],
   mutations: MutationDefinitionFn[],
   databaseInterfaceDefinitionFn: DatabaseInterfaceDefinitionFn,
-  config?: GestaltServerConfig,
+  config?: ?GestaltServerConfig,
 ): {schema: GraphQLSchema, databaseInterface: DatabaseInterface} {
   const ast = parse(schemaText);
 
   // we take inventory of object definitions and relationships before the ast
   // is modified
-  const {objectDefinitions, relationships} = databaseInfoFromAST(ast);
+  const schemaInfo = databaseInfoFromAST(ast);
+  const {relationships} = schemaInfo;
   const databaseInterface = databaseInterfaceDefinitionFn(
-    objectDefinitions,
-    relationships,
+    schemaInfo,
     config,
   );
 

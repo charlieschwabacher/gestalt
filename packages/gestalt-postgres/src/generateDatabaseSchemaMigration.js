@@ -25,7 +25,12 @@ import type {DatabaseSchema, Table, Column, Index, DatabaseSchemaMigration,
 import {keyMap, group, invariant} from 'gestalt-utils';
 import readExistingDatabaseSchema from './readExistingDatabaseSchema';
 
-const EMPTY_SCHEMA = {tables: [], indices: [], extensions: []};
+const EMPTY_SCHEMA: DatabaseSchema = {
+  tables: [],
+  enums: [],
+  indices: [],
+  extensions: []
+};
 
 
 export default function generateDatabaseSchemaMigration(
@@ -49,8 +54,8 @@ export default function generateDatabaseSchemaMigration(
   });
 
   expectedSchema.tables.forEach(expectedTable => {
-    const existingTable = existingTables[expectedTable.name];
-    if (existingTable == null) {
+    const table = existingTables[expectedTable.name];
+    if (table == null) {
 
       // create tables in expected schema but not existing
       operations.push({
@@ -61,50 +66,45 @@ export default function generateDatabaseSchemaMigration(
     } else {
 
       // alter tables present in both schemas
-      const existingColumns = keyMap(existingTable.columns, c => c.name);
+      const existingColumns = keyMap(table.columns, c => c.name);
 
       expectedTable.columns.forEach(expectedColumn => {
-        const existingColumn = existingColumns[expectedColumn.name];
+        const column = existingColumns[expectedColumn.name];
 
         // add columns present in expected schema but not existing
-        if (existingColumn == null) {
+        if (column == null) {
           operations.push({
             type: 'AddColumn',
-            table: existingTable,
+            table,
             column: expectedColumn,
           });
         } else {
           // change data type?
-          if (existingColumn.type !== expectedColumn.type) {
+          if (column.type !== expectedColumn.type) {
             operations.push({
               type: 'ChangeColumnType',
-              table: existingTable,
-              column: existingColumn,
+              table,
+              column,
               toType: expectedColumn.type,
             });
           }
 
           // add / remove uniqueness constraint
-          if (existingColumn.unique !== expectedColumn.unique) {
-            operations.push({
-              type: (
-                expectedColumn.unique
-                ? 'AddUniquenessConstraint'
-                : 'RemoveUniquenessConstraint'
-              ),
-              table: existingTable,
-              column: existingColumn,
-              // TODO: should this include constraint object?
-            });
+          if (column.unique !== expectedColumn.unique) {
+            operations.push(
+              expectedColumn.unique
+              ? {table, column, type: 'AddUniquenessConstraint'}
+              : {table, column, type: 'RemoveUniquenessConstraint'}
+            );
           }
 
           // make non nullable / nullable
-          if (existingColumn.nonNull !== expectedColumn.nonNull) {
-            operations.push({
-              type: expectedColumn.nonNull ? 'MakeNonNullable' : 'MakeNullable',
-              table: existingTable,
-              column: existingColumn,
-            });
+          if (column.nonNull !== expectedColumn.nonNull) {
+            operations.push(
+              expectedColumn.nonNull
+              ? {table, column, type: 'MakeNonNullable'}
+              : {table, column, type: 'MakeNullable'}
+            );
           }
 
           // TODO: handle change to references constraints
@@ -128,9 +128,29 @@ export default function generateDatabaseSchemaMigration(
       const existingReferences = existingColumn && existingColumn.references;
       const {references} = column;
 
-      if (references == null && existingReferences == null) {
-        // do nothing
-      } else if (existingReferences == null) {
+      if (references != null && existingReferences != null) {
+        if (
+          existingReferences.table !== references.table ||
+          existingReferences.column !== references.column
+        ) {
+          invariant(
+            existingReferences.name,
+            'foreign key constraint loaded from existing schema missing name',
+          );
+
+          // replace existing foreign key constraint
+          operations.push({
+            type: 'RemoveForeignKeyConstraint',
+            table: existingTable,
+            constraintName: existingReferences.name,
+          }, {
+            type: 'AddForeignKeyConstraint',
+            table: expectedTable,
+            column,
+            references,
+          });
+        }
+      } else if (references != null) {
         // add foreign key constraint
         operations.push({
           type: 'AddForeignKeyConstraint',
@@ -138,27 +158,17 @@ export default function generateDatabaseSchemaMigration(
           column,
           references,
         });
-      } else if (references == null) {
+      } else if (existingReferences != null) {
+        invariant(
+          existingReferences.name,
+          'foreign key constraint loaded from existing schema missing name',
+        );
+
         // remove existing foreign key constraint
         operations.push({
           type: 'RemoveForeignKeyConstraint',
           table: existingTable,
-          constraintName: existingReferences.constraintName,
-        });
-      } else if (
-        existingReferences.table !== references.table ||
-        existingReferences.column !== references.column
-      ) {
-        // replace existing foreign key constraint
-        operations.push({
-          type: 'RemoveForeignKeyConstraint',
-          table: existingTable,
-          constraintName: existingReferences.constraintName,
-        }, {
-          type: 'AddForeignKeyConstraint',
-          table: expectedTable,
-          column,
-          references,
+          constraintName: existingReferences.name,
         });
       }
     });
@@ -174,7 +184,8 @@ export default function generateDatabaseSchemaMigration(
         existingIndices[existingTable.name]
       );
 
-      Object.entries(expectedTableIndices).forEach(([key, index]) => {
+      Object.keys(expectedTableIndices).forEach(key => {
+        const index = expectedTableIndices[key];
         if (existingTableIndices == null || existingTableIndices[key] == null) {
           operations.push({
             type: 'CreateIndex',
@@ -209,10 +220,13 @@ function sqlFromOperation(operation: DatabaseSchemaMigrationOperation): string {
       return addForeignKeyConstraint(
         operation.table,
         operation.column,
-        operation.references
+        operation.references,
       );
     case 'RemoveForeignKeyConstraint':
-      return removeForeignKeyConstraint(operation.table, operation.name);
+      return removeForeignKeyConstraint(
+        operation.table,
+        operation.constraintName
+      );
     case 'MakeNullable':
       return makeNullable(operation.table, operation.column);
     case 'MakeNonNullable':
@@ -329,11 +343,13 @@ export function removeColumn(table: Table, column: Column): string {
 export function indexMapFromSchema(
   schema: DatabaseSchema
 ): {[key: string]: {[key: string]: Index}} {
+  const indicesByTable = group(schema.indices, index => index.table);
   return (
-    Object.entries(
-      group(schema.indices, index => index.table)
-    ).reduce((memo, [table, indices]) => {
-      memo[table] = keyMap(indices, index => index.columns.join('|'));
+    Object.keys(indicesByTable).reduce((memo, table) => {
+      memo[table] = keyMap(
+        indicesByTable[table],
+        index => index.columns.join('|')
+      );
       return memo;
     }, {})
   );

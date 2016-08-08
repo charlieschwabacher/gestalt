@@ -3,10 +3,11 @@
 // type definition AST.
 
 import type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
-  Type, NamedType, DatabaseInterface, DatabaseSchema, Table, Index, Column,
-  ColumnType, Relationship, RelationshipSegment, RelationshipSegmentPair,
-  JoinTableDescription, ForeignKeyDescription, RelationshipSegmentDescription,
-  DatabaseRelevantSchemaInfo, GestaltServerConfig} from 'gestalt-utils';
+  Type, NamedType, DatabaseInterface, DatabaseSchema, Table, Enum, Index,
+  Column, ColumnType, Relationship, RelationshipSegment,
+  RelationshipSegmentPair, JoinTableDescription, ForeignKeyDescription,
+  RelationshipSegmentDescription, DatabaseRelevantSchemaInfo,
+  GestaltServerConfig} from 'gestalt-utils';
 import {plural} from 'pluralize';
 import snake from 'snake-case';
 import generateNodeResolver from './generateNodeResolver';
@@ -16,19 +17,22 @@ import {invariant, keyMap, baseType} from 'gestalt-utils';
 import DB from './DB';
 import REQUIRED_EXTENSIONS from './REQUIRED_EXTENSIONS';
 
+
+
 export default function generateDatabaseInterface(
   databaseURL: string,
   schemaInfo: DatabaseRelevantSchemaInfo,
-  config?: GestaltServerConfig,
+  config?: ?GestaltServerConfig,
 ): DatabaseInterface {
   const {objectTypes, relationships} = schemaInfo;
 
   const db = new DB({
     url: databaseURL,
-    log: config != null && config.development,
+    log: config != null && !!config.development,
   });
 
   const tables: Table[] = [];
+  const enums: Enum[] = [];
   const tablesByName: {[key: string]: Table} = {};
   const indices: Index[] = [];
 
@@ -71,6 +75,7 @@ export default function generateDatabaseInterface(
     schema: {
       tables,
       indices,
+      enums,
       extensions: REQUIRED_EXTENSIONS,
     },
     resolveNode: generateNodeResolver(db),
@@ -219,24 +224,25 @@ export function segmentDescriptionsFromRelationships(
 
   // create RelationshipSegmentDescription objects
   return Object.keys(segmentMap).map(signature => {
-    const segments = segmentMap[signature];
     const pair = {};
-    segments.forEach(segment => pair[segment.direction] = segment);
+    const matchingSegments = segmentMap[signature];
+    matchingSegments.forEach(segment => pair[segment.direction] = segment);
 
-    const isJoin = segmentPairRequiresJoinTable(pair);
-    const type = isJoin ? 'join' : 'foreignKey';
-    const storage = (
-      isJoin
-      ? joinTableDescriptionFromRelationshipSegmentPair(pair)
-      : foreignKeyDescriptionFromRelationshipSegmentPair(pair)
-    );
-
-    return {
-      type,
-      signature,
-      pair,
-      storage
-    };
+    if (segmentPairRequiresJoinTable(pair)) {
+      return {
+        type: 'join',
+        signature,
+        pair,
+        storage: joinTableDescriptionFromRelationshipSegmentPair(pair),
+      };
+    } else {
+      return {
+        type: 'foreignKey',
+        signature,
+        pair,
+        storage: foreignKeyDescriptionFromRelationshipSegmentPair(pair),
+      };
+    }
   });
 }
 
@@ -254,17 +260,18 @@ export function pairingSignatureFromRelationshipSegment(
 export function flattenedUniqueSegmentsFromRelationships(
   relationships: Relationship[]
 ): RelationshipSegment[] {
-  const segmentMap: {[key: string]: RelationshipSegment} = {};
+  const segmentMap: Map<string, RelationshipSegment> = new Map;
   relationships.forEach(relationship =>
     relationship.path.forEach(segment => {
       const signature = identitySignatureFromRelationshipSegment(segment);
-      if (segmentMap[signature] == null || !segmentMap[signature].nonNull) {
-        segmentMap[signature] = segment;
+      const existingSegment = segmentMap.get(signature);
+      if (existingSegment == null || !existingSegment.nonNull) {
+        segmentMap.set(signature, segment);
       }
     })
   );
 
-  return Object.values(segmentMap);
+  return Array.from(segmentMap.values());
 }
 
 export function identitySignatureFromRelationshipSegment(
@@ -286,13 +293,14 @@ export function segmentPairRequiresJoinTable(
 export function joinTableDescriptionFromRelationshipSegmentPair(
   pair: RelationshipSegmentPair
 ): JoinTableDescription {
-  invariant(
-    pair.out || pair.in,
-    'relationship segment pair must have at least one segment'
-  );
   const left = (pair.out && pair.out.fromType) || (pair.in && pair.in.toType);
   const right = (pair.out && pair.out.toType) || (pair.in && pair.in.fromType);
   const label = (pair.out && pair.out.label) || (pair.in && pair.in.label);
+
+  invariant(
+    left && right && label,
+    'relationship segment pair must have at least one segment'
+  );
 
   return {
     name: tableNameFromTypeName(`${left}_${label}_${right}`),
@@ -363,7 +371,7 @@ export function joinTableIndicesFromDescription(
 // foreign key using the following rules:
 
 // missing + singular:
-//   - add the column to the existing segment
+//   - add the column to the fromType of the existing segment
 // singular + plural:
 //   - add the column to the fromType of the singular segment
 // singular + singular:
@@ -375,6 +383,7 @@ export function foreignKeyDescriptionFromRelationshipSegmentPair(
 ): ForeignKeyDescription {
   let normalType;
   if (pair.in == null) {
+    invariant(pair.out);
     normalType = {
       ...pair.out,
       direction: 'in',

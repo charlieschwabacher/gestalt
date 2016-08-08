@@ -3,9 +3,10 @@
 // type, and relationship information.
 
 import type {Relationship, RelationshipSegmentDescriptionMap,
-  RelationshipSegmentDescription, RelationshipSegment, Query, Join, Condition,
-  Order, GraphQLFieldResolveFn, GraphQLResolveInfo, ConnectionArguments,
-  ForeignKeyDescription, JoinTableDescription} from 'gestalt-utils';
+  RelationshipSegmentDescription, RelationshipSegment, Query, Join,
+  JoinCondition, QueryCondition, Order, GraphQLFieldResolveFn,
+  GraphQLResolveInfo, ConnectionArguments, ForeignKeyDescription,
+  JoinTableDescription} from 'gestalt-utils';
 import type DB from './DB';
 import {pairingSignatureFromRelationshipSegment, tableNameFromTypeName} from
   './generateDatabaseInterface';
@@ -302,13 +303,15 @@ export function objectKeyColumnFromRelationship(
     segmentDescriptionMap,
     relationship.path[0]
   );
-  const {type, storage} = description;
 
-  return (
-    type === 'foreignKey' && storage.direction !== segment.direction
-    ? camel(storage.column)
-    : 'id'
-  );
+  if (description.type === 'foreignKey') {
+    const {storage} = description;
+    if (storage.direction !== segment.direction) {
+      return camel(storage.column);
+    }
+  }
+
+  return 'id';
 }
 
 export function resolvedKeyColumnFromRelationship(
@@ -320,13 +323,15 @@ export function resolvedKeyColumnFromRelationship(
     segmentDescriptionMap,
     relationship.path[0]
   );
-  const {type, storage} = description;
 
-  return (
-    type === 'foreignKey' && storage.direction === segment.direction
-    ? camel(storage.column)
-    : 'id'
-  );
+  if (description.type === 'foreignKey') {
+    const {storage} = description;
+    if (storage.direction === segment.direction) {
+      return camel(storage.column);
+    }
+  }
+
+  return 'id';
 }
 
 
@@ -366,8 +371,8 @@ function aliasJoins(table: string, joins: Join[]): Join[] {
 function conditionFromSegment(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   segment: RelationshipSegment,
-  alias: string,
-): Condition {
+  alias: ?string,
+): QueryCondition {
   const description = descriptionFromSegment(segmentDescriptionMap, segment);
   const operator = '=';
   const value = 'ANY ($1)';
@@ -415,18 +420,18 @@ function joinsFromSegments(
       if (segment.direction === direction) {
         joins.push({
           table: referencedTable,
-          condition: {
+          conditions: [{
             left: {table: referencedTable, column: 'id'},
             right: {table, column},
-          },
+          }],
         });
       } else {
         joins.push({
           table,
-          condition: {
+          conditions: [{
             left: {table, column},
             right: {table: referencedTable, column: 'id'},
-          },
+          }],
         });
       }
     } else {
@@ -437,34 +442,34 @@ function joinsFromSegments(
         joins.push(
           {
             table: name,
-            condition: {
+            conditions: [{
               left: {table: name, column: leftColumnName},
               right: {table: leftTableName, column: 'id'},
-            },
+            }],
           },
           {
             table: rightTableName,
-            condition: {
+            conditions: [{
               left: {table: rightTableName, column: 'id'},
               right: {table: name, column: rightColumnName},
-            },
+            }],
           },
         );
       } else {
         joins.push(
           {
             table: name,
-            condition: {
+            conditions: [{
               left: {table: name, column: rightColumnName},
               right: {table: toTableName, column: 'id'},
-            },
+            }],
           },
           {
             table: leftTableName,
-            condition: {
+            conditions: [{
               left: {table: leftTableName, column: 'id'},
               right: {table: name, column: leftColumnName},
-            },
+            }],
           },
         );
       }
@@ -487,18 +492,18 @@ function joinsFromInitialSegment(
     if (segment.direction === 'in') {
       return [{
         table: name,
-        condition: {
+        conditions: [{
           left: {table: name, column: leftColumnName},
           right: {table: leftTableName, column: 'id'},
-        },
+        }],
       }];
     } else {
       return [{
         table: name,
-        condition: {
+        conditions: [{
           left: {table: name, column: rightColumnName},
           right: {table: rightTableName, column: 'id'},
-        },
+        }],
       }];
     }
   } else {
@@ -514,15 +519,24 @@ function compactJoins(joins: Join[]): Join[] {
     const next = joins[i + 1];
     if (
       next != null &&
-      join.condition.left.table === next.condition.right.table &&
-      join.condition.left.column === next.condition.right.column
+      join.conditions.length === next.conditions.length &&
+      join.conditions.every((condition, index) => {
+        const nextCondition = next.conditions[index];
+        return (
+          condition.left.table === nextCondition.right.table &&
+          condition.left.column === nextCondition.right.column
+        );
+      })
     ) {
       compactJoins.push({
         table: next.table,
-        condition: {
-          left: next.condition.left,
-          right: join.condition.right,
-        }
+        conditions: join.conditions.map((condition, index) => {
+          const nextCondition = next.conditions[index];
+          return {
+            left: nextCondition.left,
+            right: condition.right,
+          };
+        })
       });
       i += 1;
     } else {
@@ -533,13 +547,23 @@ function compactJoins(joins: Join[]): Join[] {
   return compactJoins;
 }
 
-
-function descriptionFromSegment(
+export function descriptionFromSegment(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   segment: RelationshipSegment
 ): RelationshipSegmentDescription {
   const signature = pairingSignatureFromRelationshipSegment(segment);
   return segmentDescriptionMap[signature];
+}
+
+export function sqlStringFromJoin(join: Join): string {
+  const {table, alias, conditions} = join;
+  const aliasedLeftTableName = alias || conditions[0].left.table;
+
+  return ` JOIN ${table}${alias != null ? ` ${alias}` : ''} ON ${
+    conditions.map(({left, right}) =>
+      `${aliasedLeftTableName}.${left.column} = ${right.table}.${right.column}`
+    ).join(' AND ')
+  }`;
 }
 
 export function sqlStringFromQuery(
@@ -553,20 +577,7 @@ export function sqlStringFromQuery(
     ? `COUNT(${table}.*)`
     : `${table}.*`
   } FROM ${table}${
-    joins.map(join => {
-      const {table, alias, condition} = join;
-      const {left, right} = condition;
-
-      return (
-        alias == null
-        ?
-          ` JOIN ${table} ON ${left.table}.${left.column} = ` +
-          `${right.table}.${right.column}`
-        :
-          ` JOIN ${table} ${alias} ON ${alias}.${left.column} = ` +
-          `${right.table}.${right.column}`
-      );
-    }).join('')
+    joins.map(sqlStringFromJoin).join('')
   } WHERE ${
     conditions.map(({table, alias, column, operator, value}) =>
       `${alias || table}.${column} ${operator} ${value}`
@@ -580,6 +591,8 @@ export function sqlStringFromQuery(
   }`;
 
   if (reverseResults && !count) {
+    invariant(order, 'results cannot be reversed without a defined order');
+
     const column = order.column;
     const direction = order.direction === 'ASC' ? 'DESC' : 'ASC';
     sql = `SELECT * FROM (${sql}) ${table} ORDER BY ${column} ${direction}`;
