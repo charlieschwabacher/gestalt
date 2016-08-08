@@ -1,0 +1,14 @@
+type User implements Node {
+  id: ID!
+  favoriteLandscape: Landscape @relationship(path: "-PINNED->Artwork-DEPICTED->")
+}
+type Landscape implements Node {
+  id: ID!
+}
+type Photo implements Node {
+  id: ID!
+}
+type Painting implements Node {
+  id: ID!
+}
+union Artwork = Photo | Painting

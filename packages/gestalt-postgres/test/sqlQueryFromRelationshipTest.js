@@ -48,13 +48,11 @@ const expectedSQLQueries =
   fs.readFileSync(`${__dirname}/fixtures/expectedQueries.sql`, 'utf8');
 const schema = fs.readFileSync(`${__dirname}/fixtures/schema.graphql`, 'utf8');
 const schemaAST = parse(schema);
-const schemaInfo = databaseInfoFromAST(schemaAST);
-const {relationships} = schemaInfo;
+const {relationships} = databaseInfoFromAST(schemaAST);
 
 describe('sqlQueryFromRelationship', () => {
 
   it('generates SQL queries for fixture schema', () => {
-    const database = generateDatabaseInterface('', schemaInfo);
     const segmentDescriptionsBySignature = keyMap(
       segmentDescriptionsFromRelationships(relationships),
       segment => segment.signature,

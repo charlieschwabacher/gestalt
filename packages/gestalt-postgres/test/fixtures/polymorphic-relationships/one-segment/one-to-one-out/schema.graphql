@@ -1,0 +1,13 @@
+type User implements Node {
+  id: ID!
+  image: Image @relationship(path: "<-DEPICTED-")
+}
+type Post implements Node {
+  id: ID!
+  image: Image @relationship(path: "<-DEPICTED-")
+}
+type Image implements Node {
+  id: ID!
+  subject: Subject @relationship(path: "-DEPICTED->")
+}
+union Subject = User | Post

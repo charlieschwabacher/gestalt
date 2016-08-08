@@ -24,7 +24,7 @@ export default function generateDatabaseInterface(
   schemaInfo: DatabaseRelevantSchemaInfo,
   config?: ?GestaltServerConfig,
 ): DatabaseInterface {
-  const {objectTypes, relationships} = schemaInfo;
+  const {objectTypes, enumTypes, polymorphicTypes, relationships} = schemaInfo;
 
   const db = new DB({
     url: databaseURL,
@@ -65,8 +65,10 @@ export default function generateDatabaseInterface(
     } else {
       // add foreign key and index
       const table = tablesByName[segment.storage.table];
-      table.columns.push(columnFromForeignKeyDescription(segment.storage));
-      indices.push(indexFromForeignKeyDescription(segment.storage));
+      if (table != null) {
+        table.columns.push(columnFromForeignKeyDescription(segment.storage));
+        indices.push(indexFromForeignKeyDescription(segment.storage));
+      }
     }
   });
 

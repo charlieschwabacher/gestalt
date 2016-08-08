@@ -28,6 +28,8 @@
     "babel-register": "^6.7.2",
     "colors": "^1.1.2",
     "gestalt-graphql": "^0.0.17",
-    "mocha": "^2.5.3"
+    "glob": "^7.0.5",
+    "mocha": "^2.5.3",
+    "no-case": "^2.3.0"
   }
 }

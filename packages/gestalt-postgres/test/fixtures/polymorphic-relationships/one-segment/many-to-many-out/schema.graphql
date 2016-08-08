@@ -1,0 +1,10 @@
+type Player implements Node {
+  teams: Team @relationship(path: "<=INCLUDED=")
+}
+type Coach implements Node {
+  teams: Team @relationship(path: "<=INCLUDED=")
+}
+type Team implements Node {
+  members: Member @relationship(path: "=INCLUDED=>")
+}
+union Member = Player | Coach

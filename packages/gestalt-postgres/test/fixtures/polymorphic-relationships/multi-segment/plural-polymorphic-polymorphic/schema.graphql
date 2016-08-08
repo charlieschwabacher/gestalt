@@ -1,0 +1,15 @@
+type User implements Node {
+  id: ID!
+  feed: Piece @relationship(path: "=FOLLOWED=>Agent=AUTHORED=>")
+}
+type Bot implements Node {
+  id: ID!
+}
+type Blog implements Node {
+  id: ID!
+}
+type Tweet implements Node {
+  id: ID!
+}
+union Agent = User | Bot
+union Piece = Blog | Tweet

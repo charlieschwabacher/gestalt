@@ -1,0 +1,14 @@
+type User implements Node {
+  id: ID!
+  deliveredPackages: Package @relationship(path: "=DROVE=>Vehicle=CARRIED=>")
+}
+type Car implements Node {
+  id: ID!
+}
+type Truck implements Node {
+  id: ID!
+}
+type Package implements Node {
+  id: ID!
+}
+union Vehicle = Car | Truck
