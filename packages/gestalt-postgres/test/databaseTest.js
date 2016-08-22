@@ -3,7 +3,7 @@ import assert from 'assert';
 import DB from '../src/DB';
 import readExistingDatabaseSchema, {normalizeSchemaForComparison} from
   '../src/readExistingDatabaseSchema';
-import expectedDatabaseSchema from './fixtures/expectedDatabaseSchema';
+import expectedSchema from './fixtures/schema';
 
 const DATABASE_URL = 'postgres://localhost/gestalt_test';
 
@@ -171,7 +171,7 @@ describe('postgres database interface', () => {
         normalizeSchemaForComparison(
           await readExistingDatabaseSchema(DATABASE_URL)
         ),
-        normalizeSchemaForComparison(expectedDatabaseSchema),
+        normalizeSchemaForComparison(expectedSchema),
       );
     });
   });

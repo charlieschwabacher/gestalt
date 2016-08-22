@@ -102,7 +102,8 @@ export type DatabaseSchemaMigration = {
 export type DatabaseSchemaMigrationOperation = CreateTable | AddColumn |
   ChangeColumnType | CreateIndex | AddUniquenessConstraint |
   RemoveUniquenessConstraint | AddForeignKeyConstraint |
-  RemoveForeignKeyConstraint | MakeNullable | MakeNonNullable | CreateExtension;
+  RemoveForeignKeyConstraint | MakeNullable | MakeNonNullable |
+  CreateExtension | CreateEnum | AddEnumValue;
 
 export type CreateTable = {
   type: 'CreateTable',
@@ -172,6 +173,18 @@ export type MakeNonNullable = {
 export type CreateExtension = {
   type: 'CreateExtension',
   extension: string,
+}
+
+export type CreateEnum = {
+  type: 'CreateEnum',
+  name: string,
+  values: string[],
+}
+
+export type AddEnumValue = {
+  type: 'AddEnumValue',
+  name: string,
+  value: string,
 }
 
 export type Relationship = {

@@ -2,7 +2,7 @@
 
 export default function group<T>(
   list: T[],
-  keyFn: (item: T) => string
+  keyFn: (item: T) => string,
 ): {[key: string]: T[]} {
   return list.reduce((map, item) => {
     const key = keyFn(item);

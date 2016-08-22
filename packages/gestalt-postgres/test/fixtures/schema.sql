@@ -1,5 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+CREATE TYPE food AS ENUM ('ICE_CREAM', 'PIZZA', 'SALAD');
+
 CREATE TABLE users (
   seq SERIAL NOT NULL UNIQUE,
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

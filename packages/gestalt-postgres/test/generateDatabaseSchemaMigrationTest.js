@@ -2,8 +2,8 @@ import fs from 'fs';
 import assert from 'assert';
 import generateDatabaseSchemaMigration from
   '../src/generateDatabaseSchemaMigration';
-import expectedDatabaseSchema from './fixtures/expectedDatabaseSchema';
-import updatedDatabaseSchema from './fixtures/updatedDatabaseSchema';
+import expectedSchema from './fixtures/schema';
+import expectedUpdatedSchema from './fixtures/schemaUpdate';
 
 const expectedSQLSchema =
   fs.readFileSync(`${__dirname}/fixtures/schema.sql`, 'utf8');
@@ -17,22 +17,22 @@ describe('generateDatabaseSchemaMigration', () => {
     () => {
       assert.equal(
         expectedSQLSchema,
-        generateDatabaseSchemaMigration(expectedDatabaseSchema).sql
+        generateDatabaseSchemaMigration(expectedSchema).sql
       );
     },
   );
 
   it('generates SQL updating an existing schema', () => {
     const schema = generateDatabaseSchemaMigration(
-      updatedDatabaseSchema,
-      expectedDatabaseSchema,
+      expectedUpdatedSchema,
+      expectedSchema,
     );
 
     assert.equal(
       expectedSQLSchemaUpdate,
       generateDatabaseSchemaMigration(
-        updatedDatabaseSchema,
-        expectedDatabaseSchema,
+        expectedUpdatedSchema,
+        expectedSchema,
       ).sql,
     );
   });

@@ -1,3 +1,7 @@
+WORKING NOTES:
+  - update schema generation to handle polymorphic types
+  - how do we handle polymorphic types w/ mix of node and non node types?
+
 TODO:
   - AST validation for helpful error messages (notes in stub files in
     ./src/validation)

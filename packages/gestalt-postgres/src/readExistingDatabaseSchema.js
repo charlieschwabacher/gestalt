@@ -7,7 +7,7 @@
 
 import type {DatabaseSchema, Table, Constraint, Index, Enum} from
   'gestalt-utils';
-import {camelizeKeys, keyValMap, sortBy} from 'gestalt-utils';
+import {camelizeKeys, group, keyValMap, sortBy} from 'gestalt-utils';
 import DB from './DB';
 import REQUIRED_EXTENSIONS from './REQUIRED_EXTENSIONS';
 
@@ -212,9 +212,23 @@ export async function loadExtensions(db: DB): Promise<string[]> {
   return rows.map(({extname}) => extname);
 }
 
-// TODO: load enums from db
 export async function loadEnums(db: DB): Promise<Enum[]> {
-  return [];
+  const rows = await db.query(`
+    SELECT
+      pg_type.typname AS enum_name,
+      pg_enum.enumlabel AS enum_value
+    FROM pg_type
+      JOIN pg_enum
+      ON pg_type.oid = pg_enum.enumtypid
+    ORDER BY pg_enum.enumsortorder ASC;
+  `);
+  const groups = group(rows, row => row.enumName);
+  return Object.keys(groups).map(name => {
+    return {
+      name,
+      values: groups[name].map(row => row.enumValue)
+    };
+  });
 }
 
 export function normalizeSchemaForComparison(

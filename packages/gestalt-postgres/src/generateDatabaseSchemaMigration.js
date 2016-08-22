@@ -22,7 +22,7 @@
 
 import type {DatabaseSchema, Table, Column, Index, DatabaseSchemaMigration,
   DatabaseSchemaMigrationOperation, ColumnType} from 'gestalt-utils';
-import {keyMap, group, invariant} from 'gestalt-utils';
+import {keyMap, group, difference, invariant} from 'gestalt-utils';
 import readExistingDatabaseSchema from './readExistingDatabaseSchema';
 
 const EMPTY_SCHEMA: DatabaseSchema = {
@@ -37,12 +37,9 @@ export default function generateDatabaseSchemaMigration(
   expectedSchema: DatabaseSchema,
   existingSchema: DatabaseSchema = EMPTY_SCHEMA,
 ): DatabaseSchemaMigration {
-  const existingTables = keyMap(existingSchema.tables, table => table.name);
-  const existingIndices = indexMapFromSchema(existingSchema);
-  const expectedIndices = indexMapFromSchema(expectedSchema);
-
   const operations = [];
 
+  // create any required extensions
   const existingExtensions = new Set(existingSchema.extensions);
   expectedSchema.extensions.forEach(expectedExtension => {
     if (!existingExtensions.has(expectedExtension)) {
@@ -53,6 +50,28 @@ export default function generateDatabaseSchemaMigration(
     }
   });
 
+  // create enums, or add missing values to existing enums
+  const existingEnums = keyMap(existingSchema.enums, e => e.name);
+  expectedSchema.enums.forEach(({name, values}) => {
+    if (existingEnums.name == null) {
+      operations.push({
+        type: 'CreateEnum',
+        name,
+        values,
+      });
+    } else {
+      difference(values, existingEnums[name].values).forEach(value => {
+        operations.push({
+          type: 'AddEnumValue',
+          name,
+          value,
+        });
+      });
+    }
+  });
+
+  // create or alter tables
+  const existingTables = keyMap(existingSchema.tables, table => table.name);
   expectedSchema.tables.forEach(expectedTable => {
     const table = existingTables[expectedTable.name];
     if (table == null) {
@@ -175,6 +194,8 @@ export default function generateDatabaseSchemaMigration(
   });
 
   // add indices
+  const existingIndices = indexMapFromSchema(existingSchema);
+  const expectedIndices = indexMapFromSchema(expectedSchema);
   expectedSchema.tables.forEach(expectedTable => {
     const expectedTableIndices = expectedIndices[expectedTable.name];
     if (expectedTableIndices != null) {
@@ -237,6 +258,10 @@ function sqlFromOperation(operation: DatabaseSchemaMigrationOperation): string {
         operation.column,
         operation.toType,
       );
+    case 'CreateEnum':
+      return createEnum(operation.name, operation.values);
+    case 'AddEnumValue':
+      return addEnumValue(operation.name, operation.value);
     default:
       throw `Unrecognized operation type '${operation.type}'`;
   }
@@ -323,7 +348,7 @@ export function changeColumnType(
   column: Column,
   type: ColumnType,
 ): string {
-  return 'ALTER TABLE ${table.name} ALTER COLUMN ${column.name} TYPE ${type}';
+  return `ALTER TABLE ${table.name} ALTER COLUMN ${column.name} TYPE ${type}`;
 }
 
 export function dropTable(table: Table): string {
@@ -333,11 +358,20 @@ export function dropTable(table: Table): string {
 
 export function dropIndex(index: Index): string {
   invariant(index.name != null, 'Cannot drop index without name');
-  return 'DROP INDEX ${index.name}';
+  return `DROP INDEX ${index.name}`;
 }
 
 export function removeColumn(table: Table, column: Column): string {
-  return 'ALTER TABLE ${table.name} DROP COLUMN ${column.name};';
+  return `ALTER TABLE ${table.name} DROP COLUMN ${column.name};`;
+}
+
+export function createEnum(name: string, values: string[]): string {
+  const valuesDescription = values.map(v => `'${v}'`).join(', ');
+  return `CREATE TYPE ${name} AS ENUM (${valuesDescription});`;
+}
+
+export function addEnumValue(name: string, value: string): string {
+  return `ALTER TYPE ${name} ADD VALUE '${value}';`;
 }
 
 export function indexMapFromSchema(

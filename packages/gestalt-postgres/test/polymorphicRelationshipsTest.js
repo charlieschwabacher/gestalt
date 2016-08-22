@@ -26,16 +26,22 @@ function testNameFromPath(path: string): string {
 }
 
 function normalizeSQLQuery(query: string): string {
-  return query.split('\n').map(line => line.replace(/^ */, '')).join(' ');
+  const parts = query.split('\n').map(line => line.replace(/^ */, ''));
+  const result = parts.join(' ');
+  return result + (result.slice(-1) === ';' ? '' : ';');
 }
 
 describe('polymorphic relationships', () => {
   testPaths.forEach(path => {
     describe(testNameFromPath(path), () => {
+
+      // read expected graphql schema
       const graphQLSchema = parse(
         fs.readFileSync(`${path}/schema.graphql`, 'utf8')
       );
       const schemaInfo = databaseInfoFromAST(graphQLSchema);
+
+      // generate sql queries for relationship resolution
       const {relationships} = schemaInfo;
       const segmentDescriptionsBySignature = keyMap(
         segmentDescriptionsFromRelationships(relationships),
@@ -49,15 +55,22 @@ describe('polymorphic relationships', () => {
           )
         )
       );
+
+      // load expected sql queries from file
+      const expectedSQLQueries = fs
+        .readFileSync(`${path}/queries.sql`, 'utf8')
+        .split(';')
+        .map(line => line.replace(/^\s*/, ''))
+        .filter(line => line)
+        .map(normalizeSQLQuery);
+
+      // generate sql schema
       const sqlSchema = generateDatabaseSchemaMigration(
         generateDatabaseInterface('', schemaInfo).schema
       ).sql;
 
+      // load expected sql schema from file
       const expectedSQLSchema = fs.readFileSync(`${path}/schema.sql`, 'utf8');
-      const expectedSQLQueries = fs
-        .readFileSync(`${path}/queries.sql`, 'utf8')
-        .split(';')
-        .map(normalizeSQLQuery);
 
 
       it('generates a database schema', () => {

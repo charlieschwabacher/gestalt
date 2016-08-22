@@ -3,8 +3,8 @@ import assert from 'assert';
 import {parse} from 'graphql';
 import {databaseInfoFromAST} from 'gestalt-graphql';
 import generateDatabaseInterface from '../src/generateDatabaseInterface';
-import expectedDatabaseSchema from './fixtures/expectedDatabaseSchema';
-import updatedDatabaseSchema from './fixtures/updatedDatabaseSchema';
+import expectedSchema from './fixtures/schema';
+import expectedUpdatedSchema from './fixtures/schemaUpdate';
 
 function loadSchema(path) {
   const schema = fs.readFileSync(path, 'utf8');
@@ -17,11 +17,11 @@ describe('generateDatabaseInterface', () => {
   it('generates a database schema definition from a GraphQL IDL AST', () => {
     assert.deepEqual(
       loadSchema(`${__dirname}/fixtures/schema.graphql`),
-      expectedDatabaseSchema,
+      expectedSchema,
     );
     assert.deepEqual(
-      loadSchema(`${__dirname}/fixtures/updatedSchema.graphql`),
-      updatedDatabaseSchema,
+      loadSchema(`${__dirname}/fixtures/schemaUpdate.graphql`),
+      expectedUpdatedSchema,
     );
   });
 });

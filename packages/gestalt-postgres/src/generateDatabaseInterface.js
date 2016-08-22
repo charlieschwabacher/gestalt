@@ -46,7 +46,7 @@ export default function generateDatabaseInterface(
   });
 
   // having looked at each type and recorded their relationships, we create
-  // normalized descriptions of their relationships
+  // normalized descriptions of the relationships
   const segmentDescriptions = segmentDescriptionsFromRelationships(
     relationships
   );
@@ -54,6 +54,14 @@ export default function generateDatabaseInterface(
     segmentDescriptions,
     segment => segment.signature
   );
+
+  // create DB enums for each enum type and polymorphic type
+  Object.keys(enumTypes).forEach(name => {
+    enums.push({name: `${snake(name)}`, values: enumTypes[name]});
+  });
+  Object.keys(polymorphicTypes).forEach(name => {
+    enums.push({name: `_${snake(name)}_type`, values: polymorphicTypes[name]});
+  });
 
   // create join tables, foreign key columns, and indices based on the
   // relationship descriptions

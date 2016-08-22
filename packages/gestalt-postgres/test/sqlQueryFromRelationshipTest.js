@@ -45,7 +45,7 @@ function testRelationship(
 
 
 const expectedSQLQueries =
-  fs.readFileSync(`${__dirname}/fixtures/expectedQueries.sql`, 'utf8');
+  fs.readFileSync(`${__dirname}/fixtures/queries.sql`, 'utf8');
 const schema = fs.readFileSync(`${__dirname}/fixtures/schema.graphql`, 'utf8');
 const schemaAST = parse(schema);
 const {relationships} = databaseInfoFromAST(schemaAST);
