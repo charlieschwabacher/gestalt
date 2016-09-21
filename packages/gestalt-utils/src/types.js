@@ -205,16 +205,15 @@ export type RelationshipSegment = {
 export type RelationshipSegmentPair = {
   in?: RelationshipSegment,
   out?: RelationshipSegment,
+  signature: string,
 };
 
 export type RelationshipSegmentDescription = {
   type: 'join',
-  signature: string,
   pair: RelationshipSegmentPair,
   storage: JoinTableDescription,
 } | {
   type: 'foreignKey',
-  signature: string,
   pair: RelationshipSegmentPair,
   storage: ForeignKeyDescription,
 };

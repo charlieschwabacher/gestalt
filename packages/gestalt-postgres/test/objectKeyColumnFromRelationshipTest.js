@@ -3,7 +3,7 @@
 import assert from 'assert';
 import {keyMap} from 'gestalt-utils';
 import {relationshipFromPathString as r} from 'gestalt-graphql';
-import {segmentDescriptionsFromRelationships} from
+import {segmentPairsFromRelationships, segmentDescriptionsFromPairs} from
   '../src/generateDatabaseInterface';
 import {objectKeyColumnFromRelationship} from
   '../src/generateRelationshipResolver';
@@ -12,7 +12,6 @@ import type {Relationship} from 'gestalt-utils';
 declare function describe(a: string, b: () => any): void;
 declare function it(a: string, b: () => any): void;
 
-
 function testKeyColumns(
   inRelationship: Relationship,
   outRelationship: Relationship,
@@ -20,8 +19,10 @@ function testKeyColumns(
   outKeyColumn: string
 ): void {
   const descriptions = keyMap(
-    segmentDescriptionsFromRelationships([inRelationship, outRelationship]),
-    segment => segment.signature,
+    segmentDescriptionsFromPairs(
+      segmentPairsFromRelationships([inRelationship, outRelationship])
+    ),
+    segment => segment.pair.signature,
   );
   assert.equal(
     objectKeyColumnFromRelationship(descriptions, inRelationship),

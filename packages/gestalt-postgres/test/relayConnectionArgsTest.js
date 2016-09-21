@@ -2,7 +2,7 @@
 
 import assert from 'assert';
 import {relationshipFromPathString as r} from 'gestalt-graphql';
-import {segmentDescriptionsFromRelationships} from
+import {segmentDescriptionsFromPairs, segmentPairsFromRelationships} from
   '../src/generateDatabaseInterface';
 import {sqlStringFromQuery, applyCursorsToQuery, applyLimitToQuery,
   queryFromRelationship} from '../src/generateRelationshipResolver';
@@ -19,8 +19,10 @@ function testConnectionArgs(
   sql: string,
 ): void {
   const descriptions = keyMap(
-    segmentDescriptionsFromRelationships(relationships),
-    segment => segment.signature,
+    segmentDescriptionsFromPairs(
+      segmentPairsFromRelationships(relationships)
+    ),
+    segment => segment.pair.signature,
   );
   assert.equal(
     sqlStringFromQuery(

@@ -5,7 +5,7 @@ import assert from 'assert';
 import DB from '../src/DB';
 import {parse} from 'graphql';
 import {databaseInfoFromAST} from 'gestalt-graphql';
-import {segmentDescriptionsFromRelationships}
+import {segmentPairsFromRelationships, segmentDescriptionsFromPairs}
   from '../src/generateDatabaseInterface';
 import {generateRelationshipLoaders, generateRelationshipResolver} from
   '../src/generateRelationshipResolver';
@@ -31,8 +31,10 @@ const relationshipMap = keyMap(
   relationship => `${relationship.path[0].fromType}|${relationship.fieldName}`
 );
 const segmentDescriptionMap = keyMap(
-  segmentDescriptionsFromRelationships(relationships),
-  segment => segment.signature
+  segmentDescriptionsFromPairs(
+    segmentPairsFromRelationships(relationships)
+  ),
+  segment => segment.pair.signature
 );
 const loaders = generateRelationshipLoaders(
   db,

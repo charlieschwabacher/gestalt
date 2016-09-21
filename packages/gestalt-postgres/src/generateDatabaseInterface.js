@@ -47,12 +47,11 @@ export default function generateDatabaseInterface(
 
   // having looked at each type and recorded their relationships, we create
   // normalized descriptions of the relationships
-  const segmentDescriptions = segmentDescriptionsFromRelationships(
-    relationships
-  );
+  const segmentPairs = segmentPairsFromRelationships(relationships);
+  const segmentDescriptions = segmentDescriptionsFromPairs(segmentPairs);
   const segmentDescriptionsBySignature = keyMap(
     segmentDescriptions,
-    segment => segment.signature
+    segment => segment.pair.signature
   );
 
   // create DB enums for each enum type and polymorphic type
@@ -219,9 +218,9 @@ export function indicesFromObjectTypeDefinition(
   return indices;
 }
 
-export function segmentDescriptionsFromRelationships(
+export function segmentPairsFromRelationships(
   relationships: [Relationship]
-): RelationshipSegmentDescription[] {
+): RelationshipSegmentPair[] {
   const segments = flattenedUniqueSegmentsFromRelationships(relationships);
 
   // create map of segments by taking their signature along the relationship
@@ -234,26 +233,37 @@ export function segmentDescriptionsFromRelationships(
 
   // create RelationshipSegmentDescription objects
   return Object.keys(segmentMap).map(signature => {
-    const pair = {};
-    const matchingSegments = segmentMap[signature];
-    matchingSegments.forEach(segment => pair[segment.direction] = segment);
+    const pair: RelationshipSegmentPair = {signature};
+    segmentMap[signature].forEach(segment => {
+      if (segment.direction === 'in') {
+        pair.in = segment;
+      } else if (segment.direction === 'out') {
+        pair.out = segment;
+      }
+    });
+    return pair;
+  });
+}
 
+export function segmentDescriptionsFromPairs(
+  pairs: RelationshipSegmentPair[],
+): RelationshipSegmentDescription[] {
+  return pairs.map(pair => {
     if (segmentPairRequiresJoinTable(pair)) {
       return {
-        type: 'join',
-        signature,
         pair,
+        type: 'join',
         storage: joinTableDescriptionFromRelationshipSegmentPair(pair),
       };
     } else {
       return {
-        type: 'foreignKey',
-        signature,
         pair,
+        type: 'foreignKey',
         storage: foreignKeyDescriptionFromRelationshipSegmentPair(pair),
       };
     }
   });
+
 }
 
 export function pairingSignatureFromRelationshipSegment(

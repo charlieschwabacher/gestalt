@@ -7,6 +7,7 @@ export {default as invariant} from './invariant';
 export {default as isListType} from './isListType';
 export {default as keyMap} from './keyMap';
 export {default as keyValMap} from './keyValMap';
+export {default as partition} from './partition';
 export {default as resolveMaybeThunk} from './resolveMaybeThunk';
 export {default as setMap} from './setMap';
 export {default as sortBy} from './sortBy';

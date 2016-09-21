@@ -6,8 +6,8 @@ import assert from 'assert';
 import {parse} from 'graphql';
 import {keyMap} from 'gestalt-utils';
 import {databaseInfoFromAST} from 'gestalt-graphql';
-import generateDatabaseInterface, {segmentDescriptionsFromRelationships} from
-  '../src/generateDatabaseInterface';
+import generateDatabaseInterface, {segmentPairsFromRelationships,
+  segmentDescriptionsFromPairs} from '../src/generateDatabaseInterface';
 import {sqlStringFromQuery, queryFromRelationship} from
   '../src/generateRelationshipResolver';
 import generateDatabaseSchemaMigration from
@@ -44,8 +44,10 @@ describe('polymorphic relationships', () => {
       // generate sql queries for relationship resolution
       const {relationships} = schemaInfo;
       const segmentDescriptionsBySignature = keyMap(
-        segmentDescriptionsFromRelationships(relationships),
-        segment => segment.signature,
+        segmentDescriptionsFromPairs(
+          segmentPairsFromRelationships(relationships)
+        ),
+        segment => segment.pair.signature,
       );
       const sqlQueries = relationships.map(
         relationship => sqlStringFromQuery(

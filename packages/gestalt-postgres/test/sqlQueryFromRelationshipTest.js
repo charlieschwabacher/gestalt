@@ -5,8 +5,8 @@ import assert from 'assert';
 import {parse} from 'graphql';
 import {databaseInfoFromAST, relationshipFromPathString as r} from
   'gestalt-graphql';
-import generateDatabaseInterface, {segmentDescriptionsFromRelationships} from
-  '../src/generateDatabaseInterface';
+import generateDatabaseInterface, {segmentDescriptionsFromPairs,
+  segmentPairsFromRelationships} from '../src/generateDatabaseInterface';
 import {keyMap} from 'gestalt-utils';
 import {objectKeyColumnFromRelationship, sqlStringFromQuery,
   queryFromRelationship} from '../src/generateRelationshipResolver';
@@ -24,10 +24,12 @@ function testRelationship(
   inSQL: ?string,
 ): void {
   const descriptions = keyMap(
-    segmentDescriptionsFromRelationships(
-      [inRelationship, outRelationship].filter(relationship => relationship)
+    segmentDescriptionsFromPairs(
+      segmentPairsFromRelationships(
+        [inRelationship, outRelationship].filter(relationship => relationship)
+      )
     ),
-    segment => segment.signature,
+    segment => segment.pair.signature,
   );
   outRelationship && assert.equal(
     outSQL,
@@ -54,8 +56,10 @@ describe('sqlQueryFromRelationship', () => {
 
   it('generates SQL queries for fixture schema', () => {
     const segmentDescriptionsBySignature = keyMap(
-      segmentDescriptionsFromRelationships(relationships),
-      segment => segment.signature,
+      segmentDescriptionsFromPairs(
+        segmentPairsFromRelationships(relationships)
+      ),
+      segment => segment.pair.signature,
     );
     const sqlQueries = relationships.map(
       relationship => sqlStringFromQuery(
