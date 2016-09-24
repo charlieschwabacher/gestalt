@@ -4,7 +4,7 @@ esproposal.class_static_fields=enable
 esproposal.class_instance_fields=enable
 
 [version]
-0.30.0
+0.32.0
 
 [ignore]
 .*blogs-example/.*
