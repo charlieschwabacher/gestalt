@@ -56,16 +56,22 @@ describe('collapseRelationshipSegments', () => {
       },
     ]);
 
-    const expectedPairs = pairsFromSegments([
+    const expectedPairs = [
       {
-        fromType: 'User',
-        toType: 'Content',
         label: 'AUTHORED',
-        direction: 'out',
-        cardinality: 'plural',
-        nonNull: false,
-      },
-    ]);
+        left: 'User',
+        right: 'Content',
+        signature: 'User|AUTHORED|Content',
+        out: {
+          fromType: 'User',
+          toType: 'Content',
+          label: 'AUTHORED',
+          direction: 'out',
+          cardinality: 'plural',
+          nonNull: false,
+        },
+      }
+    ];
 
     const polymorphicTypes: PolymorphicTypeMap = {
       Content: ['Post', 'Comment'],
@@ -160,32 +166,58 @@ describe('collapseRelationshipSegments', () => {
       },
     ]);
 
-    const expectedPairs = pairsFromSegments([
+    const expectedPairs = [
       {
-        fromType: 'Agent',
-        toType: 'Content',
         label: 'AUTHORED',
-        direction: 'out',
-        cardinality: 'plural',
-        nonNull: false,
+        left: 'Agent',
+        right: 'Content',
+        signature: 'Agent|AUTHORED|Content',
+        in: {
+          cardinality: 'singular',
+          direction: 'in',
+          fromType: 'Content',
+          label: 'AUTHORED',
+          nonNull: false,
+          toType: 'Agent',
+        },
+        out: {
+          fromType: 'Agent',
+          toType: 'Content',
+          label: 'AUTHORED',
+          direction: 'out',
+          cardinality: 'plural',
+          nonNull: false
+        },
       },
       {
-        fromType: 'User',
-        toType: 'Agent',
         label: 'FOLLOWED',
-        direction: 'out',
-        cardinality: 'plural',
-        nonNull: false,
+        left: 'User',
+        right: 'Agent',
+        signature: 'User|FOLLOWED|Agent',
+        out: {
+          fromType: 'User',
+          toType: 'Agent',
+          label: 'FOLLOWED',
+          direction: 'out',
+          cardinality: 'plural',
+          nonNull: false
+        },
       },
       {
-        fromType: 'Post',
-        toType: 'Comment',
         label: 'INSPIRED',
-        direction: 'out',
-        cardinality: 'plural',
-        nonNull: false,
-      },
-    ]);
+        left: 'Post',
+        right: 'Comment',
+        signature: 'Post|INSPIRED|Comment',
+        out: {
+          fromType: 'Post',
+          toType: 'Comment',
+          label: 'INSPIRED',
+          direction: 'out',
+          cardinality: 'plural',
+          nonNull: false
+        },
+      }
+    ];
 
     const polymorphicTypes: PolymorphicTypeMap = {
       Content: ['Post', 'Comment'],
