@@ -32,7 +32,8 @@ const relationshipMap = keyMap(
 );
 const segmentDescriptionMap = keyMap(
   segmentDescriptionsFromPairs(
-    segmentPairsFromRelationships(relationships)
+    segmentPairsFromRelationships(relationships),
+    {},
   ),
   segment => segment.pair.signature
 );

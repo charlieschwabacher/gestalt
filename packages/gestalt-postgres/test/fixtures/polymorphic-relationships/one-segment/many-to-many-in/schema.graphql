@@ -1,10 +1,13 @@
 type Player implements Node {
+  id: ID!
   teams: Team @relationship(path: "=JOINED=>")
 }
 type Coach implements Node {
+  id: ID!
   teams: Team @relationship(path: "=JOINED=>")
 }
 type Team implements Node {
+  id: ID!
   members: Member @relationship(path: "<=JOINED=")
 }
 union Member = Player | Coach

@@ -7,16 +7,23 @@ import type {GraphQLFieldConfigMap, InputObjectConfigFieldMap,
   GraphQLResolveInfo} from 'graphql';
 import type DataLoader from 'dataloader';
 
-
-export type {GraphQLSchema, GraphQLObjectType, GraphQLField} from 'graphql';
 export type {GraphQLFieldResolveFn, GraphQLResolveInfo, GraphQLFieldConfig,
   GraphQLType} from 'graphql/type/definition';
 export type {Document, Node, ObjectTypeDefinition, UnionTypeDefinition,
   EnumTypeDefinition, TypeDefinition, FieldDefinition, Directive, Type,
   NamedType} from 'graphql/language/ast';
-export type {ConnectionArguments} from
-  'graphql-relay/lib/connection/connectiontypes';
 
+import type {GraphQLSchema, GraphQLObjectType, GraphQLField} from 'graphql';
+export type {GraphQLSchema, GraphQLObjectType, GraphQLField};
+
+
+export type ConnectionArguments = {
+  before?: ?string,
+  after?: ?string,
+  first?: ?number,
+  last?: ?number,
+  order?: ?string,
+};
 
 // represents the interface between the GraphQL schema and database backend
 
@@ -73,7 +80,7 @@ export type Index = {
 
 export type Column = {
   name: string,
-  type: ColumnType,
+  type: string,
   primaryKey: boolean,
   nonNull: boolean,
   unique: boolean,
@@ -90,9 +97,6 @@ export type Constraint = {
   type: 'UNIQUE',
   columns: string[],
 };
-
-export type ColumnType = 'uuid' | 'jsonb' | 'timestamp without time zone' |
-  'text' | 'integer' | 'double precision' | 'money' | 'SERIAL';
 
 export type DatabaseSchemaMigration = {
   sql: string,
@@ -120,7 +124,7 @@ export type ChangeColumnType = {
   type: 'ChangeColumnType',
   table: Table,
   column: Column,
-  toType: ColumnType,
+  toType: string,
 };
 
 export type CreateIndex = {
@@ -205,6 +209,9 @@ export type RelationshipSegment = {
 export type RelationshipSegmentPair = {
   in?: RelationshipSegment,
   out?: RelationshipSegment,
+  left: string,
+  right: string,
+  label: string,
   signature: string,
 };
 
@@ -220,10 +227,20 @@ export type RelationshipSegmentDescription = {
 
 export type JoinTableDescription = {
   name: string,
-  leftTableName: string,
-  rightTableName: string,
-  leftColumnName: string,
-  rightColumnName: string,
+  left: JoinTableDescriptionSide,
+  right: JoinTableDescriptionSide,
+};
+
+export type JoinTableDescriptionSide = {
+  isPolymorphic: false,
+  tableName: string,
+  columnName: string,
+} | {
+  isPolymorphic: true,
+  tableName: string,
+  columnName: string,
+  typeColumnName: string,
+  typeColumnEnumName: string,
 };
 
 export type ForeignKeyDescription = {
@@ -269,7 +286,7 @@ export type Query = {
   joins: Join[],
   conditions: QueryCondition[],
   order?: Order,
-  limit?: number,
+  limit?: ?number,
   reverseResults?: boolean,
 };
 

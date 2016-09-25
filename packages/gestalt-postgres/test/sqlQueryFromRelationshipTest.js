@@ -23,11 +23,14 @@ function testRelationship(
   outSQL: ?string,
   inSQL: ?string,
 ): void {
+  const relationships = [];
+  inRelationship && relationships.push(inRelationship);
+  outRelationship && relationships.push(outRelationship);
+
   const descriptions = keyMap(
     segmentDescriptionsFromPairs(
-      segmentPairsFromRelationships(
-        [inRelationship, outRelationship].filter(relationship => relationship)
-      )
+      segmentPairsFromRelationships(relationships),
+      {},
     ),
     segment => segment.pair.signature,
   );
@@ -57,7 +60,8 @@ describe('sqlQueryFromRelationship', () => {
   it('generates SQL queries for fixture schema', () => {
     const segmentDescriptionsBySignature = keyMap(
       segmentDescriptionsFromPairs(
-        segmentPairsFromRelationships(relationships)
+        segmentPairsFromRelationships(relationships),
+        {},
       ),
       segment => segment.pair.signature,
     );

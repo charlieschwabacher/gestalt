@@ -12,6 +12,7 @@ import {sqlStringFromQuery, queryFromRelationship} from
   '../src/generateRelationshipResolver';
 import generateDatabaseSchemaMigration from
   '../src/generateDatabaseSchemaMigration';
+import {magenta, cyan} from 'colors';
 
 declare function describe(a: string, b: () => any): void;
 declare function it(a: string, b: () => any): void;
@@ -45,7 +46,8 @@ describe('polymorphic relationships', () => {
       const {relationships} = schemaInfo;
       const segmentDescriptionsBySignature = keyMap(
         segmentDescriptionsFromPairs(
-          segmentPairsFromRelationships(relationships)
+          segmentPairsFromRelationships(relationships),
+          {}, // TODO: this needs to be real polymorphic type map
         ),
         segment => segment.pair.signature,
       );
@@ -74,8 +76,10 @@ describe('polymorphic relationships', () => {
       // load expected sql schema from file
       const expectedSQLSchema = fs.readFileSync(`${path}/schema.sql`, 'utf8');
 
-
       it('generates a database schema', () => {
+        // console.log('GENERATED DATABSE SCHEMA');
+        // console.log(magenta(sqlSchema));
+        // console.log(cyan(expectedSQLSchema));
         assert.equal(
           sqlSchema,
           expectedSQLSchema,

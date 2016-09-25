@@ -271,7 +271,7 @@ export function applyCursorsToQuery(
   };
 }
 
-export function orderFromOrderArgument(order: string): Order {
+export function orderFromOrderArgument(order: ?string): Order {
   return {
     column: (
       order == null || order === 'ASC' || order === 'DESC'

@@ -13,10 +13,16 @@ declare function it(a: string, b: () => any): void;
 function pairsFromSegments(
   segments: RelationshipSegment[],
 ): RelationshipSegmentPair[] {
-  return segments.map(segment => ({
-    [segment.direction]: segment,
-    signature: pairingSignatureFromRelationshipSegment(segment),
-  }));
+  return segments.map(segment => {
+    const {direction, label, fromType, toType} = segment;
+    return {
+      label,
+      [direction]: segment,
+      left: direction === 'in' ? toType : fromType,
+      right: direction === 'in' ? fromType : toType,
+      signature: pairingSignatureFromRelationshipSegment(segment),
+    };
+  });
 }
 
 describe('collapseRelationshipSegments', () => {
@@ -65,7 +71,7 @@ describe('collapseRelationshipSegments', () => {
       Content: ['Post', 'Comment'],
     };
 
-    const { pairs } = collapseRelationshipSegments(
+    const {mapping, pairs} = collapseRelationshipSegments(
       initialPairs,
       polymorphicTypes
     );
@@ -186,7 +192,7 @@ describe('collapseRelationshipSegments', () => {
       Agent: ['User', 'Admin']
     };
 
-    const { pairs } = collapseRelationshipSegments(
+    const {mapping, pairs} = collapseRelationshipSegments(
       initialPairs,
       polymorphicTypes
     );

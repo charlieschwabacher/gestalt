@@ -7,16 +7,16 @@ import type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
   Column, ColumnType, Relationship, RelationshipSegment,
   RelationshipSegmentPair, JoinTableDescription, ForeignKeyDescription,
   RelationshipSegmentDescription, DatabaseRelevantSchemaInfo,
-  GestaltServerConfig} from 'gestalt-utils';
+  GestaltServerConfig, PolymorphicTypeMap} from 'gestalt-utils';
 import {plural} from 'pluralize';
 import snake from 'snake-case';
+import collapseRelationshipSegments from './collapseRelationshipSegments';
 import generateNodeResolver from './generateNodeResolver';
 import {generateRelationshipResolver, generateRelationshipLoaders} from
   './generateRelationshipResolver';
-import {invariant, keyMap, baseType} from 'gestalt-utils';
+import {invariant, keyMap, baseType, compact} from 'gestalt-utils';
 import DB from './DB';
 import REQUIRED_EXTENSIONS from './REQUIRED_EXTENSIONS';
-
 
 
 export default function generateDatabaseInterface(
@@ -48,7 +48,10 @@ export default function generateDatabaseInterface(
   // having looked at each type and recorded their relationships, we create
   // normalized descriptions of the relationships
   const segmentPairs = segmentPairsFromRelationships(relationships);
-  const segmentDescriptions = segmentDescriptionsFromPairs(segmentPairs);
+  const {mapping: pairMapping, pairs: collapsedPairs} =
+    collapseRelationshipSegments(segmentPairs, polymorphicTypes);
+  const segmentDescriptions =
+    segmentDescriptionsFromPairs(collapsedPairs, polymorphicTypes);
   const segmentDescriptionsBySignature = keyMap(
     segmentDescriptions,
     segment => segment.pair.signature
@@ -219,7 +222,7 @@ export function indicesFromObjectTypeDefinition(
 }
 
 export function segmentPairsFromRelationships(
-  relationships: [Relationship]
+  relationships: Relationship[],
 ): RelationshipSegmentPair[] {
   const segments = flattenedUniqueSegmentsFromRelationships(relationships);
 
@@ -233,27 +236,35 @@ export function segmentPairsFromRelationships(
 
   // create RelationshipSegmentDescription objects
   return Object.keys(segmentMap).map(signature => {
-    const pair: RelationshipSegmentPair = {signature};
-    segmentMap[signature].forEach(segment => {
-      if (segment.direction === 'in') {
-        pair.in = segment;
-      } else if (segment.direction === 'out') {
-        pair.out = segment;
-      }
-    });
+    const [firstSegment, secondSegment] = segmentMap[signature];
+    const {label, direction, fromType, toType} = firstSegment;
+
+    const pair: RelationshipSegmentPair = {
+      signature,
+      label,
+      [direction]: firstSegment,
+      left: direction === 'in' ? toType : fromType,
+      right: direction === 'in' ? fromType : toType,
+    };
+
+    if (secondSegment) {
+      pair[secondSegment.direction] = secondSegment;
+    }
+
     return pair;
   });
 }
 
 export function segmentDescriptionsFromPairs(
   pairs: RelationshipSegmentPair[],
+  polymorphicTypes: PolymorphicTypeMap,
 ): RelationshipSegmentDescription[] {
   return pairs.map(pair => {
-    if (segmentPairRequiresJoinTable(pair)) {
+    if (segmentPairRequiresJoinTable(pair, polymorphicTypes)) {
       return {
         pair,
         type: 'join',
-        storage: joinTableDescriptionFromRelationshipSegmentPair(pair),
+        storage: joinTableDescriptionFromRelationshipSegmentPair(pair, polymorphicTypes),
       };
     } else {
       return {
@@ -302,73 +313,128 @@ export function identitySignatureFromRelationshipSegment(
 }
 
 export function segmentPairRequiresJoinTable(
-  pair: RelationshipSegmentPair
+  pair: RelationshipSegmentPair,
+  polymorphicTypes: PolymorphicTypeMap,
 ): boolean {
   return (
-    (pair.in == null || pair.in.cardinality === 'plural') &&
-    (pair.out == null || pair.out.cardinality === 'plural')
+    (
+      (pair.in == null || pair.in.cardinality === 'plural') &&
+      (pair.out == null || pair.out.cardinality === 'plural')
+    ) ||
+    polymorphicTypes[pair.left] != null ||
+    polymorphicTypes[pair.right] != null
   );
 }
 
 export function joinTableDescriptionFromRelationshipSegmentPair(
-  pair: RelationshipSegmentPair
+  pair: RelationshipSegmentPair,
+  polymorphicTypes: PolymorphicTypeMap,
 ): JoinTableDescription {
-  const left = (pair.out && pair.out.fromType) || (pair.in && pair.in.toType);
-  const right = (pair.out && pair.out.toType) || (pair.in && pair.in.fromType);
-  const label = (pair.out && pair.out.label) || (pair.in && pair.in.label);
-
-  invariant(
-    left && right && label,
-    'relationship segment pair must have at least one segment'
-  );
+  const {left, right, label} = pair;
+  const leftPolymorphic = polymorphicTypes[left] != null;
+  const rightPolymorphic = polymorphicTypes[right] != null;
 
   return {
     name: tableNameFromTypeName(`${left}_${label}_${right}`),
-    leftTableName: tableNameFromTypeName(left),
-    rightTableName: tableNameFromTypeName(right),
-    leftColumnName: snake(`${left}_id`),
-    rightColumnName: snake(`${label}_${right}_id`),
+    left: (
+      leftPolymorphic
+      ? {
+        isPolymorphic: true,
+        tableName: tableNameFromTypeName(left),
+        columnName: `${snake(left)}_id`,
+        typeColumnName: `${snake(left)}_type`,
+        typeColumnEnumName: `_${snake(left)}_type`,
+      }
+      : {
+        isPolymorphic: false,
+        tableName: tableNameFromTypeName(left),
+        columnName: `${snake(left)}_id`,
+      }
+    ),
+    right: (
+      rightPolymorphic
+      ? {
+        isPolymorphic: true,
+        tableName: tableNameFromTypeName(right),
+        columnName: `${snake(label)}_${snake(right)}_id`,
+        typeColumnName: `${snake(label)}_${snake(right)}_type`,
+        typeColumnEnumName: `_${snake(right)}_type`,
+      }
+      : {
+        isPolymorphic: false,
+        tableName: tableNameFromTypeName(right),
+        columnName: snake(`${label}_${right}_id`),
+      }
+    ),
   };
 }
 
 export function joinTableFromDescription(
   description: JoinTableDescription
 ): Table {
-  const {name, leftTableName, rightTableName, leftColumnName,
-    rightColumnName} = description;
+  const {name, left, right} = description;
+  const columns = [];
+
+  columns.push({
+    name: left.columnName,
+    type: 'uuid',
+    nonNull: true,
+    primaryKey: false,
+    unique: false,
+    defaultValue: null,
+    references: left.isPolymorphic ? null : {
+      table: left.tableName,
+      column: 'id',
+    }
+  });
+
+  if (left.isPolymorphic) {
+    columns.push({
+      name: left.typeColumnName,
+      type: left.typeColumnEnumName,
+      nonNull: true,
+      primaryKey: false,
+      unique: false,
+      defaultValue: null,
+    });
+  }
+
+  columns.push({
+    name: right.columnName,
+    type: 'uuid',
+    nonNull: true,
+    primaryKey: false,
+    unique: false,
+    defaultValue: null,
+    references: right.isPolymorphic ? null : {
+      table: right.tableName,
+      column: 'id',
+    },
+  });
+
+  if (right.isPolymorphic) {
+    columns.push({
+      name: right.typeColumnName,
+      type: right.typeColumnEnumName,
+      nonNull: true,
+      primaryKey: false,
+      unique: false,
+      defaultValue: null,
+    });
+  }
 
   return {
     name,
-    columns: [
-      {
-        name: leftColumnName,
-        type: 'uuid',
-        nonNull: true,
-        primaryKey: false,
-        unique: false,
-        defaultValue: null,
-        references: {
-          table: leftTableName,
-          column: 'id',
-        }
-      },
-      {
-        name: rightColumnName,
-        type: 'uuid',
-        nonNull: true,
-        primaryKey: false,
-        unique: false,
-        defaultValue: null,
-        references: {
-          table: rightTableName,
-          column: 'id',
-        },
-      },
-    ],
+    columns,
     constraints: [
       {
         type: 'UNIQUE',
-        columns: [leftColumnName, rightColumnName],
+        columns: compact([
+          left.columnName,
+          left.isPolymorphic ? left.typeColumnName : null,
+          right.columnName,
+          right.isPolymorphic ? right.typeColumnName : null,
+        ]),
       },
     ],
   };
@@ -377,11 +443,14 @@ export function joinTableFromDescription(
 export function joinTableIndicesFromDescription(
   description: JoinTableDescription
 ): Index[] {
-  const {name, rightColumnName} = description;
+  const {name, right} = description;
   return [
     {
       table: name,
-      columns: [rightColumnName],
+      columns: compact([
+        right.columnName,
+        right.isPolymorphic ? right.typeColumnName : null,
+      ]),
     }
   ];
 }

@@ -20,7 +20,8 @@ function testKeyColumns(
 ): void {
   const descriptions = keyMap(
     segmentDescriptionsFromPairs(
-      segmentPairsFromRelationships([inRelationship, outRelationship])
+      segmentPairsFromRelationships([inRelationship, outRelationship]),
+      {},
     ),
     segment => segment.pair.signature,
   );

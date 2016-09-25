@@ -20,7 +20,8 @@ function testConnectionArgs(
 ): void {
   const descriptions = keyMap(
     segmentDescriptionsFromPairs(
-      segmentPairsFromRelationships(relationships)
+      segmentPairsFromRelationships(relationships),
+      {}
     ),
     segment => segment.pair.signature,
   );

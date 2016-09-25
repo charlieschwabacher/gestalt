@@ -3,6 +3,8 @@ import {group, invariant} from 'gestalt-utils';
 import type {RelationshipSegmentPair, PolymorphicTypeMap} from
   'gestalt-utils';
 
+// recursively collapse relationship segments that can be fulfilled by existing
+// segments with polymorphic types
 export default function collapseRelationshipSegments(
   pairs: RelationshipSegmentPair[],
   polymorphicTypes: PolymorphicTypeMap,
@@ -15,15 +17,18 @@ export default function collapseRelationshipSegments(
 } {
   const nextMapping = {...mapping};
   const nextPairs = [];
-  const groups = group(pairs, direction === 'left' ? groupLeft : groupRight);
   let collapsed = false;
 
+  // group segment pairs by their label and one of their types
+  const groups = group(pairs, direction === 'left' ? groupLeft : groupRight);
+
+  // for each group, collapse segments where a
   Object.keys(groups).forEach(groupSignature => {
     const group = groups[groupSignature];
     const polymorphicPairs = {};
     const homomorphicPairs = {};
     group.forEach(pair => {
-      const type = normalSegment(pair)[direction];
+      const type = pair[direction];
       if (polymorphicTypes[type] != null) {
         polymorphicPairs[type] = pair;
         nextPairs.push(pair);
@@ -50,6 +55,8 @@ export default function collapseRelationshipSegments(
     });
   });
 
+  // repeat this process alternating sides until we have looked at both sides
+  // without collapsing any types
   if (collapsed || !final) {
     return collapseRelationshipSegments(
       nextPairs,
@@ -66,30 +73,14 @@ export default function collapseRelationshipSegments(
   }
 }
 
-function normalSegment(
-  pair: RelationshipSegmentPair
-): {
-  left: string,
-  right: string,
-  label: string,
-} {
-  if (pair.in != null) {
-    const {toType: left, fromType: right, label} = pair.in;
-    return {left, right, label};
-  } else if (pair.out != null) {
-    const {fromType: left, toType: right, label} = pair.out;
-    return {left, right, label};
-  } else {
-    throw 'Relationship segment pair should have at least one segment';
-  }
-}
-
+// generate a grouping signature based on the label and right type of a pair
 function groupLeft(pair: RelationshipSegmentPair): string {
-  const {right, label} = normalSegment(pair);
+  const {right, label} = pair;
   return `${label}|${right}`;
 }
 
+// generate a grouping signature based on the label and left type of a pair
 function groupRight(pair) {
-  const {left, label} = normalSegment(pair);
+  const {left, label} = pair;
   return `${left}|${label}`;
 }

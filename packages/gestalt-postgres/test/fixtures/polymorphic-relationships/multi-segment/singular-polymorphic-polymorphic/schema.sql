@@ -1,16 +1,44 @@
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TYPE _artwork_type AS ENUM ('Photo', 'Painting');
+
+CREATE TYPE _subject_type AS ENUM ('Landscape', 'StillLife');
+
 CREATE TABLE users (
-  id text PRIMARY KEY
-  pinned_artwork_type _artwork_type NOT NULL,
-  pinned_artwork_id text NOT NULL
+  seq SERIAL NOT NULL UNIQUE,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  pinned_artwork_id uuid NOT NULL,
+  pinned_artwork_type _artwork_type text NOT NULL
 );
-CREATE TABLE photos (id text PRIMARY KEY);
-CREATE TABLE paintings (id text PRIMARY KEY);
-CREATE TABLE landscapes (id text PRIMARY KEY);
-CREATE TABLE still_lifes (id text PRIMARY KEY);
+
+CREATE TABLE landscapes (
+  seq SERIAL NOT NULL UNIQUE,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+);
+
+CREATE TABLE still_lifes (
+  seq SERIAL NOT NULL UNIQUE,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+);
+
+CREATE TABLE photos (
+  seq SERIAL NOT NULL UNIQUE,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+);
+
+CREATE TABLE paintings (
+  seq SERIAL NOT NULL UNIQUE,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+);
+
 CREATE TABLE artwork_depicted_subjects (
-  artwork_id text NOT NULL,
+  artwork_id uuid NOT NULL,
   artwork_type _artwork_type NOT NULL,
-  subject_id text NOT NULL,
+  depicted_subject_id uuid NOT NULL,
   depicted_subject_type _subject_type NOT NULL,
-  UNIQUE (artwork_type, agent_type, authored_piece_id, authored_piece_type)
+  UNIQUE (artwork_id, artwork_type, depicted_subject_id, depicted_subject_type)
 );
+
+CREATE INDEX ON users (pinned_artwork_id, pinned_artwork_type);
+
+CREATE INDEX ON artwork_depicted_subjects (depicted_subject_id, depicted_subject_type);

@@ -1,8 +1,20 @@
-CREATE TABLE users (id text PRIMARY KEY);
-CREATE TABLE posts (id text PRIMARY KEY);
-CREATE TABLE IMAGES (
-  id text PRIMARY KEY,
-  depicted_subject_id text,
-  depicted_subject_type _subject_type
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TYPE _subject_type AS ENUM ('User', 'Post');
+
+CREATE TABLE users (
+  seq SERIAL NOT NULL UNIQUE,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+);
+
+CREATE TABLE posts (
+  seq SERIAL NOT NULL UNIQUE,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+);
+
+CREATE TABLE images (
+  id uuid PRIMARY KEY,
+  depicted_subject_id uuid,
+  depicted_subject_type _subject_type,
   UNIQUE(depicted_subject_id, depicted_subject_type)
 );
