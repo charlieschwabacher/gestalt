@@ -475,11 +475,6 @@ export function joinTableIndicesFromDescription(
 //   - if one segment is non null, add the column to its fromType, otherwise
 //     add it to the toType of the out segment.
 
-// TODO: refactor 'normalType' here - what we care about is direction,
-// and referenced and referencing types.  Normal type achieves this by creating
-// a hypothetical segment encapsulating these three values and label.. it could
-// be more straightforward.
-
 function foreignKeyDirection(pair: RelationshipSegmentPair): {
   direction: 'in' | 'out',
   referencingType: string,
@@ -515,30 +510,10 @@ export function foreignKeyDescriptionFromRelationshipSegmentPair(
   pair: RelationshipSegmentPair,
   polymorphicTypes: PolymorphicTypeMap,
 ): ForeignKeyDescription {
-  let normalType;
-  if (pair.in == null) {
-    invariant(pair.out);
-    normalType = {
-      ...pair.out,
-      direction: 'in',
-      fromType: pair.out.toType,
-      toType: pair.out.fromType,
-    };
-  } else {
-    normalType = (
-      (
-        (pair.out == null) ||
-        (pair.in.cardinality === 'plural') ||
-        (pair.out.nonNull && !pair.in.nonNull)
-      )
-      ? pair.in
-      : pair.out
-    );
-  }
-
-  invariant(normalType, 'input pair does not require a foreign key');
-  const {label, fromType, toType, direction} = normalType;
-  const isPolymorphic = polymorphicTypes[fromType] != null;
+  const {label} = pair;
+  const {direction, referencedType, referencingType} =
+    foreignKeyDirection(pair);
+  const isPolymorphic = polymorphicTypes[referencedType] != null;
 
   const description = {
     direction,
@@ -546,12 +521,12 @@ export function foreignKeyDescriptionFromRelationshipSegmentPair(
       (pair.out != null && pair.out.nonNull) ||
       (pair.in != null && pair.in.nonNull)
     ),
-    tableName: tableNameFromTypeName(toType),
-    referencedTableName: tableNameFromTypeName(fromType),
+    tableName: tableNameFromTypeName(referencingType),
+    referencedTableName: tableNameFromTypeName(referencedType),
     columnName: (
       (direction === 'in')
-      ? `${snake(label)}_${snake(fromType)}_id`
-      : `${snake(label)}_by_${snake(fromType)}_id`
+      ? `${snake(label)}_${snake(referencedType)}_id`
+      : `${snake(label)}_by_${snake(referencedType)}_id`
     ),
   };
 
@@ -560,10 +535,10 @@ export function foreignKeyDescriptionFromRelationshipSegmentPair(
       isPolymorphic: true,
       typeColumnName: (
         (direction === 'in')
-        ? `${snake(label)}_${snake(fromType)}_type`
-        : `${snake(label)}_by_${snake(fromType)}_type`
+        ? `${snake(label)}_${snake(referencedType)}_type`
+        : `${snake(label)}_by_${snake(referencedType)}_type`
       ),
-      typeColumnEnumName: `_${snake(fromType)}_type`,
+      typeColumnEnumName: `_${snake(referencedType)}_type`,
       ...description,
     };
   } else {
