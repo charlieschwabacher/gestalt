@@ -21,8 +21,8 @@
     "eslint-plugin-classes": "^0.1.1",
     "eslint-plugin-react": "^4.2.0",
     "flow-bin": "^0.32.0",
-    "graphql": "^0.6.0",
-    "lerna": "2.0.0-beta.19",
+    "graphql": "^0.7.0",
+    "lerna": "2.0.0-beta.28",
     "mocha": "^2.5.3"
   }
 }
