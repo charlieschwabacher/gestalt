@@ -4,10 +4,10 @@
 
 import type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
   Type, NamedType, DatabaseInterface, DatabaseSchema, Table, Enum, Index,
-  Column, Relationship, RelationshipSegment, RelationshipSegmentPair,
-  JoinTableDescription, ForeignKeyDescription, RelationshipSegmentDescription,
-  DatabaseRelevantSchemaInfo, GestaltServerConfig, PolymorphicTypeMap} from
-  'gestalt-utils';
+  Column, Constraint, Relationship, RelationshipSegment,
+  RelationshipSegmentPair, JoinTableDescription, ForeignKeyDescription,
+  RelationshipSegmentDescription, DatabaseRelevantSchemaInfo,
+  GestaltServerConfig, PolymorphicTypeMap} from 'gestalt-utils';
 import {plural} from 'pluralize';
 import snake from 'snake-case';
 import collapseRelationshipSegments from './collapseRelationshipSegments';
@@ -50,8 +50,16 @@ export default function generateDatabaseInterface(
   const segmentPairs = segmentPairsFromRelationships(relationships);
   const {mapping: pairMapping, pairs: collapsedPairs} =
     collapseRelationshipSegments(segmentPairs, polymorphicTypes);
+
+  // console.log('PAIRS');
+  // console.log(collapsedPairs);
+
   const segmentDescriptions =
     segmentDescriptionsFromPairs(collapsedPairs, polymorphicTypes);
+
+  // console.log('DESCRIPTIONS');
+  // console.log(segmentDescriptions);
+
   const segmentDescriptionsBySignature = keyMap(
     segmentDescriptions,
     segment => segment.pair.signature
@@ -71,7 +79,7 @@ export default function generateDatabaseInterface(
     if (segment.type === 'join') {
       // add join table and indices
       tables.push(joinTableFromDescription(segment.storage));
-      indices.push(...joinTableIndicesFromDescription(segment.storage));
+      indices.push(...indicesFromJoinTableDescription(segment.storage));
     } else {
       // add foreign key and index
       const table = tablesByName[segment.storage.tableName];
@@ -79,7 +87,10 @@ export default function generateDatabaseInterface(
         table.columns.push(
           ...columnsFromForeignKeyDescription(segment.storage)
         );
-        indices.push(indexFromForeignKeyDescription(segment.storage));
+        table.constraints.push(
+          ...constraintsFromForeignKeyDescription(segment.storage)
+        );
+        indices.push(...indicesFromForeignKeyDescription(segment.storage));
       }
     }
   });
@@ -448,7 +459,7 @@ export function joinTableFromDescription(
   };
 }
 
-export function joinTableIndicesFromDescription(
+export function indicesFromJoinTableDescription(
   description: JoinTableDescription
 ): Index[] {
   const {name, right} = description;
@@ -539,6 +550,12 @@ export function foreignKeyDescriptionFromRelationshipSegmentPair(
         : `${snake(label)}_by_${snake(referencedType)}_type`
       ),
       typeColumnEnumName: `_${snake(referencedType)}_type`,
+      unique: (
+        pair.in != null &&
+        pair.in.cardinality === 'singular' &&
+        pair.out != null &&
+        pair.out.cardinality === 'singular'
+      ),
       ...description,
     };
   } else {
@@ -549,16 +566,24 @@ export function foreignKeyDescriptionFromRelationshipSegmentPair(
   }
 }
 
-export function indexFromForeignKeyDescription(
+export function indicesFromForeignKeyDescription(
   description: ForeignKeyDescription
-): Index {
-  return {
-    table: description.tableName,
-    columns: compact([
-      description.columnName,
-      description.isPolymorphic ? description.typeColumnName : null,
-    ]),
-  };
+): Index[] {
+  const indices = [];
+
+  // if the columns alread have a unique constraint, no additional index is
+  // necessary
+  if (!description.isPolymorphic || !description.unique) {
+    indices.push({
+      table: description.tableName,
+      columns: compact([
+        description.columnName,
+        description.isPolymorphic ? description.typeColumnName : null,
+      ]),
+    });
+  }
+
+  return indices;
 }
 
 export function columnsFromForeignKeyDescription(
@@ -582,7 +607,7 @@ export function columnsFromForeignKeyDescription(
       name: description.typeColumnName,
       type: description.typeColumnEnumName,
       primaryKey: false,
-      nonNUll: description.nonNull,
+      nonNull: description.nonNull,
       unique: false,
       defaultValue: null,
       references: null,
@@ -590,6 +615,24 @@ export function columnsFromForeignKeyDescription(
   }
 
   return columns;
+}
+
+export function constraintsFromForeignKeyDescription(
+  description: ForeignKeyDescription
+): Constraint[] {
+  const constraints = [];
+
+  if (description.isPolymorphic && description.unique) {
+    constraints.push({
+      type: 'UNIQUE',
+      columns: [
+        description.columnName,
+        description.typeColumnName,
+      ],
+    });
+  }
+
+  return constraints;
 }
 
 export function tableNameFromTypeName(typeName: string): string {

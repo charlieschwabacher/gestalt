@@ -16,7 +16,7 @@ export default function collapseRelationshipSegments(
   pairs: RelationshipSegmentPair[],
 } {
   const nextMapping = {...mapping};
-  const nextPairs = [];
+  const nextPairMap: {[key: string]: RelationshipSegmentPair} = {};
   let collapsed = false;
 
   // group segment pairs by their label and one of their types
@@ -31,7 +31,7 @@ export default function collapseRelationshipSegments(
       const type = pair[direction];
       if (polymorphicTypes[type] != null) {
         polymorphicPairs[type] = pair;
-        nextPairs.push(pair);
+        nextPairMap[pair.signature] = pair;
       } else {
         homomorphicPairs[type] = pair;
       }
@@ -46,14 +46,20 @@ export default function collapseRelationshipSegments(
         polymorphicTypes[polymorphicTypeName].includes(homomorphicTypeName)
       );
       if (superTypeName != null) {
-        nextMapping[pair.signature] = polymorphicPairs[superTypeName];
+        nextMapping[pair.signature] = polymorphicPairs[superTypeName].signature;
+        nextPairMap[pair.signature] = mergePairs(
+          nextPairMap[pair.signature] || polymorphicPairs[superTypeName],
+          pair
+        );
         collapsed = true;
       } else {
         nextMapping[pair.signature] = pair;
-        nextPairs.push(pair);
+        nextPairMap[pair.signature] = pair;
       }
     });
   });
+
+  const nextPairs = Object.values(nextPairMap);
 
   // repeat this process alternating sides until we have looked at both sides
   // without collapsing any types
@@ -71,6 +77,67 @@ export default function collapseRelationshipSegments(
       pairs: nextPairs,
     };
   }
+}
+
+// merge a homomorphic pair into an existing polymorphic pair, adding new
+// information to the polymorphic based on the cardinality and nullability of
+// the homomorphic pair
+function mergePairs(polymorphicPair, homomorphicPair) {
+  const mergedPair = {...polymorphicPair};
+
+  if (homomorphicPair.in != null) {
+    if (polymorphicPair.in == null) {
+      mergedPair.in = {
+        fromType: polymorphicPair.out.toType,
+        toType: polymorphicPair.out.fromType,
+        label: mergedPair.label,
+        direction: 'in',
+        cardinality: homomorphicPair.in.cardinality,
+        nonNull: homomorphicPair.in.nonNull,
+      };
+    } else {
+      mergedPair.in.nonNull = (
+        polymorphicPair.in.nonNull &&
+        homomorphicPair.in.nonNull
+      );
+      mergedPair.in.cardinality = (
+        (
+          polymorphicPair.in.cardinality === 'plural' ||
+          homomorphicPair.in.cardinality === 'plural'
+        )
+        ? 'plural'
+        : 'singular'
+      );
+    }
+  }
+
+  if (homomorphicPair.out != null) {
+    if (polymorphicPair.out == null) {
+      mergedPair.out = {
+        fromType: polymorphicPair.in.toType,
+        toType: polymorphicPair.in.fromType,
+        label: mergedPair.label,
+        direction: 'out',
+        cardinality: homomorphicPair.out.cardinality,
+        nonNull: homomorphicPair.out.nonNull,
+      };
+    } else {
+      mergedPair.out.nonNull = (
+        polymorphicPair.out.nonNull &&
+        homomorphicPair.out.nonNull
+      );
+      mergedPair.out.cardinality = (
+        (
+          polymorphicPair.out.cardinality === 'plural' ||
+          homomorphicPair.out.cardinality === 'plural'
+        )
+        ? 'plural'
+        : 'singular'
+      );
+    }
+  }
+
+  return mergedPair;
 }
 
 // generate a grouping signature based on the label and right type of a pair

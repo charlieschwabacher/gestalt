@@ -259,6 +259,7 @@ export type ForeignKeyDescription = {
   typeColumnName: string,
   typeColumnEnumName: string,
   nonNull: boolean,
+  unique: boolean,
 };
 
 export type RelationshipSegmentDescriptionMap =
