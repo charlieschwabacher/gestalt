@@ -17,5 +17,5 @@ CREATE TABLE images (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   depicted_subject_id uuid,
   depicted_subject_type _subject_type,
-  UNIQUE(depicted_subject_id, depicted_subject_type)
+  UNIQUE (depicted_subject_id, depicted_subject_type)
 );

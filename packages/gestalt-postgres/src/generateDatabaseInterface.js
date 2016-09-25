@@ -50,16 +50,8 @@ export default function generateDatabaseInterface(
   const segmentPairs = segmentPairsFromRelationships(relationships);
   const {mapping: pairMapping, pairs: collapsedPairs} =
     collapseRelationshipSegments(segmentPairs, polymorphicTypes);
-
-  // console.log('PAIRS');
-  // console.log(collapsedPairs);
-
   const segmentDescriptions =
     segmentDescriptionsFromPairs(collapsedPairs, polymorphicTypes);
-
-  // console.log('DESCRIPTIONS');
-  // console.log(segmentDescriptions);
-
   const segmentDescriptionsBySignature = keyMap(
     segmentDescriptions,
     segment => segment.pair.signature
@@ -340,9 +332,19 @@ export function segmentPairRequiresJoinTable(
   polymorphicTypes: PolymorphicTypeMap,
 ): boolean {
   return (
-    (pair.in == null || pair.in.cardinality === 'plural') &&
-    (pair.out == null || pair.out.cardinality === 'plural')
-  ) || polymorphicTypes[foreignKeyDirection(pair).referencingType] != null;
+    (
+      (
+        pair.in == null ||
+        pair.in.cardinality === 'plural' ||
+        polymorphicTypes[pair.in.fromType] != null
+      ) &&
+      (
+        pair.out == null ||
+        pair.out.cardinality === 'plural' ||
+        polymorphicTypes[pair.out.fromType] != null
+      )
+    )
+  );
 }
 
 export function joinTableDescriptionFromRelationshipSegmentPair(
@@ -483,10 +485,15 @@ export function indicesFromJoinTableDescription(
 // singular + plural:
 //   - add the column to the fromType of the singular segment
 // singular + singular:
-//   - if one segment is non null, add the column to its fromType, otherwise
-//     add it to the toType of the out segment.
+//   - if one segment is polymorphic and the other is homomorphic, add the
+//     column to the homorphic type
+//   - if one segment is non null, add the column to its fromType
+//   - otherwise add the column to the toType of the out segment
 
-function foreignKeyDirection(pair: RelationshipSegmentPair): {
+function foreignKeyDirection(
+  pair: RelationshipSegmentPair,
+  polymorphicTypes: PolymorphicTypeMap,
+): {
   direction: 'in' | 'out',
   referencingType: string,
   referencedType: string,
@@ -501,7 +508,11 @@ function foreignKeyDirection(pair: RelationshipSegmentPair): {
   } else if (
     (pair.out == null) ||
     (pair.in.cardinality === 'plural') ||
-    (pair.out.nonNull && !pair.in.nonNull)
+    (pair.out.nonNull && !pair.in.nonNull) ||
+    (
+      polymorphicTypes[pair.in.toType] == null &&
+      polymorphicTypes[pair.out.toType] != null
+    )
   ) {
     return {
       direction: 'in',
@@ -523,7 +534,7 @@ export function foreignKeyDescriptionFromRelationshipSegmentPair(
 ): ForeignKeyDescription {
   const {label} = pair;
   const {direction, referencedType, referencingType} =
-    foreignKeyDirection(pair);
+    foreignKeyDirection(pair, polymorphicTypes);
   const isPolymorphic = polymorphicTypes[referencedType] != null;
 
   const description = {
