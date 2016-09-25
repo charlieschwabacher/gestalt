@@ -179,7 +179,7 @@ export function columnFromFieldDefintion(definition: FieldDefinition): Column {
   };
 }
 
-export function columnTypeFromGraphQLType(type: Type): ColumnType {
+export function columnTypeFromGraphQLType(type: Type): string {
   if (type.isListType) {
     return 'jsonb';
   }
