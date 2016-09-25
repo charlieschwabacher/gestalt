@@ -1,6 +1,6 @@
 // @flow
 
-import type {Document} from 'gestalt-utils';
+import type {Document, Node} from 'gestalt-utils';
 
 export default function removeHiddenNodes(ast: Document): void {
   // remove hidden types

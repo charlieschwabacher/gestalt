@@ -10,8 +10,7 @@ import prompt from 'prompt';
 import semver from 'semver';
 import {blue} from 'colors/safe';
 import snake from 'snake-case';
-import {graphql, parse} from 'graphql';
-import {introspectionQuery} from 'graphql/utilities';
+import {graphql, parse, introspectionQuery} from 'graphql';
 import {generateGraphQLSchemaWithoutResolution, databaseInfoFromAST} from
   'gestalt-graphql';
 import {generateDatabaseInterface, generateDatabaseSchemaMigration,
