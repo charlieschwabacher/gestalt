@@ -1,7 +1,6 @@
 type User implements Node {
   id: ID!
   deliveredPackages: Package @relationship(path: "=DROVE=>Vehicle=CARRIED=>")
-  cars: Car @relationship(path: "=DROVE=>")
 }
 type Car implements Node {
   id: ID!
@@ -11,6 +10,5 @@ type Truck implements Node {
 }
 type Package implements Node {
   id: ID!
-  carrier: Vehicle @relationship(path: "<-CARRIED-")
 }
 union Vehicle = Car | Truck

@@ -21,7 +21,7 @@
 // - making a column non nullable when there are null values
 
 import type {DatabaseSchema, Table, Column, Index, DatabaseSchemaMigration,
-  DatabaseSchemaMigrationOperation, ColumnType} from 'gestalt-utils';
+  DatabaseSchemaMigrationOperation} from 'gestalt-utils';
 import {keyMap, group, difference, invariant} from 'gestalt-utils';
 import readExistingDatabaseSchema from './readExistingDatabaseSchema';
 
@@ -346,7 +346,7 @@ export function makeNonNullable(table: Table, column: Column): string {
 export function changeColumnType(
   table: Table,
   column: Column,
-  type: ColumnType,
+  type: string,
 ): string {
   return `ALTER TABLE ${table.name} ALTER COLUMN ${column.name} TYPE ${type}`;
 }

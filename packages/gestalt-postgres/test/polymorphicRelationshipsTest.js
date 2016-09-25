@@ -35,29 +35,9 @@ function normalizeSQLQuery(query: string): string {
 describe('polymorphic relationships', () => {
   testPaths.forEach(path => {
     describe(testNameFromPath(path), () => {
-
       // read expected graphql schema
       const graphQLSchema = parse(
         fs.readFileSync(`${path}/schema.graphql`, 'utf8')
-      );
-      const schemaInfo = databaseInfoFromAST(graphQLSchema);
-
-      // generate sql queries for relationship resolution
-      const {relationships} = schemaInfo;
-      const segmentDescriptionsBySignature = keyMap(
-        segmentDescriptionsFromPairs(
-          segmentPairsFromRelationships(relationships),
-          {}, // TODO: this needs to be real polymorphic type map
-        ),
-        segment => segment.pair.signature,
-      );
-      const sqlQueries = relationships.map(
-        relationship => sqlStringFromQuery(
-          queryFromRelationship(
-            segmentDescriptionsBySignature,
-            relationship
-          )
-        )
       );
 
       // load expected sql queries from file
@@ -68,15 +48,16 @@ describe('polymorphic relationships', () => {
         .filter(line => line)
         .map(normalizeSQLQuery);
 
-      // generate sql schema
-      const sqlSchema = generateDatabaseSchemaMigration(
-        generateDatabaseInterface('', schemaInfo).schema
-      ).sql;
-
       // load expected sql schema from file
       const expectedSQLSchema = fs.readFileSync(`${path}/schema.sql`, 'utf8');
 
       it('generates a database schema', () => {
+        // generate sql schema
+        const schemaInfo = databaseInfoFromAST(graphQLSchema);
+        const sqlSchema = generateDatabaseSchemaMigration(
+          generateDatabaseInterface('', schemaInfo).schema
+        ).sql;
+
         // console.log('GENERATED DATABSE SCHEMA');
         // console.log(magenta(sqlSchema));
         // console.log(cyan(expectedSQLSchema));
@@ -87,6 +68,24 @@ describe('polymorphic relationships', () => {
       });
 
       it('generates sql queries', () => {
+        // generate sql queries for relationship resolution
+        const {relationships} = databaseInfoFromAST(graphQLSchema);
+        const segmentDescriptionsBySignature = keyMap(
+          segmentDescriptionsFromPairs(
+            segmentPairsFromRelationships(relationships),
+            {}, // TODO: this needs to be real polymorphic type map
+          ),
+          segment => segment.pair.signature,
+        );
+        const sqlQueries = relationships.map(
+          relationship => sqlStringFromQuery(
+            queryFromRelationship(
+              segmentDescriptionsBySignature,
+              relationship
+            )
+          )
+        );
+
         assert.deepEqual(
           sqlQueries,
           expectedSQLQueries,

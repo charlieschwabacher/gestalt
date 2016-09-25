@@ -244,10 +244,20 @@ export type JoinTableDescriptionSide = {
 };
 
 export type ForeignKeyDescription = {
+  isPolymorphic: false,
   direction: 'in' | 'out',
-  table: string,
-  referencedTable: string,
-  column: string,
+  tableName: string,
+  referencedTableName: string,
+  columnName: string,
+  nonNull: boolean,
+} | {
+  isPolymorphic: true,
+  direction: 'in' | 'out',
+  tableName: string,
+  referencedTableName: string,
+  columnName: string,
+  typeColumnName: string,
+  typeColumnEnumName: string,
   nonNull: boolean,
 };
 

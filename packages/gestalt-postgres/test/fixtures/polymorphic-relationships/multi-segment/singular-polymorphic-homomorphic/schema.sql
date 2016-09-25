@@ -5,8 +5,8 @@ CREATE TYPE _artwork_type AS ENUM ('Photo', 'Painting');
 CREATE TABLE users (
   seq SERIAL NOT NULL UNIQUE,
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  pinned_artwork_id uuid NOT NULL,
-  pinned_artwork_type _artwork_type text NOT NULL
+  pinned_artwork_id uuid,
+  pinned_artwork_type _artwork_type
 );
 
 CREATE TABLE landscapes (

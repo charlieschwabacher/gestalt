@@ -4,10 +4,10 @@
 
 import type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
   Type, NamedType, DatabaseInterface, DatabaseSchema, Table, Enum, Index,
-  Column, ColumnType, Relationship, RelationshipSegment,
-  RelationshipSegmentPair, JoinTableDescription, ForeignKeyDescription,
-  RelationshipSegmentDescription, DatabaseRelevantSchemaInfo,
-  GestaltServerConfig, PolymorphicTypeMap} from 'gestalt-utils';
+  Column, Relationship, RelationshipSegment, RelationshipSegmentPair,
+  JoinTableDescription, ForeignKeyDescription, RelationshipSegmentDescription,
+  DatabaseRelevantSchemaInfo, GestaltServerConfig, PolymorphicTypeMap} from
+  'gestalt-utils';
 import {plural} from 'pluralize';
 import snake from 'snake-case';
 import collapseRelationshipSegments from './collapseRelationshipSegments';
@@ -74,9 +74,11 @@ export default function generateDatabaseInterface(
       indices.push(...joinTableIndicesFromDescription(segment.storage));
     } else {
       // add foreign key and index
-      const table = tablesByName[segment.storage.table];
+      const table = tablesByName[segment.storage.tableName];
       if (table != null) {
-        table.columns.push(columnFromForeignKeyDescription(segment.storage));
+        table.columns.push(
+          ...columnsFromForeignKeyDescription(segment.storage)
+        );
         indices.push(indexFromForeignKeyDescription(segment.storage));
       }
     }
@@ -264,13 +266,19 @@ export function segmentDescriptionsFromPairs(
       return {
         pair,
         type: 'join',
-        storage: joinTableDescriptionFromRelationshipSegmentPair(pair, polymorphicTypes),
+        storage: joinTableDescriptionFromRelationshipSegmentPair(
+          pair,
+          polymorphicTypes,
+        ),
       };
     } else {
       return {
         pair,
         type: 'foreignKey',
-        storage: foreignKeyDescriptionFromRelationshipSegmentPair(pair),
+        storage: foreignKeyDescriptionFromRelationshipSegmentPair(
+          pair,
+          polymorphicTypes,
+        ),
       };
     }
   });
@@ -312,18 +320,18 @@ export function identitySignatureFromRelationshipSegment(
   return [fromType, toType, label, direction].join('|');
 }
 
+// we need to use a join table for a segment pair when both sides of the pair
+// are plural (meaning it represents a many to many relationship), or when one
+// side of the pair is unknown and the other is plural (meaning it could
+// potentially represent a many to many relationship)
 export function segmentPairRequiresJoinTable(
   pair: RelationshipSegmentPair,
   polymorphicTypes: PolymorphicTypeMap,
 ): boolean {
   return (
-    (
-      (pair.in == null || pair.in.cardinality === 'plural') &&
-      (pair.out == null || pair.out.cardinality === 'plural')
-    ) ||
-    polymorphicTypes[pair.left] != null ||
-    polymorphicTypes[pair.right] != null
-  );
+    (pair.in == null || pair.in.cardinality === 'plural') &&
+    (pair.out == null || pair.out.cardinality === 'plural')
+  ) || polymorphicTypes[foreignKeyDirection(pair).referencingType] != null;
 }
 
 export function joinTableDescriptionFromRelationshipSegmentPair(
@@ -467,8 +475,45 @@ export function joinTableIndicesFromDescription(
 //   - if one segment is non null, add the column to its fromType, otherwise
 //     add it to the toType of the out segment.
 
+// TODO: refactor 'normalType' here - what we care about is direction,
+// and referenced and referencing types.  Normal type achieves this by creating
+// a hypothetical segment encapsulating these three values and label.. it could
+// be more straightforward.
+
+function foreignKeyDirection(pair: RelationshipSegmentPair): {
+  direction: 'in' | 'out',
+  referencingType: string,
+  referencedType: string,
+} {
+  if (pair.in == null) {
+    invariant(pair.out);
+    return {
+      direction: 'in',
+      referencingType: pair.out.fromType,
+      referencedType: pair.out.toType,
+    };
+  } else if (
+    (pair.out == null) ||
+    (pair.in.cardinality === 'plural') ||
+    (pair.out.nonNull && !pair.in.nonNull)
+  ) {
+    return {
+      direction: 'in',
+      referencingType: pair.in.toType,
+      referencedType: pair.in.fromType,
+    };
+  } else {
+    return {
+      direction: 'out',
+      referencingType: pair.out.toType,
+      referencedType: pair.out.fromType,
+    };
+  }
+}
+
 export function foreignKeyDescriptionFromRelationshipSegmentPair(
-  pair: RelationshipSegmentPair
+  pair: RelationshipSegmentPair,
+  polymorphicTypes: PolymorphicTypeMap,
 ): ForeignKeyDescription {
   let normalType;
   if (pair.in == null) {
@@ -493,47 +538,83 @@ export function foreignKeyDescriptionFromRelationshipSegmentPair(
 
   invariant(normalType, 'input pair does not require a foreign key');
   const {label, fromType, toType, direction} = normalType;
+  const isPolymorphic = polymorphicTypes[fromType] != null;
 
-  return {
+  const description = {
     direction,
     nonNull: (
       (pair.out != null && pair.out.nonNull) ||
       (pair.in != null && pair.in.nonNull)
     ),
-    table: tableNameFromTypeName(toType),
-    referencedTable: tableNameFromTypeName(fromType),
-    column: snake(
+    tableName: tableNameFromTypeName(toType),
+    referencedTableName: tableNameFromTypeName(fromType),
+    columnName: (
       (direction === 'in')
-      ? `${label}_${fromType}_id`
-      : `${label}_by_${fromType}_id`
+      ? `${snake(label)}_${snake(fromType)}_id`
+      : `${snake(label)}_by_${snake(fromType)}_id`
     ),
   };
+
+  if (isPolymorphic) {
+    return {
+      isPolymorphic: true,
+      typeColumnName: (
+        (direction === 'in')
+        ? `${snake(label)}_${snake(fromType)}_type`
+        : `${snake(label)}_by_${snake(fromType)}_type`
+      ),
+      typeColumnEnumName: `_${snake(fromType)}_type`,
+      ...description,
+    };
+  } else {
+    return {
+      isPolymorphic: false,
+      ...description,
+    };
+  }
 }
 
 export function indexFromForeignKeyDescription(
   description: ForeignKeyDescription
 ): Index {
   return {
-    table: description.table,
-    columns: [description.column]
+    table: description.tableName,
+    columns: compact([
+      description.columnName,
+      description.isPolymorphic ? description.typeColumnName : null,
+    ]),
   };
 }
 
-export function columnFromForeignKeyDescription(
+export function columnsFromForeignKeyDescription(
   description: ForeignKeyDescription
-): Column {
-  return {
-    name: description.column,
+): Column[] {
+  const columns = [{
+    name: description.columnName,
     type: 'uuid',
     primaryKey: false,
     nonNull: description.nonNull,
     unique: false,
     defaultValue: null,
-    references: {
-      table: description.referencedTable,
+    references: description.isPolymorphic ? null : {
+      table: description.referencedTableName,
       column: 'id',
     },
-  };
+  }];
+
+  if (description.isPolymorphic) {
+    columns.push({
+      name: description.typeColumnName,
+      type: description.typeColumnEnumName,
+      primaryKey: false,
+      nonNUll: description.nonNull,
+      unique: false,
+      defaultValue: null,
+      references: null,
+    });
+  }
+
+  return columns;
 }
 
 export function tableNameFromTypeName(typeName: string): string {
