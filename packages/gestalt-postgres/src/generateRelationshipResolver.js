@@ -385,12 +385,16 @@ function conditionFromSegment(
       return {table: referencedTable, column: 'id', alias, operator, value};
     }
   } else {
-    const {name, leftTableName, rightTableName, leftColumnName,
-      rightColumnName} = description.storage;
+    const {
+      name,
+      left: {column: leftColumn},
+      right: {column: rightColumn},
+    } = description.storage;
+
     if (segment.direction === 'in') {
-      return {table: name, column: rightColumnName, alias, operator, value};
+      return {table: name, column: rightColumn, alias, operator, value};
     } else {
-      return {table: name, column: leftColumnName, alias, operator, value};
+      return {table: name, column: leftColumn, alias, operator, value};
     }
   }
 }
@@ -436,22 +440,26 @@ function joinsFromSegments(
       }
     } else {
       const storage: JoinTableDescription = description.storage;
-      const {name, leftTableName, leftColumnName, rightTableName,
-        rightColumnName} = storage;
-      if (toTableName === leftTableName) {
+      const {
+        name,
+        left: {table: leftTable, column: leftColumn},
+        right: {table: rightTable, column: rightColumn}
+      } = storage;
+
+      if (toTableName === leftTable) {
         joins.push(
           {
             table: name,
             conditions: [{
-              left: {table: name, column: leftColumnName},
-              right: {table: leftTableName, column: 'id'},
+              left: {table: name, column: leftColumn},
+              right: {table: leftTable, column: 'id'},
             }],
           },
           {
-            table: rightTableName,
+            table: rightTable,
             conditions: [{
-              left: {table: rightTableName, column: 'id'},
-              right: {table: name, column: rightColumnName},
+              left: {table: rightTable, column: 'id'},
+              right: {table: name, column: rightColumn},
             }],
           },
         );
@@ -460,15 +468,15 @@ function joinsFromSegments(
           {
             table: name,
             conditions: [{
-              left: {table: name, column: rightColumnName},
+              left: {table: name, column: rightColumn},
               right: {table: toTableName, column: 'id'},
             }],
           },
           {
-            table: leftTableName,
+            table: leftTable,
             conditions: [{
-              left: {table: leftTableName, column: 'id'},
-              right: {table: name, column: leftColumnName},
+              left: {table: leftTable, column: 'id'},
+              right: {table: name, column: leftColumn},
             }],
           },
         );
@@ -486,23 +494,26 @@ function joinsFromInitialSegment(
   const description = descriptionFromSegment(segmentDescriptionMap, segment);
 
   if (description.type === 'join') {
-    const {name, leftTableName, rightTableName, leftColumnName,
-      rightColumnName} = description.storage;
+    const {
+      name,
+      left: {table: leftTable, column: leftColumn},
+      right: {table: rightTable, column: rightColumn},
+    } = description.storage;
 
     if (segment.direction === 'in') {
       return [{
         table: name,
         conditions: [{
-          left: {table: name, column: leftColumnName},
-          right: {table: leftTableName, column: 'id'},
+          left: {table: name, column: leftColumn},
+          right: {table: leftTable, column: 'id'},
         }],
       }];
     } else {
       return [{
         table: name,
         conditions: [{
-          left: {table: name, column: rightColumnName},
-          right: {table: rightTableName, column: 'id'},
+          left: {table: name, column: rightColumn},
+          right: {table: rightTable, column: 'id'},
         }],
       }];
     }

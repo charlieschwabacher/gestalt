@@ -59,7 +59,7 @@ export default function collapseRelationshipSegments(
     });
   });
 
-  const nextPairs = Object.values(nextPairMap);
+  const nextPairs = Object.keys(nextPairMap).map(key => nextPairMap[key]);
 
   // repeat this process alternating sides until we have looked at both sides
   // without collapsing any types

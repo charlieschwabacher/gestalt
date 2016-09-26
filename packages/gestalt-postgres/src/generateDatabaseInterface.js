@@ -74,7 +74,7 @@ export default function generateDatabaseInterface(
       indices.push(...indicesFromJoinTableDescription(segment.storage));
     } else {
       // add foreign key and index
-      const table = tablesByName[segment.storage.tableName];
+      const table = tablesByName[segment.storage.table];
       if (table != null) {
         table.columns.push(
           ...columnsFromForeignKeyDescription(segment.storage)
@@ -361,30 +361,30 @@ export function joinTableDescriptionFromRelationshipSegmentPair(
       leftPolymorphic
       ? {
         isPolymorphic: true,
-        tableName: tableNameFromTypeName(left),
-        columnName: `${snake(left)}_id`,
-        typeColumnName: `${snake(left)}_type`,
-        typeColumnEnumName: `_${snake(left)}_type`,
+        table: tableNameFromTypeName(left),
+        column: `${snake(left)}_id`,
+        typeColumn: `${snake(left)}_type`,
+        typeColumnEnum: `_${snake(left)}_type`,
       }
       : {
         isPolymorphic: false,
-        tableName: tableNameFromTypeName(left),
-        columnName: `${snake(left)}_id`,
+        table: tableNameFromTypeName(left),
+        column: `${snake(left)}_id`,
       }
     ),
     right: (
       rightPolymorphic
       ? {
         isPolymorphic: true,
-        tableName: tableNameFromTypeName(right),
-        columnName: `${snake(label)}_${snake(right)}_id`,
-        typeColumnName: `${snake(label)}_${snake(right)}_type`,
-        typeColumnEnumName: `_${snake(right)}_type`,
+        table: tableNameFromTypeName(right),
+        column: `${snake(label)}_${snake(right)}_id`,
+        typeColumn: `${snake(label)}_${snake(right)}_type`,
+        typeColumnEnum: `_${snake(right)}_type`,
       }
       : {
         isPolymorphic: false,
-        tableName: tableNameFromTypeName(right),
-        columnName: snake(`${label}_${right}_id`),
+        table: tableNameFromTypeName(right),
+        column: snake(`${label}_${right}_id`),
       }
     ),
   };
@@ -397,22 +397,22 @@ export function joinTableFromDescription(
   const columns = [];
 
   columns.push({
-    name: left.columnName,
+    name: left.column,
     type: 'uuid',
     nonNull: true,
     primaryKey: false,
     unique: false,
     defaultValue: null,
     references: left.isPolymorphic ? null : {
-      table: left.tableName,
+      table: left.table,
       column: 'id',
     }
   });
 
   if (left.isPolymorphic) {
     columns.push({
-      name: left.typeColumnName,
-      type: left.typeColumnEnumName,
+      name: left.typeColumn,
+      type: left.typeColumnEnum,
       nonNull: true,
       primaryKey: false,
       unique: false,
@@ -421,22 +421,22 @@ export function joinTableFromDescription(
   }
 
   columns.push({
-    name: right.columnName,
+    name: right.column,
     type: 'uuid',
     nonNull: true,
     primaryKey: false,
     unique: false,
     defaultValue: null,
     references: right.isPolymorphic ? null : {
-      table: right.tableName,
+      table: right.table,
       column: 'id',
     },
   });
 
   if (right.isPolymorphic) {
     columns.push({
-      name: right.typeColumnName,
-      type: right.typeColumnEnumName,
+      name: right.typeColumn,
+      type: right.typeColumnEnum,
       nonNull: true,
       primaryKey: false,
       unique: false,
@@ -451,10 +451,10 @@ export function joinTableFromDescription(
       {
         type: 'UNIQUE',
         columns: compact([
-          left.columnName,
-          left.isPolymorphic ? left.typeColumnName : null,
-          right.columnName,
-          right.isPolymorphic ? right.typeColumnName : null,
+          left.column,
+          left.isPolymorphic ? left.typeColumn : null,
+          right.column,
+          right.isPolymorphic ? right.typeColumn : null,
         ]),
       },
     ],
@@ -469,8 +469,8 @@ export function indicesFromJoinTableDescription(
     {
       table: name,
       columns: compact([
-        right.columnName,
-        right.isPolymorphic ? right.typeColumnName : null,
+        right.column,
+        right.isPolymorphic ? right.typeColumn : null,
       ]),
     }
   ];
@@ -543,9 +543,9 @@ export function foreignKeyDescriptionFromRelationshipSegmentPair(
       (pair.out != null && pair.out.nonNull) ||
       (pair.in != null && pair.in.nonNull)
     ),
-    tableName: tableNameFromTypeName(referencingType),
-    referencedTableName: tableNameFromTypeName(referencedType),
-    columnName: (
+    table: tableNameFromTypeName(referencingType),
+    referencedTable: tableNameFromTypeName(referencedType),
+    column: (
       (direction === 'in')
       ? `${snake(label)}_${snake(referencedType)}_id`
       : `${snake(label)}_by_${snake(referencedType)}_id`
@@ -555,12 +555,12 @@ export function foreignKeyDescriptionFromRelationshipSegmentPair(
   if (isPolymorphic) {
     return {
       isPolymorphic: true,
-      typeColumnName: (
+      typeColumn: (
         (direction === 'in')
         ? `${snake(label)}_${snake(referencedType)}_type`
         : `${snake(label)}_by_${snake(referencedType)}_type`
       ),
-      typeColumnEnumName: `_${snake(referencedType)}_type`,
+      typeColumnEnum: `_${snake(referencedType)}_type`,
       unique: (
         pair.in != null &&
         pair.in.cardinality === 'singular' &&
@@ -586,10 +586,10 @@ export function indicesFromForeignKeyDescription(
   // necessary
   if (!description.isPolymorphic || !description.unique) {
     indices.push({
-      table: description.tableName,
+      table: description.table,
       columns: compact([
-        description.columnName,
-        description.isPolymorphic ? description.typeColumnName : null,
+        description.column,
+        description.isPolymorphic ? description.typeColumn : null,
       ]),
     });
   }
@@ -601,22 +601,22 @@ export function columnsFromForeignKeyDescription(
   description: ForeignKeyDescription
 ): Column[] {
   const columns = [{
-    name: description.columnName,
+    name: description.column,
     type: 'uuid',
     primaryKey: false,
     nonNull: description.nonNull,
     unique: false,
     defaultValue: null,
     references: description.isPolymorphic ? null : {
-      table: description.referencedTableName,
+      table: description.referencedTable,
       column: 'id',
     },
   }];
 
   if (description.isPolymorphic) {
     columns.push({
-      name: description.typeColumnName,
-      type: description.typeColumnEnumName,
+      name: description.typeColumn,
+      type: description.typeColumnEnum,
       primaryKey: false,
       nonNull: description.nonNull,
       unique: false,
@@ -637,8 +637,8 @@ export function constraintsFromForeignKeyDescription(
     constraints.push({
       type: 'UNIQUE',
       columns: [
-        description.columnName,
-        description.typeColumnName,
+        description.column,
+        description.typeColumn,
       ],
     });
   }

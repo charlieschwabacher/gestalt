@@ -233,31 +233,31 @@ export type JoinTableDescription = {
 
 export type JoinTableDescriptionSide = {
   isPolymorphic: false,
-  tableName: string,
-  columnName: string,
+  table: string,
+  column: string,
 } | {
   isPolymorphic: true,
-  tableName: string,
-  columnName: string,
-  typeColumnName: string,
-  typeColumnEnumName: string,
+  table: string,
+  column: string,
+  typeColumn: string,
+  typeColumnEnum: string,
 };
 
 export type ForeignKeyDescription = {
   isPolymorphic: false,
   direction: 'in' | 'out',
-  tableName: string,
-  referencedTableName: string,
-  columnName: string,
+  table: string,
+  referencedTable: string,
+  column: string,
   nonNull: boolean,
 } | {
   isPolymorphic: true,
   direction: 'in' | 'out',
-  tableName: string,
-  referencedTableName: string,
-  columnName: string,
-  typeColumnName: string,
-  typeColumnEnumName: string,
+  table: string,
+  referencedTable: string,
+  column: string,
+  typeColumn: string,
+  typeColumnEnum: string,
   nonNull: boolean,
   unique: boolean,
 };
