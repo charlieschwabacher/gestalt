@@ -1,0 +1,17 @@
+type Car implements Node {
+  id: ID!
+}
+type Rocket implements Node {
+  id: ID!
+}
+type Human implements Node {
+  id: ID!
+}
+type Robot implements Node {
+  id: ID!
+}
+type Team implements Node {
+  passengers: Agent @relationship(path: "=INCLUDED=>Agent=OPERATED=>Vehicle=CARRIED=>")
+}
+union Vehicle = Car | Rocket
+union Agent = Human | Robot
