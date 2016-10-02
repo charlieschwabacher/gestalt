@@ -22,7 +22,8 @@ export default function collapseRelationshipSegments(
   // group segment pairs by their label and one of their types
   const groups = group(pairs, direction === 'left' ? groupLeft : groupRight);
 
-  // for each group, collapse segments where a
+  // for each group, collapse segments where the non grouping type is a member
+  // of a polymorphic type in the same group
   Object.keys(groups).forEach(groupSignature => {
     const group = groups[groupSignature];
     const polymorphicPairs = {};
