@@ -1,265 +1,37 @@
 WORKING NOTES:
-  - update schema generation to handle polymorphic types
-  - segment pairing:
 
-      looking at this schema:
-      ```graphql
-      type User {
-        posts: =AUTHORED=> Post
-        contents: =AUTHORED=> Content
-        feed: =FOLLOWED=> Agent =AUTHORED=> Content
-      }
-      type Admin {
-        contents: =AUTHORED=> Content
-      }
-      type Post {
-        author: <-AUTHORED- Agent!
-        comments: =INSPIRED=> Comment
-      }
-      type Comment {
-        author: <-AUTHORED- Agent!
-        post: <-INSPIRED- Post
-      }
-      union Content = Post | Comment;
-      union Agent = User | Admin;
-      union Addressable = User | Post | Comment;
-      ```
+  - TODO: DO NOT need type in joins / indices because ids are globally unique
 
-      we get these relationships:
-      ```javascript
-      [
-        {
-          fieldName: 'posts',
-          cardinality: 'plural',
-          path: [
-            // User|AUTHORED|Post
-            {
-              fromType: 'User',
-              toType: 'Post',
-              label: 'AUTHORED',
-              direction: 'out',
-              cardinality: 'plural',
-              nonNull: false,
-            },
-          ],
-        },
-        {
-          fieldName: 'contents',
-          cardinality: 'plural',
-          path: [
-            // User|AUTHORED|Content
-            {
-              fromType: 'User',
-              toType: 'Content',
-              label: 'AUTHORED',
-              direction: 'out',
-              cardinality: 'plural',
-              nonNull: false,
-            },
-          ],
-        },
-        {
-          fieldName: 'feed',
-          cardinality: 'plural',
-          path: [
-            // User|FOLLOWED|Agent
-            {
-              fromType: 'User',
-              toType: 'Agent',
-              label: 'FOLLOWED',
-              direction: 'out',
-              cardinality: 'plural',
-              nonNull: false,
-            },
-            // Agent|AUTHORED|Content
-            {
-              fromType: 'Agent',
-              toType: 'Content',
-              label: 'AUTHORED',
-              direction: 'out',
-              cardinality: 'plural',
-              nonNull: false,
-            }
-          ],
-        },
-        {
-          fieldName: 'contents',
-          cardinality: 'plural',
-          path: [
-            // Admin|AUTHORED|Content
-            {
-              fromType: 'Admin',
-              toType: 'Content',
-              label: 'AUTHORED',
-              direction: 'out',
-              cardinality: 'plural',
-              nonNull: false,
-            },
-          ],
-        },
-        {
-          fieldName: 'author',
-          cardinality: 'singular',
-          path: [
-            // Agent|AUTHORED|Post
-            {
-              fromType: 'Post',
-              toType: 'Agent',
-              label: 'AUTHORED',
-              direction: 'in',
-              cardinality: 'singular',
-              nonNull: true,
-            },
-          ],
-        },
-        {
-          fieldName: 'author',
-          cardinality: 'singular',
-          path: [
-            // Agent|AUTHORED|Comment
-            {
-              fromType: 'Comment',
-              toType: 'Agent',
-              label: 'AUTHORED',
-              direction: 'in',
-              cardinality: 'singular',
-              nonNull: true,
-            },
-          ],
-        },      
-      ]
-      ```
+  - Resolution:
+    - Starting point is `queryFromRelationship` in
+      `generateRelationshipResolver.js`
+      - `relationshipSegmentMap` argument is mapping of pairing signature to
+        segment description, is produced in `generateDatabaseInterface.js`.
+          * This will need to be updated to include info from the mapping
+            produced by `collapseRelationshipSegments` so that segments can be
+            resolved through their polymorphic types.
+    - Resolved query now works by selecting from the final type of a
+      relationship and creating joins working backwards along the path.  In
+      cases where the final type is polymorphic, we will need to select from one
+      type back and left join all of the possible types.
+      * The `Query` flow type will need to include information on what to
+        select, because it won't necessarily match `table`.  This can replace
+        the `count` argument to `sqlStringFromQuery`.
+      * The `Join` flow type will need to include join type (left, inner, etc..)
+      * When selecting something like `posts.*, comments.*`, need to look at
+        results returned by `pg`, might need to normalize in some way, tag
+        results with `_type` or something.
 
-      we have these pairing signatures:
-      ```
-      User|AUTHORED|Post
-      User|AUTHORED|Content
-      User|FOLLOWED|Agent
-      Agent|AUTHORED|Content
-      Admin|AUTHORED|Content
-      Agent|AUTHORED|Post
-      Agent|AUTHORED|Comment
-      ```
+    - We will never need to expand polymorphic types other than at the final
 
-      we want to collapse to:
-      ```
-      User|FOLLOWED|Agent
-        - User|FOLLOWED|User
-        - User|FOLLOWED|Admin
-      Agent|AUTHORED|Content
-        - User|AUTHORED|Post
-        - User|AUTHORED|Comment
-        - User|AUTHORED|Content
-        - Admin|AUTHORED|Post
-        - Admin|AUTHORED|Comment
-        - Admin|AUTHORED|Content
-      ```
 
-      algorithm:
-      - instead of storing pairs, we will store sets of segments for each
-        RelationshipSegmentDescription
-      - to generate descriptions
-        - take flattened unique segments
-        - take segments containing a polymorphic type on the right
-        - group by `${LABEL}|${toType}`
-        - within groups, collapse types on the left that belong to the same
-          polymorphic type
-        - put results into map by pairing signature (will be either a
-          polymorphic or homomorphic type on the left, and a polymorphic type
-          on the right)
-        - take remanining segments (homomorphic to homomorphic), if types on
-          the left or right belong to polymorphic types, add to groups, otherwise
-          add to map using their own signatures
-          - need some way to resolve ambiguity when types belong to many
-            polymorphic types (dont allow shared labels in this case?)
-
-      1) take flattened unique segments
-      ```
-      User|AUTHORED|Post
-      User|AUTHORED|Content
-      User|FOLLOWED|Agent
-      Agent|AUTHORED|Content
-      Admin|AUTHORED|Content
-      Agent|AUTHORED|Post
-      Agent|AUTHORED|Comment
-      ```
-
-      2) group by `${LABEL}|${toType}`
-      ```
-      AUTHORED|Post
-        User|AUTHORED|Post
-        Agent|AUTHORED|Post
-      AUTHORED|Comment
-        Agent|AUTHORED|Comment
-      AUTHORED|Content
-        User|AUTHORED|Content
-        Admin|AUTHORED|Content
-        Agent|AUTHORED|Content
-      FOLLOWED|Agent
-        User|FOLLOWED|Agent
-      ```
-
-      4) collapse homomorphic types on the left into their polymorphic type
-      ```
-      Agent|AUTHORED|Content
-      User|FOLLOWED|Agent
-      ```
-
-      5) take remaining types, collapse types that can be satisfied by existing
-         polymorphic relationships
-      ```
-      User|FOLLOWED|Agent
-      Agent|AUTHORED|Content
-        User|AUTHORED|Post
-        Agent|AUTHORED|Post
-        Agent|AUTHORED|Comment
-      ```
-
-      6) the final types are
-      ```
-      User|FOLLOWED|Agent
-      Agent|AUTHORED|Content
-      ```
-
-      WITH DIRECTIONS REVERSED
-
-      1) take flattened unique segments
-      ```
-      Post|ORIGINATED|User
-      Content|ORIGINATED|User
-      Agent|CAPTURED|User
-      Content|ORIGINATED|Agent
-      Content|ORIGINATED|Admin
-      Post|ORIGINATED|Agent
-      Comment|ORIGINATED|Agent
-      ```
-
-      2) take segments containing a polymorphic type on the right
-      ```
-      Content|ORIGINATED|Agent
-      Post|ORIGINATED|Agent
-      Comment|ORIGINATED|Agent
-      ```
-
-      3) group by `${LABEL}|${toType}`
-      ```
-      ORIGINATED|Agent
-        Content|ORIGINATED|Agent
-        Post|ORIGINATED|Agent
-        Comment|ORIGINATED|Agent
-      ```
-
-      4) collapse types on the left that belong to the same polymorphic type
-      ```
-      Content|ORIGINATED|Agent
-      ```
-
-      5)
-
-  - how do we handle polymorphic types w/ mix of node and non node types?
-    - validate that these are not allowed
+  - segment pairing TODO:
+    - how do we handle polymorphic types w/ mix of node and non node types?
+      - validate that these are not allowed
 
 TODO:
+  - Required fields should NOT effect which side of a relationship gets a
+    foreign key (they do now in one to one relationships)
   - AST validation for helpful error messages (notes in stub files in
     ./src/validation)
   - allow sorting of connections on multiple columns
@@ -276,5 +48,8 @@ TODO:
     installed CLI module to be updated less frequently
   - refactor: move non shared flow types into individual packages from
     gestalt-utils
+  - refactor: (performance) singular relationships where the foreign key is on
+    the node we have already resolved can be resolved through a global Node
+    loader and can cache across relationships
   - CLI command for gestalt postgres to run EXPLAIN and print cost of queries to
     resolve all relationships
