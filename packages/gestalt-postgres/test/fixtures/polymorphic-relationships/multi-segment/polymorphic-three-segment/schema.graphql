@@ -11,6 +11,7 @@ type Robot implements Node {
   id: ID!
 }
 type Team implements Node {
+  id: ID!
   passengers: Agent @relationship(path: "=INCLUDED=>Agent=OPERATED=>Vehicle=CARRIED=>")
 }
 union Vehicle = Car | Rocket

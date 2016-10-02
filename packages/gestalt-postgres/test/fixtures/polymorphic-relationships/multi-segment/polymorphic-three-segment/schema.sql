@@ -1,12 +1,12 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE TYPE _agent_type AS ENUM ('Human', 'Robot');
-
 CREATE TYPE _vehicle_type AS ENUM ('Car', 'Rocket');
+
+CREATE TYPE _agent_type AS ENUM ('Human', 'Robot');
 
 CREATE TABLE cars (
   seq SERIAL NOT NULL UNIQUE,
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
 );
 
 CREATE TABLE rockets (
@@ -28,7 +28,6 @@ CREATE TABLE teams (
   seq SERIAL NOT NULL UNIQUE,
   id uuid PRIMARY KEY DEFAULT gen_random_uuid()
 );
-
 
 CREATE TABLE team_included_agents (
   team_id uuid NOT NULL,
