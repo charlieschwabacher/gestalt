@@ -54,7 +54,6 @@ export default function collapseRelationshipSegments(
         );
         collapsed = true;
       } else {
-        nextMapping[pair.signature] = pair;
         nextPairMap[pair.signature] = pair;
       }
     });

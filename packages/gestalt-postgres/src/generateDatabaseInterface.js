@@ -7,7 +7,8 @@ import type {Document, Node, ObjectTypeDefinition, FieldDefinition, Directive,
   Column, Constraint, Relationship, RelationshipSegment,
   RelationshipSegmentPair, JoinTableDescription, ForeignKeyDescription,
   RelationshipSegmentDescription, DatabaseRelevantSchemaInfo,
-  GestaltServerConfig, PolymorphicTypeMap} from 'gestalt-utils';
+  GestaltServerConfig, PolymorphicTypeMap, RelationshipSegmentDescriptionMap}
+  from 'gestalt-utils';
 import {plural} from 'pluralize';
 import snake from 'snake-case';
 import collapseRelationshipSegments from './collapseRelationshipSegments';
@@ -52,10 +53,8 @@ export default function generateDatabaseInterface(
     collapseRelationshipSegments(segmentPairs, polymorphicTypes);
   const segmentDescriptions =
     segmentDescriptionsFromPairs(collapsedPairs, polymorphicTypes);
-  const segmentDescriptionsBySignature = keyMap(
-    segmentDescriptions,
-    segment => segment.pair.signature
-  );
+  const segmentDescriptionsBySignature =
+    mapSegmentDescriptionsBySignature(pairMapping, segmentDescriptions);
 
   // create DB enums for each enum type and polymorphic type
   Object.keys(enumTypes).forEach(name => {
@@ -108,6 +107,21 @@ export default function generateDatabaseInterface(
       return {...ctx, db, loaders};
     },
   };
+}
+
+export function mapSegmentDescriptionsBySignature(
+  pairMapping: {[key: string]: string},
+  segmentDescriptions: RelationshipSegmentDescription[],
+): RelationshipSegmentDescriptionMap {
+  const mapping = keyMap(
+    segmentDescriptions,
+    segment => segment.pair.signature
+  );
+  Object.keys(pairMapping).forEach(fromSignature => {
+    const toSignature = pairMapping[fromSignature];
+    mapping[fromSignature] = mapping[toSignature];
+  });
+  return mapping;
 }
 
 export function isDatabaseField(definition: FieldDefinition): boolean {

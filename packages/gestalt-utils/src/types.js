@@ -294,14 +294,16 @@ export type MutationDefinition = {
 
 export type Query = {
   table: string,
+  selection: string,
   joins: Join[],
   conditions: QueryCondition[],
-  order?: Order,
+  order?: ?Order,
   limit?: ?number,
   reverseResults?: boolean,
 };
 
 export type Join = {
+  type?: ?('LEFT' | 'RIGHT'), // assumed to be inner if not set
   table: string,
   alias?: ?string,
   conditions: JoinCondition[],

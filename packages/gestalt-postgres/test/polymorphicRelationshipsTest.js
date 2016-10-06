@@ -6,8 +6,10 @@ import assert from 'assert';
 import {parse} from 'graphql';
 import {keyMap} from 'gestalt-utils';
 import {databaseInfoFromAST} from 'gestalt-graphql';
+import collapseRelationshipSegments from '../src/collapseRelationshipSegments';
 import generateDatabaseInterface, {segmentPairsFromRelationships,
-  segmentDescriptionsFromPairs} from '../src/generateDatabaseInterface';
+  segmentDescriptionsFromPairs, mapSegmentDescriptionsBySignature} from
+  '../src/generateDatabaseInterface';
 import {sqlStringFromQuery, queryFromRelationship} from
   '../src/generateRelationshipResolver';
 import generateDatabaseSchemaMigration from
@@ -58,9 +60,6 @@ describe('polymorphic relationships', () => {
           generateDatabaseInterface('', schemaInfo).schema
         ).sql;
 
-        // console.log('GENERATED DATABSE SCHEMA');
-        // console.log(magenta(sqlSchema));
-        // console.log(cyan(expectedSQLSchema));
         assert.equal(
           sqlSchema,
           expectedSQLSchema,
@@ -69,14 +68,16 @@ describe('polymorphic relationships', () => {
 
       it('generates sql queries', () => {
         // generate sql queries for relationship resolution
-        const {relationships} = databaseInfoFromAST(graphQLSchema);
-        const segmentDescriptionsBySignature = keyMap(
-          segmentDescriptionsFromPairs(
-            segmentPairsFromRelationships(relationships),
-            {}, // TODO: this needs to be real polymorphic type map
-          ),
-          segment => segment.pair.signature,
-        );
+        const {relationships, polymorphicTypes} =
+          databaseInfoFromAST(graphQLSchema);
+        const segmentPairs = segmentPairsFromRelationships(relationships);
+        const {mapping: pairMapping, pairs: collapsedPairs} =
+          collapseRelationshipSegments(segmentPairs, polymorphicTypes);
+        const segmentDescriptions =
+          segmentDescriptionsFromPairs(collapsedPairs, polymorphicTypes);
+        const segmentDescriptionsBySignature =
+          mapSegmentDescriptionsBySignature(pairMapping, segmentDescriptions);
+
         const sqlQueries = relationships.map(
           relationship => sqlStringFromQuery(
             queryFromRelationship(

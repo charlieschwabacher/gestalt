@@ -8,4 +8,4 @@ SELECT blogs.*, tweets.* FROM agent_authored_pieces
   JOIN user_followed_agents ON
     user_followed_agents.followed_agent_type = agent_authored_pieces.agent_type AND
     user_followed_agents.followed_agent_id = agent_authored_pieces.agent_id
-  WHERE user_followed_agents.user_id = $1;
+  WHERE user_followed_agents.user_id = ANY ($1);

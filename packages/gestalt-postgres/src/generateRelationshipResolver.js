@@ -143,7 +143,7 @@ function generatePluralRelationshipLoader(
 
       let totalCount, pageInfo;
       if (selectsCount || selectsPageInfo) {
-        const countSql = sqlStringFromQuery(baseQuery, true);
+        const countSql = sqlStringFromQuery(countQuery(baseQuery));
         totalCount = await db.count(countSql, [[key]]);
         if (selectsPageInfo) {
           pageInfo = {
@@ -192,7 +192,7 @@ async function resolveHasPreviousPage(
   }
 
   const count = await db.count(
-    sqlStringFromQuery(slicedQuery, true),
+    sqlStringFromQuery(countQuery(slicedQuery)),
     [[key], args.before]
   );
   return count > nodesLength;
@@ -214,7 +214,7 @@ async function resolveHasNextPage(
   }
 
   const count = await db.count(
-    sqlStringFromQuery(slicedQuery, true),
+    sqlStringFromQuery(countQuery(slicedQuery)),
     [[key], args.after]
   );
   return count > nodesLength;
@@ -294,6 +294,16 @@ export function applyLimitToQuery(
   };
 }
 
+// for count: clear order, set reverseResults false, update selection
+export function countQuery(query: Query): Query {
+  return {
+    ...query,
+    order: null,
+    reverseResults: false,
+    selection: `COUNT(${query.table}.*)`,
+  };
+}
+
 export function objectKeyColumnFromRelationship(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   relationship: Relationship
@@ -345,6 +355,7 @@ export function queryFromRelationship(
   const initialSegment = relationship.path[0];
   const finalSegment = relationship.path[relationship.path.length - 1];
   const table = tableNameFromTypeName(finalSegment.toType);
+  const selection = `${table}.*`;
   const joins = aliasJoins(table, compactJoins(joinsFromPath(
     segmentDescriptionMap,
     relationship.path
@@ -355,7 +366,7 @@ export function queryFromRelationship(
     conditionFromSegment(segmentDescriptionMap, initialSegment, conditionAlias)
   ];
 
-  return {table, joins, conditions};
+  return {selection, table, joins, conditions};
 }
 
 function aliasJoins(table: string, joins: Join[]): Join[] {
@@ -403,6 +414,14 @@ function joinsFromPath(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   segments: RelationshipSegment[]
 ): Join[] {
+  console.log('JOINS FROM PATH');
+  console.log('PATH');
+  console.log(JSON.stringify(segments, null, 2));
+  console.log('JOINS FROM SEGMENTS');
+  console.log(JSON.stringify(joinsFromSegments(segmentDescriptionMap, segments.slice(1)), null, 2));
+  console.log('JOINS FROM INITIAL SEGMENT');
+  console.log(JSON.stringify(joinsFromInitialSegment(segmentDescriptionMap, segments[0]), null, 2));
+
   return joinsFromSegments(segmentDescriptionMap, segments.slice(1))
     .concat(joinsFromInitialSegment(segmentDescriptionMap, segments[0]));
 }
@@ -416,75 +435,122 @@ function joinsFromSegments(
   for (let i = segments.length - 1; i >= 0; i--) {
     const segment = segments[i];
     const description = descriptionFromSegment(segmentDescriptionMap, segment);
-    const toTableName = tableNameFromTypeName(segment.toType);
-
-    if (description.type === 'foreignKey') {
-      const storage: ForeignKeyDescription = description.storage;
-      const {direction, table, referencedTable, column} = storage;
-      if (segment.direction === direction) {
-        joins.push({
-          table: referencedTable,
-          conditions: [{
-            left: {table: referencedTable, column: 'id'},
-            right: {table, column},
-          }],
-        });
-      } else {
-        joins.push({
-          table,
-          conditions: [{
-            left: {table, column},
-            right: {table: referencedTable, column: 'id'},
-          }],
-        });
-      }
-    } else {
-      const storage: JoinTableDescription = description.storage;
-      const {
-        name,
-        left: {table: leftTable, column: leftColumn},
-        right: {table: rightTable, column: rightColumn}
-      } = storage;
-
-      if (toTableName === leftTable) {
-        joins.push(
-          {
-            table: name,
-            conditions: [{
-              left: {table: name, column: leftColumn},
-              right: {table: leftTable, column: 'id'},
-            }],
-          },
-          {
-            table: rightTable,
-            conditions: [{
-              left: {table: rightTable, column: 'id'},
-              right: {table: name, column: rightColumn},
-            }],
-          },
-        );
-      } else {
-        joins.push(
-          {
-            table: name,
-            conditions: [{
-              left: {table: name, column: rightColumn},
-              right: {table: toTableName, column: 'id'},
-            }],
-          },
-          {
-            table: leftTable,
-            conditions: [{
-              left: {table: leftTable, column: 'id'},
-              right: {table: name, column: leftColumn},
-            }],
-          },
-        );
-      }
-    }
+    joins.push(...joinsFromSegment(segment, description));
   }
 
   return joins;
+}
+
+function joinsFromSegment(
+  segment: RelationshipSegment,
+  description: RelationshipSegmentDescription
+): Join[] {
+  if (description.type === 'foreignKey') {
+    return joinsFromForeignKeySegment(segment, description.storage);
+  } else {
+    return joinsFromJoinTableSegment(segment, description.storage);
+  }
+}
+
+function joinsFromForeignKeySegment(
+  segment: RelationshipSegment,
+  storage: ForeignKeyDescription,
+): Join[] {
+  const {isPolymorphic, direction, table, referencedTable, column} = storage;
+  // console.log('JOINS FROM FOREIGN KEY SEGMENT', {direction, table, referencedTable, column});
+
+  if (segment.direction === direction) {
+    return [{
+      table: referencedTable,
+      conditions: [{
+        left: {table: referencedTable, column: 'id'},
+        right: {table, column},
+      }],
+    }];
+  } else {
+    return [{
+      table,
+      conditions: [{
+        left: {table, column},
+        right: {table: referencedTable, column: 'id'},
+      }],
+    }];
+  }
+}
+
+function joinsFromJoinTableSegment(
+  segment: RelationshipSegment,
+  storage: JoinTableDescription,
+): Join[] {
+  const toTableName = tableNameFromTypeName(segment.toType);
+
+  const {
+    name,
+    left: {
+      table: leftTable,
+      column: leftColumn,
+    },
+    right: {
+      table: rightTable,
+      column: rightColumn,
+    },
+  } = storage;
+
+  // console.log('JOINS FROM JOIN TABLE SEGMENT', {name, leftTable, rightTable});
+
+  if (toTableName === leftTable) {
+    return [
+      {
+        table: name,
+        conditions: [{
+          left: {table: name, column: leftColumn},
+          right: {table: leftTable, column: 'id'},
+        }],
+      },
+      {
+        table: rightTable,
+        conditions: [{
+          left: {table: rightTable, column: 'id'},
+          right: {table: name, column: rightColumn},
+        }],
+      },
+    ];
+  } else {
+    const rightConditions = [{
+      left: {table: name, column: rightColumn},
+      right: {table: toTableName, column: 'id'},
+    }];
+
+    if (storage.right.isPolymorphic) {
+      rightConditions.push({
+        left: {table: name, column: storage.right.typeColumn},
+        right: {table: toTableName, column: '__type'},
+      });
+    }
+
+    const leftConditions = [{
+      left: {table: leftTable, column: 'id'},
+      right: {table: name, column: leftColumn},
+    }];
+
+    if (storage.left.isPolymorphic) {
+      leftConditions.push({
+        left: {table: leftTable, column: '__type'},
+        right: {table: name, column: storage.left.typeColumn},
+      });
+    }
+
+    return [
+      {
+        table: name,
+        conditions: rightConditions,
+      },
+      {
+        table: leftTable,
+        conditions: leftConditions,
+      },
+    ];
+  }
 }
 
 function joinsFromInitialSegment(
@@ -501,20 +567,38 @@ function joinsFromInitialSegment(
     } = description.storage;
 
     if (segment.direction === 'in') {
+      const conditions = [{
+        left: {table: name, column: leftColumn},
+        right: {table: leftTable, column: 'id'},
+      }];
+
+      if (description.storage.left.isPolymorphic) {
+        conditions.push({
+          left: {table: name, column: description.storage.left.typeColumn},
+          right: {table: leftTable, column: '__type'},
+        });
+      }
+
       return [{
         table: name,
-        conditions: [{
-          left: {table: name, column: leftColumn},
-          right: {table: leftTable, column: 'id'},
-        }],
+        conditions,
       }];
     } else {
+      const conditions = [{
+        left: {table: name, column: rightColumn},
+        right: {table: rightTable, column: 'id'},
+      }];
+
+      if (description.storage.right.isPolymorphic) {
+        conditions.push({
+          left: {table: name, column: description.storage.right.typeColumn},
+          right: {table: rightTable, column: '__type'},
+        });
+      }
+
       return [{
         table: name,
-        conditions: [{
-          left: {table: name, column: rightColumn},
-          right: {table: rightTable, column: 'id'},
-        }],
+        conditions,
       }];
     }
   } else {
@@ -567,10 +651,14 @@ export function descriptionFromSegment(
 }
 
 export function sqlStringFromJoin(join: Join): string {
-  const {table, alias, conditions} = join;
+  const {type, table, alias, conditions} = join;
   const aliasedLeftTableName = alias || conditions[0].left.table;
 
-  return ` JOIN ${table}${alias != null ? ` ${alias}` : ''} ON ${
+  return `${
+    type ? ` ${type}` : ''
+  } JOIN ${table}${
+    alias != null ? ` ${alias}` : ''
+  } ON ${
     conditions.map(({left, right}) =>
       `${aliasedLeftTableName}.${left.column} = ${right.table}.${right.column}`
     ).join(' AND ')
@@ -579,29 +667,25 @@ export function sqlStringFromJoin(join: Join): string {
 
 export function sqlStringFromQuery(
   query: Query,
-  count: boolean = false
 ): string {
-  const {table, joins, conditions, limit, order, reverseResults} = query;
+  const {selection, table, joins, conditions, limit, order, reverseResults} =
+    query;
 
-  let sql = `SELECT ${
-    count
-    ? `COUNT(${table}.*)`
-    : `${table}.*`
-  } FROM ${table}${
+  let sql = `SELECT ${selection} FROM ${table}${
     joins.map(sqlStringFromJoin).join('')
   } WHERE ${
     conditions.map(({table, alias, column, operator, value}) =>
       `${alias || table}.${column} ${operator} ${value}`
     ).join(' AND ')
   }${
-    (order != null && !count)
+    (order != null)
     ? ` ORDER BY ${table}.${order.column} ${order.direction}`
     : ''
   }${
     (limit != null) ? ` LIMIT ${limit}` : ''
   }`;
 
-  if (reverseResults && !count) {
+  if (reverseResults) {
     invariant(order, 'results cannot be reversed without a defined order');
 
     const column = order.column;
