@@ -23,25 +23,17 @@ WORKING NOTES:
         results with `_type` or something.
 
     - We will never need to expand polymorphic types other than at the final
-
-
-  - segment pairing TODO:
-    - how do we handle polymorphic types w/ mix of node and non node types?
-      - validate that these are not allowed
+      segment
 
 TODO:
   - Required fields should NOT effect which side of a relationship gets a
     foreign key (they do now in one to one relationships)
-  - AST validation for helpful error messages (notes in stub files in
-    ./src/validation)
   - allow sorting of connections on multiple columns
   - allow filtering connections
   - better batching on connections
   - do obvious perf optimization of gestalt-postgres relationship loaders (TODOs
     in comments in file)
   - make sure resolvers use prepared statements
-  - handle union types (need type column in addition to foreign key, need to
-    handle during query generation)
   - refactor: keep track of non null, unique, and primary key as constraints on
     tables instead of as fields on Column objects?
   - refactor: code cleanup in CLI, move code into main package allowing globally
