@@ -11,8 +11,8 @@ SELECT teams.* FROM teams
 SELECT players.*, coaches.* FROM member_joined_teams
   LEFT JOIN players ON
     member_joined_teams.member_type = 'Player' AND
-    member_joined_teams.member_id = players.id
+    players.id = member_joined_teams.member_id
   LEFT JOIN coaches ON
     member_joined_teams.member_type = 'Coach' AND
-    member_joined_teams.member_id = coaches.id
-  WHERE member_joined_teams.team_id = ANY $(1);
+    coaches.id = member_joined_teams.member_id
+  WHERE member_joined_teams.joined_team_id = ANY ($1);
