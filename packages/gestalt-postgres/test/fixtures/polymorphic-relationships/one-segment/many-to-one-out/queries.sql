@@ -14,5 +14,5 @@ SELECT players.*, coaches.* FROM team_included_members
     players.id = team_included_members.included_member_id
   LEFT JOIN coaches ON
     team_included_members.included_member_type = 'Coach' AND
-    coaches.id = team_included_members.member_id
+    coaches.id = team_included_members.included_member_id
   WHERE team_included_members.team_id = ANY ($1);

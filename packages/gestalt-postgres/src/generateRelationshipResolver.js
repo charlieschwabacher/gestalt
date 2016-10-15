@@ -575,8 +575,8 @@ function conditionsFromSegment(
     const {table, referencedTable, column, direction} = description.storage;
     if (segment.direction === direction) {
 
-      // this condition is not necessary because ids are globally unique,
-      // consider removing in the future
+      // this condition is not necessary when ids are globally unique, consider
+      // removing after transition to meldio style ids
       if (description.storage.isPolymorphic) {
         const {typeColumn} = description.storage;
         conditions.push({
@@ -604,17 +604,28 @@ function conditionsFromSegment(
       });
     }
   } else {
-    const {
-      name,
-      left: {column: leftColumn},
-      right: {column: rightColumn},
-    } = description.storage;
+    const {name, left, right} = description.storage;
+    const side = segment.direction === 'in' ? right : left;
 
-    if (segment.direction === 'in') {
-      conditions.push({table: name, column: rightColumn, alias, operator, value});
-    } else {
-      conditions.push({table: name, column: leftColumn, alias, operator, value});
+    // this condition is not necessary if ids are globally unique, consider
+    // removing once the transition to meldio style ids is complete
+    if (side.isPolymorphic) {
+      conditions.push({
+        table: name,
+        column: side.typeColumn,
+        alias,
+        operator,
+        value: `'${segment.fromType}'`,
+      });
     }
+
+    conditions.push({
+      table: name,
+      column: side.column,
+      alias,
+      operator,
+      value,
+    });
   }
 
   return conditions;
