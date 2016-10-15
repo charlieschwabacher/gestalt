@@ -25,7 +25,8 @@
 // const schemaPath = `${__dirname}/fixtures/schema.graphql`;
 // const schemaText = fs.readFileSync(schemaPath, 'utf8');
 // const schemaAST = parse(schemaText);
-// const {objectDefinitions, relationships} = databaseInfoFromAST(schemaAST);
+// const schemaInfo = databaseInfoFromAST(schemaAST);
+// const {objectDefinitions, relationships} = schemaInfo;
 // const relationshipMap = keyMap(
 //   relationships,
 //   relationship => `${relationship.path[0].fromType}|${relationship.fieldName}`
@@ -39,6 +40,7 @@
 // );
 // const loaders = generateRelationshipLoaders(
 //   db,
+//   schemaInfo,
 //   segmentDescriptionMap,
 //   relationships
 // );

@@ -309,9 +309,18 @@ export type Join = {
   conditions: JoinCondition[],
 };
 
+export type JoinConditionSide = {
+  type: 'reference',
+  table: string,
+  column: string
+} | {
+  type: 'value',
+  value: string
+};
+
 export type JoinCondition = {
-  left: {table: string, column: string},
-  right: {table: string, column: string},
+  left: JoinConditionSide,
+  right: JoinConditionSide,
 };
 
 export type QueryCondition = {

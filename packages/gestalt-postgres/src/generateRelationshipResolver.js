@@ -4,22 +4,23 @@
 
 import type {Relationship, RelationshipSegmentDescriptionMap,
   RelationshipSegmentDescription, RelationshipSegment, Query, Join,
-  JoinCondition, QueryCondition, Order, GraphQLFieldResolveFn,
-  GraphQLResolveInfo, ConnectionArguments, ForeignKeyDescription,
-  JoinTableDescription} from 'gestalt-utils';
+  JoinCondition, JoinConditionSide, QueryCondition, Order,
+  GraphQLFieldResolveFn, GraphQLResolveInfo, ConnectionArguments,
+  ForeignKeyDescription, JoinTableDescription, DatabaseRelevantSchemaInfo,
+  PolymorphicTypeMap} from 'gestalt-utils';
 import type DB from './DB';
 import {pairingSignatureFromRelationshipSegment, tableNameFromTypeName} from
   './generateDatabaseInterface';
 import DataLoader from 'dataloader';
 import camel from 'camel-case';
 import snake from 'snake-case';
-import {invariant, keyMap, group} from 'gestalt-utils';
+import {invariant, keyMap, group, flatten} from 'gestalt-utils';
 
 export function generateRelationshipResolver(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
 ): (relationship: Relationship) => GraphQLFieldResolveFn {
   return relationship => {
-    const keyColumn = objectKeyColumnFromRelationship(
+    const {keyColumn, typeColumn} = objectKeyColumnsFromRelationship(
       segmentDescriptionMap,
       relationship
     );
@@ -27,7 +28,8 @@ export function generateRelationshipResolver(
       const loader = context.loaders.get(relationship);
       const key = object[keyColumn];
       if (relationship.cardinality === 'singular') {
-        return loader.load(key);
+        const type = object[typeColumn];
+        return loader.load({key, type});
       } else {
         validateConnectionArgs(args);
         return loader.load({key, args, info});
@@ -53,9 +55,12 @@ export function selectsField(
 
 export function generateRelationshipLoaders(
   db: DB,
+  schemaInfo: DatabaseRelevantSchemaInfo,
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   relationships: Relationship[],
 ): Map<Relationship, DataLoader> {
+  const { polymorphicTypes } = schemaInfo;
+
   // TODO: we should be able to pregenerate and store SQL queries so that they
   // are only calculated once, not re-calcualted on every request.
 
@@ -63,68 +68,129 @@ export function generateRelationshipLoaders(
   // that creates loaders lazily.  It's likely that a single request will only
   // use some small subset of the available loaders so will be worthwile to
   // avoid generating the rest
-
   const relationshipLoaderMap = new Map();
 
   relationships.forEach(relationship => {
-    const keyColumn = resolvedKeyColumnFromRelationship(
-      segmentDescriptionMap,
-      relationship
-    );
-    const query = queryFromRelationship(
-      segmentDescriptionMap,
+    relationshipLoaderMap.set(
       relationship,
+      generateRelationshipLoader(
+        db,
+        polymorphicTypes,
+        segmentDescriptionMap,
+        relationship,
+      ),
     );
-
-    if (relationship.cardinality === 'singular') {
-      const sql = sqlStringFromQuery(query);
-      relationshipLoaderMap.set(
-        relationship,
-        generateSingularRelationshipLoader(
-          db,
-          relationship,
-          keyColumn,
-          sql
-        )
-      );
-    } else {
-      relationshipLoaderMap.set(
-        relationship,
-        generatePluralRelationshipLoader(
-          db,
-          relationship,
-          keyColumn,
-          query
-        )
-      );
-    }
   });
 
   return relationshipLoaderMap;
 }
 
+export function generateRelationshipLoader(
+  db: DB,
+  polymorphicTypes: PolymorphicTypeMap,
+  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
+  relationship: Relationship,
+): DataLoader {
+  const keyColumn = resolvedKeyColumnFromRelationship(
+    segmentDescriptionMap,
+    relationship
+  );
+
+  if (relationship.cardinality === 'singular') {
+    return generateSingularRelationshipLoader(
+      db,
+      polymorphicTypes,
+      segmentDescriptionMap,
+      relationship,
+      keyColumn,
+    );
+  } else {
+    return generatePluralRelationshipLoader(
+      db,
+      polymorphicTypes,
+      segmentDescriptionMap,
+      relationship,
+      keyColumn,
+    );
+  }
+
+}
+
 function generateSingularRelationshipLoader(
   db: DB,
+  polymorphicTypes: PolymorphicTypeMap,
+  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   relationship: Relationship,
   keyColumn: string,
-  sql: string
 ): DataLoader {
-  return new DataLoader(async keys => {
-    const results = await db.query(sql, [keys]);
+  // pre-generate a query
+  const query = queryFromRelationship(
+    polymorphicTypes,
+    segmentDescriptionMap,
+    relationship,
+  );
+
+  return new DataLoader(async objs => {
+    // group requested object keys by type
+    const objsByType: Map<?string, string[]> = objs.reduce(
+      (memo, {key, type}) => {
+        if (memo.has(type)) {
+          memo.get(type).push(key);
+        } else {
+          memo.set(type, [key]);
+        }
+        return memo;
+      },
+      new Map(),
+    );
+
+    // generate a query for each requested type, and load in parallel
+    const results = flatten(
+      await Promise.all(
+        Array.from(objsByType.entries()).map(([type, keys]) => {
+          let sql;
+          if (type != null) {
+            const table = tableNameFromTypeName(type);
+            sql = sqlStringFromQuery({
+              ...query,
+              table,
+              selection: `${table}.*`,
+            });
+          } else {
+            sql = sqlStringFromQuery(query);
+          }
+          return db.query(sql, [keys]);
+        })
+      )
+    );
+
     const resultsByKey = keyMap(results, result => result[keyColumn]);
-    return keys.map(key => resultsByKey[key]);
+    return objs.map(({key}) => resultsByKey[key]);
+  }, {
+    cacheKeyFn: ({key, type}) => `${key}|${type}`,
   });
 }
 
+// TODO: these are not yet batched - unless we are using 'before' or 'after'
+// args they should be able to be batched
 function generatePluralRelationshipLoader(
   db: DB,
+  polymorphicTypes: PolymorphicTypeMap,
+  segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   relationship: Relationship,
   keyColumn: string,
-  baseQuery: Query,
 ): DataLoader {
-  return new DataLoader(loadKeys => {
-    return Promise.all(loadKeys.map(async ({key, args, info}) => {
+  const baseQuery = queryFromRelationship(
+    polymorphicTypes,
+    segmentDescriptionMap,
+    relationship,
+  );
 
+  // console.log('GENERATING RELATIONSHIP LOADER', keyColumn, baseQuery);
+
+  return new DataLoader(loadKeys => {
+    console.log('DATALOADING', loadKeys);
+    return Promise.all(loadKeys.map(async ({key, args, info}) => {
       // resolve edges
       const slicedQuery = applyCursorsToQuery(baseQuery, args);
       const connectionQuery = applyLimitToQuery(slicedQuery, args);
@@ -304,10 +370,16 @@ export function countQuery(query: Query): Query {
   };
 }
 
-export function objectKeyColumnFromRelationship(
+// this is used to calcualte which column on a parent object should be used as
+// key when calling .load on a DataLoader to resolve the field for a given
+// relationship
+export function objectKeyColumnsFromRelationship(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   relationship: Relationship
-): string {
+): {
+  keyColumn: string,
+  typeColumn: ?string,
+} {
   const segment = relationship.path[0];
   const description = descriptionFromSegment(
     segmentDescriptionMap,
@@ -317,13 +389,23 @@ export function objectKeyColumnFromRelationship(
   if (description.type === 'foreignKey') {
     const {storage} = description;
     if (storage.direction !== segment.direction) {
-      return camel(storage.column);
+      return {
+        keyColumn: camel(storage.column),
+        typeColumn: storage.isPolymorphic ? storage.typeColumn : null,
+      };
     }
   }
 
-  return 'id';
+  return {
+    keyColumn: 'id',
+    typeColumn: null,
+  };
 }
 
+// This is used to calculate which column on the resolved objects corresponds to
+// the object key column in its parent object.  It is necessary in order to
+// match rows loaded by a DataLoader in a batch to the individual load requests
+// so that they can be fulfilled
 export function resolvedKeyColumnFromRelationship(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   relationship: Relationship
@@ -349,22 +431,79 @@ export function resolvedKeyColumnFromRelationship(
 // segment.
 
 export function queryFromRelationship(
+  polymorphicTypes: PolymorphicTypeMap,
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   relationship: Relationship,
+  type?: string,
 ): Query {
   const initialSegment = relationship.path[0];
   const finalSegment = relationship.path[relationship.path.length - 1];
-  const table = tableNameFromTypeName(finalSegment.toType);
-  const selection = `${table}.*`;
-  const joins = aliasJoins(table, compactJoins(joinsFromPath(
+
+  let table;
+  let selection;
+  let path;
+  const joins = [];
+  const conditions = [];
+
+  // if the final type is polymorphic, we may need to select from one table back
+  // join each possible type
+  const targetTypes = polymorphicTypes[finalSegment.toType];
+  if (targetTypes == null) {
+    table = tableNameFromTypeName(finalSegment.toType);
+    selection = `${table}.*`;
+    path = relationship.path;
+  } else {
+    const targetTables = targetTypes.map(tableNameFromTypeName);
+    const description = descriptionFromSegment(
+      segmentDescriptionMap,
+      finalSegment,
+    );
+
+    // if we have a foreign key, we need to select from a table based on the
+    // value of type column of the object we have already loaded
+    if (description.type === 'foreignKey') {
+      invariant(type, 'type information is needed to generate this query');
+      table = tableNameFromTypeName(type);
+      selection = `${table}.*`;
+      path = [];
+
+    // if we have a join table, we need to select from the join table, and join
+    // the tables for each member of the polymorphic type
+    } else {
+      const {storage} = description;
+      const side = storage[finalSegment.direction === 'out' ? 'right' : 'left'];
+      invariant(side.isPolymorphic);
+
+      const {column, typeColumn} = side;
+
+      table = storage.name;
+      selection = targetTables.map(tableName => `${tableName}.*`).join(', ');
+      path = relationship.path.slice(0, relationship.path.length - 1);
+      joins.push(...leftJoinsFromTargetTypes(
+        targetTypes,
+        targetTables,
+        table,
+        column,
+        typeColumn,
+      ));
+    }
+  }
+
+  joins.push(...aliasJoins(table, compactJoins(joinsFromPath(
     segmentDescriptionMap,
-    relationship.path
-  )));
+    path,
+  ))));
+
   const finalJoin = joins[joins.length - 1];
   const conditionAlias = finalJoin && finalJoin.alias;
-  const conditions = [
-    conditionFromSegment(segmentDescriptionMap, initialSegment, conditionAlias)
-  ];
+  conditions.push(
+    ...conditionsFromSegment(
+      segmentDescriptionMap,
+      initialSegment,
+      conditionAlias,
+      type,
+    )
+  );
 
   return {selection, table, joins, conditions};
 }
@@ -379,11 +518,55 @@ function aliasJoins(table: string, joins: Join[]): Join[] {
   });
 }
 
-function conditionFromSegment(
+function leftJoinsFromTargetTypes(
+  targetTypes: string[],
+  targetTables: string[],
+  table: string,
+  column: string,
+  typeColumn: string,
+): Join[] {
+  return targetTypes.map((typeName, i) => {
+    const targetTable = targetTables[i];
+
+    return {
+      table: targetTable,
+      type: 'LEFT',
+      conditions: [
+        {
+          left: {
+            type: 'reference',
+            table,
+            column: typeColumn,
+          },
+          right: {
+            type: 'value',
+            value: `'${typeName}'`,
+          },
+        },
+        {
+          left: {
+            type: 'reference',
+            table: targetTable,
+            column: 'id',
+          },
+          right: {
+            type: 'reference',
+            table,
+            column,
+          },
+        },
+      ]
+    };
+  });
+}
+
+function conditionsFromSegment(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   segment: RelationshipSegment,
   alias: ?string,
-): QueryCondition {
+  type: ?string,
+): QueryCondition[] {
+  const conditions = [];
   const description = descriptionFromSegment(segmentDescriptionMap, segment);
   const operator = '=';
   const value = 'ANY ($1)';
@@ -391,9 +574,34 @@ function conditionFromSegment(
   if (description.type === 'foreignKey') {
     const {table, referencedTable, column, direction} = description.storage;
     if (segment.direction === direction) {
-      return {table, alias, column, operator, value};
+
+      // this condition is not necessary because ids are globally unique,
+      // consider removing in the future
+      if (description.storage.isPolymorphic) {
+        const {typeColumn} = description.storage;
+        conditions.push({
+          table,
+          column: typeColumn,
+          alias,
+          operator,
+          value: `'${segment.fromType}'`,
+        });
+      }
+
+      conditions.push({table, alias, column, operator, value});
     } else {
-      return {table: referencedTable, column: 'id', alias, operator, value};
+      let fromTable = referencedTable;
+      if (description.storage.isPolymorphic) {
+        invariant(type != null);
+        fromTable = tableNameFromTypeName(type);
+      }
+      conditions.push({
+        table: fromTable,
+        column: 'id',
+        alias,
+        operator,
+        value
+      });
     }
   } else {
     const {
@@ -403,24 +611,30 @@ function conditionFromSegment(
     } = description.storage;
 
     if (segment.direction === 'in') {
-      return {table: name, column: rightColumn, alias, operator, value};
+      conditions.push({table: name, column: rightColumn, alias, operator, value});
     } else {
-      return {table: name, column: leftColumn, alias, operator, value};
+      conditions.push({table: name, column: leftColumn, alias, operator, value});
     }
   }
+
+  return conditions;
 }
 
 function joinsFromPath(
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   segments: RelationshipSegment[]
 ): Join[] {
-  console.log('JOINS FROM PATH');
-  console.log('PATH');
-  console.log(JSON.stringify(segments, null, 2));
-  console.log('JOINS FROM SEGMENTS');
-  console.log(JSON.stringify(joinsFromSegments(segmentDescriptionMap, segments.slice(1)), null, 2));
-  console.log('JOINS FROM INITIAL SEGMENT');
-  console.log(JSON.stringify(joinsFromInitialSegment(segmentDescriptionMap, segments[0]), null, 2));
+  if (segments.length === 0) {
+    return [];
+  }
+
+  // console.log('JOINS FROM PATH');
+  // console.log('PATH');
+  // console.log(JSON.stringify(segments, null, 2));
+  // console.log('JOINS FROM SEGMENTS');
+  // console.log(JSON.stringify(joinsFromSegments(segmentDescriptionMap, segments.slice(1)), null, 2));
+  // console.log('JOINS FROM INITIAL SEGMENT');
+  // console.log(JSON.stringify(joinsFromInitialSegment(segmentDescriptionMap, segments[0]), null, 2));
 
   return joinsFromSegments(segmentDescriptionMap, segments.slice(1))
     .concat(joinsFromInitialSegment(segmentDescriptionMap, segments[0]));
@@ -463,16 +677,32 @@ function joinsFromForeignKeySegment(
     return [{
       table: referencedTable,
       conditions: [{
-        left: {table: referencedTable, column: 'id'},
-        right: {table, column},
+        left: {
+          type: 'reference',
+          table: referencedTable,
+          column: 'id',
+        },
+        right: {
+          type: 'reference',
+          table,
+          column,
+        },
       }],
     }];
   } else {
     return [{
       table,
       conditions: [{
-        left: {table, column},
-        right: {table: referencedTable, column: 'id'},
+        left: {
+          type: 'reference',
+          table,
+          column,
+        },
+        right: {
+          type: 'reference',
+          table: referencedTable,
+          column: 'id',
+        },
       }],
     }];
   }
@@ -503,40 +733,88 @@ function joinsFromJoinTableSegment(
       {
         table: name,
         conditions: [{
-          left: {table: name, column: leftColumn},
-          right: {table: leftTable, column: 'id'},
+          left: {
+            type: 'reference',
+            table: name,
+            column: leftColumn,
+          },
+          right: {
+            type: 'reference',
+            table: leftTable,
+            column: 'id',
+          },
         }],
       },
       {
         table: rightTable,
         conditions: [{
-          left: {table: rightTable, column: 'id'},
-          right: {table: name, column: rightColumn},
+          left: {
+            type: 'reference',
+            table: rightTable,
+            column: 'id',
+          },
+          right: {
+            type: 'reference',
+            table: name,
+            column: rightColumn,
+          },
         }],
       },
     ];
   } else {
     const rightConditions = [{
-      left: {table: name, column: rightColumn},
-      right: {table: toTableName, column: 'id'},
+      left: {
+        type: 'reference',
+        table: name,
+        column: rightColumn,
+      },
+      right: {
+        type: 'reference',
+        table: toTableName,
+        column: 'id',
+      },
     }];
 
     if (storage.right.isPolymorphic) {
       rightConditions.push({
-        left: {table: name, column: storage.right.typeColumn},
-        right: {table: toTableName, column: '__type'},
+        left: {
+          type: 'reference',
+          table: name,
+          column: storage.right.typeColumn,
+        },
+        right: {
+          type: 'reference',
+          table: toTableName,
+          column: '__type',
+        },
       });
     }
 
     const leftConditions = [{
-      left: {table: leftTable, column: 'id'},
-      right: {table: name, column: leftColumn},
+      left: {
+        type: 'reference',
+        table: leftTable,
+        column: 'id',
+      },
+      right: {
+        type: 'reference',
+        table: name,
+        column: leftColumn,
+      },
     }];
 
     if (storage.left.isPolymorphic) {
       leftConditions.push({
-        left: {table: leftTable, column: '__type'},
-        right: {table: name, column: storage.left.typeColumn},
+        left: {
+          type: 'reference',
+          table: leftTable,
+          column: '__type',
+        },
+        right: {
+          type: 'reference',
+          table: name,
+          column: storage.left.typeColumn,
+        },
       });
     }
 
@@ -568,14 +846,30 @@ function joinsFromInitialSegment(
 
     if (segment.direction === 'in') {
       const conditions = [{
-        left: {table: name, column: leftColumn},
-        right: {table: leftTable, column: 'id'},
+        left: {
+          type: 'reference',
+          table: name,
+          column: leftColumn,
+        },
+        right: {
+          type: 'reference',
+          table: leftTable,
+          column: 'id',
+        },
       }];
 
       if (description.storage.left.isPolymorphic) {
         conditions.push({
-          left: {table: name, column: description.storage.left.typeColumn},
-          right: {table: leftTable, column: '__type'},
+          left: {
+            type: 'reference',
+            table: name,
+            column: description.storage.left.typeColumn,
+          },
+          right: {
+            type: 'reference',
+            table: leftTable,
+            column: '__type',
+          },
         });
       }
 
@@ -585,14 +879,30 @@ function joinsFromInitialSegment(
       }];
     } else {
       const conditions = [{
-        left: {table: name, column: rightColumn},
-        right: {table: rightTable, column: 'id'},
+        left: {
+          type: 'reference',
+          table: name,
+          column: rightColumn,
+        },
+        right: {
+          type: 'reference',
+          table: rightTable,
+          column: 'id',
+        },
       }];
 
       if (description.storage.right.isPolymorphic) {
         conditions.push({
-          left: {table: name, column: description.storage.right.typeColumn},
-          right: {table: rightTable, column: '__type'},
+          left: {
+            type: 'reference',
+            table: name,
+            column: description.storage.right.typeColumn,
+          },
+          right: {
+            type: 'reference',
+            table: rightTable,
+            column: '__type',
+          },
         });
       }
 
@@ -606,6 +916,12 @@ function joinsFromInitialSegment(
   }
 }
 
+// Joins generated by joinsFromSegments may join intermediate tables that are
+// not neccessary in the context of the preceding and following joins.  For
+// example if we join user_authored_posts to posts to post_inspired_comments, we
+// can skip the posts table and join user_authored_posts directly to
+// post_inspired_comments on post_id.  This method looks at an array of joins
+// and removes any that are uncessary in this way.
 function compactJoins(joins: Join[]): Join[] {
   const compactJoins = [];
 
@@ -618,8 +934,16 @@ function compactJoins(joins: Join[]): Join[] {
       join.conditions.every((condition, index) => {
         const nextCondition = next.conditions[index];
         return (
-          condition.left.table === nextCondition.right.table &&
-          condition.left.column === nextCondition.right.column
+          (
+            condition.left.type === 'reference' &&
+            nextCondition.right.type === 'reference' &&
+            condition.left.table === nextCondition.right.table &&
+            condition.left.column === nextCondition.right.column
+          ) || (
+            condition.left.type === 'value' &&
+            nextCondition.right.type === 'value' &&
+            condition.left.value === nextCondition.right.value
+          )
         );
       })
     ) {
@@ -652,7 +976,6 @@ export function descriptionFromSegment(
 
 export function sqlStringFromJoin(join: Join): string {
   const {type, table, alias, conditions} = join;
-  const aliasedLeftTableName = alias || conditions[0].left.table;
 
   return `${
     type ? ` ${type}` : ''
@@ -660,18 +983,47 @@ export function sqlStringFromJoin(join: Join): string {
     alias != null ? ` ${alias}` : ''
   } ON ${
     conditions.map(({left, right}) =>
-      `${aliasedLeftTableName}.${left.column} = ${right.table}.${right.column}`
+      `${
+        sqlStringFromJoinConditionSide(table, alias, left)
+      } = ${
+        sqlStringFromJoinConditionSide(table, null, right)
+      }`
     ).join(' AND ')
   }`;
+}
+
+export function sqlStringFromJoinConditionSide(
+  table: string,
+  alias: ?string,
+  side: JoinConditionSide,
+): string {
+  if (side.type === 'reference') {
+    if (side.table === table && alias != null) {
+      return `${alias}.${side.column}`;
+    } else {
+      return `${side.table}.${side.column}`;
+    }
+  } else {
+    return side.value;
+  }
 }
 
 export function sqlStringFromQuery(
   query: Query,
 ): string {
+  invariant(
+    !query.variableTable,
+    'query must have a defined table in order generate a SQL string'
+  );
+
   const {selection, table, joins, conditions, limit, order, reverseResults} =
     query;
 
-  let sql = `SELECT ${selection} FROM ${table}${
+  let sql = `SELECT ${
+    selection
+  } FROM ${
+    table
+  }${
     joins.map(sqlStringFromJoin).join('')
   } WHERE ${
     conditions.map(({table, alias, column, operator, value}) =>

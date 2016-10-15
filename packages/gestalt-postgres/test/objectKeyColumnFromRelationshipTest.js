@@ -5,7 +5,7 @@ import {keyMap} from 'gestalt-utils';
 import {relationshipFromPathString as r} from 'gestalt-graphql';
 import {segmentPairsFromRelationships, segmentDescriptionsFromPairs} from
   '../src/generateDatabaseInterface';
-import {objectKeyColumnFromRelationship} from
+import {objectKeyColumnsFromRelationship} from
   '../src/generateRelationshipResolver';
 
 import type {Relationship} from 'gestalt-utils';
@@ -26,18 +26,18 @@ function testKeyColumns(
     segment => segment.pair.signature,
   );
   assert.equal(
-    objectKeyColumnFromRelationship(descriptions, inRelationship),
+    objectKeyColumnsFromRelationship(descriptions, inRelationship).keyColumn,
     inKeyColumn
   );
   assert.equal(
-    objectKeyColumnFromRelationship(descriptions, outRelationship),
+    objectKeyColumnsFromRelationship(descriptions, outRelationship).keyColumn,
     outKeyColumn
   );
 }
 
 
 describe('key column generation', () => {
-  it('one segment foreign key relationship', () => {
+  it('foreign key relationship', () => {
     testKeyColumns(
       r('posts', 'User', 'Post', false, '=AUTHORED=>'),
       r('author', 'Post', 'User', false, '<-AUTHORED-'),
@@ -46,7 +46,7 @@ describe('key column generation', () => {
     );
   });
 
-  it('two segment join table relationship', () => {
+  it('join table relationship', () => {
     testKeyColumns(
       r('posts', 'User', 'Post', false, '=AUTHORED=>'),
       r('author', 'Post', 'User', false, '<=AUTHORED='),

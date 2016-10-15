@@ -20,7 +20,7 @@ declare function describe(a: string, b: () => any): void;
 declare function it(a: string, b: () => any): void;
 
 const testPaths = glob.sync(
-  `${__dirname}/fixtures/polymorphic-relationships/*/*`
+  `${__dirname}/fixtures/polymorphic-relationships/*/*`,
 );
 
 function testNameFromPath(path: string): string {
@@ -32,6 +32,14 @@ function normalizeSQLQuery(query: string): string {
   const parts = query.split('\n').map(line => line.replace(/^ */, ''));
   const result = parts.join(' ');
   return result + (result.slice(-1) === ';' ? '' : ';');
+}
+
+function logQuery(query, color) {
+  console.log(color(
+    query
+      .replace(/(FROM|LEFT JOIN|JOIN|WHERE)/g, match => `\n  ${match}`)
+      .replace(/(ON|AND|OR)/g, match => `\n    ${match}`)
+  ));
 }
 
 describe('polymorphic relationships', () => {
@@ -66,7 +74,7 @@ describe('polymorphic relationships', () => {
         );
       });
 
-      it('generates sql queries', () => {
+      it('generates sql queries', async () => {
         // generate sql queries for relationship resolution
         const {relationships, polymorphicTypes} =
           databaseInfoFromAST(graphQLSchema);
@@ -79,13 +87,23 @@ describe('polymorphic relationships', () => {
           mapSegmentDescriptionsBySignature(pairMapping, segmentDescriptions);
 
         const sqlQueries = relationships.map(
-          relationship => sqlStringFromQuery(
-            queryFromRelationship(
-              segmentDescriptionsBySignature,
-              relationship
-            )
-          )
+          relationship => {
+            const polyType = polymorphicTypes[relationship.path[0].toType];
+            return sqlStringFromQuery(
+              queryFromRelationship(
+                polymorphicTypes,
+                segmentDescriptionsBySignature,
+                relationship,
+                polyType && polyType[0],
+              )
+            );
+          }
         );
+
+        // sqlQueries.forEach((query, i) => {
+        //   logQuery(query, cyan);
+        //   logQuery(expectedSQLQueries[i], magenta);
+        // });
 
         assert.deepEqual(
           sqlQueries,

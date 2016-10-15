@@ -8,8 +8,8 @@ import {databaseInfoFromAST, relationshipFromPathString as r} from
 import generateDatabaseInterface, {segmentDescriptionsFromPairs,
   segmentPairsFromRelationships} from '../src/generateDatabaseInterface';
 import {keyMap} from 'gestalt-utils';
-import {objectKeyColumnFromRelationship, sqlStringFromQuery,
-  queryFromRelationship} from '../src/generateRelationshipResolver';
+import {sqlStringFromQuery, queryFromRelationship} from
+  '../src/generateRelationshipResolver';
 
 import type {Relationship, RelationshipSegmentDescriptionMap,
   ConnectionArguments} from 'gestalt-utils';
@@ -24,6 +24,7 @@ function testRelationship(
   inSQL: ?string,
 ): void {
   const relationships = [];
+  const polymorphicTypes = {};
   inRelationship && relationships.push(inRelationship);
   outRelationship && relationships.push(outRelationship);
 
@@ -37,13 +38,13 @@ function testRelationship(
   outRelationship && assert.equal(
     outSQL,
     sqlStringFromQuery(
-      queryFromRelationship(descriptions, outRelationship)
+      queryFromRelationship(polymorphicTypes, descriptions, outRelationship),
     )
   );
   inRelationship && assert.equal(
     inSQL,
     sqlStringFromQuery(
-      queryFromRelationship(descriptions, inRelationship)
+      queryFromRelationship(polymorphicTypes, descriptions, inRelationship)
     )
   );
 }
@@ -58,6 +59,7 @@ const {relationships} = databaseInfoFromAST(schemaAST);
 describe('sqlQueryFromRelationship', () => {
 
   it('generates SQL queries for fixture schema', () => {
+    const polymorphicTypes = {};
     const segmentDescriptionsBySignature = keyMap(
       segmentDescriptionsFromPairs(
         segmentPairsFromRelationships(relationships),
@@ -68,6 +70,7 @@ describe('sqlQueryFromRelationship', () => {
     const sqlQueries = relationships.map(
       relationship => sqlStringFromQuery(
         queryFromRelationship(
+          polymorphicTypes,
           segmentDescriptionsBySignature,
           relationship
         )

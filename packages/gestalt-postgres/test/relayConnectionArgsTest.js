@@ -18,6 +18,7 @@ function testConnectionArgs(
   args: ConnectionArguments,
   sql: string,
 ): void {
+  const polymorphicTypes = {};
   const descriptions = keyMap(
     segmentDescriptionsFromPairs(
       segmentPairsFromRelationships(relationships),
@@ -29,7 +30,7 @@ function testConnectionArgs(
     sqlStringFromQuery(
       applyLimitToQuery(
         applyCursorsToQuery(
-          queryFromRelationship(descriptions, relationships[0]),
+          queryFromRelationship(polymorphicTypes, descriptions, relationships[0]),
           args
         ),
         args

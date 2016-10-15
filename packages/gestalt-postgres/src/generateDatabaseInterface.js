@@ -101,6 +101,7 @@ export default function generateDatabaseInterface(
     prepareQueryContext: ctx => {
       const loaders = generateRelationshipLoaders(
         db,
+        schemaInfo,
         segmentDescriptionsBySignature,
         relationships
       );

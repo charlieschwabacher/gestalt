@@ -1,31 +1,41 @@
 WORKING NOTES:
 
-  - TODO: DO NOT need type in joins / indices because ids are globally unique
+  - Existing query from relationship algorithm
+    - look at the to type of the final segment
+    - if it is homomorphic
+      - select from the table for the to type of the final segment
+      - use all segments as path
+    - if it is polymorphic
+      - if its storage uses a foreign key
+        - select from the table based on the type column on the parent object
+        - do not do any joins
+      - if its storage uses a join table
+        - select from the join table
+        - left join the table for each member of the polymorphic type
+        - use everything but the final segment as path
+    -
+
+  - when starting type of a relationship has a foreign key, we need to select
+    directly from a table based on the value from the type column
+  - we need to pass singular relationship loaders {key, type} instead of key
+  - we need to calculate query obj later once we have access to type (it becomes
+    an argument to queryFromRelationship)
 
   - Resolution:
     - Starting point is `queryFromRelationship` in
       `generateRelationshipResolver.js`
-      - `relationshipSegmentMap` argument is mapping of pairing signature to
-        segment description, is produced in `generateDatabaseInterface.js`.
-          * This will need to be updated to include info from the mapping
-            produced by `collapseRelationshipSegments` so that segments can be
-            resolved through their polymorphic types.
+    - in 'polymorphic relationships multi segment singular polymorphic
+      homomorphic generates sql queries' test, we have an extra join to
+      'artworks' that shouldn't be happening.
+    - it is coming from `joinsFromSegments` - artwork id and artwork type should
+      columns on user, which we should already have access to.
     - Resolved query now works by selecting from the final type of a
       relationship and creating joins working backwards along the path.  In
       cases where the final type is polymorphic, we will need to select from one
       type back and left join all of the possible types.
-      * The `Query` flow type will need to include information on what to
-        select, because it won't necessarily match `table`.  This can replace
-        the `count` argument to `sqlStringFromQuery`.
-      * The `Join` flow type will need to include join type (left, inner, etc..)
-      * When selecting something like `posts.*, comments.*`, need to look at
-        results returned by `pg`, might need to normalize in some way, tag
-        results with `_type` or something.
-
-    - We will never need to expand polymorphic types other than at the final
-      segment
 
 TODO:
+  - DO NOT need type in joins / indices because ids are globally unique
   - Required fields should NOT effect which side of a relationship gets a
     foreign key (they do now in one to one relationships)
   - allow sorting of connections on multiple columns
