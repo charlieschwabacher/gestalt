@@ -4,8 +4,11 @@ import assert from 'assert';
 import {relationshipFromPathString as r} from 'gestalt-graphql';
 import {segmentDescriptionsFromPairs, segmentPairsFromRelationships} from
   '../src/generateDatabaseInterface';
-import {sqlStringFromQuery, applyCursorsToQuery, applyLimitToQuery,
-  queryFromRelationship} from '../src/generateRelationshipResolver';
+import {sqlStringFromQuery} from '../src/sqlStringFromQuery';
+import {applyCursorsToQuery, applyLimitToQuery} from
+  '../src/resolveRelayConnection';
+import {queryFromRelationship, describeRelationship} from
+  '../src/generateRelationshipResolver';
 import {keyMap} from 'gestalt-utils';
 import type {Relationship, ConnectionArguments} from 'gestalt-utils';
 
@@ -30,7 +33,10 @@ function testConnectionArgs(
     sqlStringFromQuery(
       applyLimitToQuery(
         applyCursorsToQuery(
-          queryFromRelationship(polymorphicTypes, descriptions, relationships[0]),
+          queryFromRelationship(
+            polymorphicTypes,
+            describeRelationship(descriptions, relationships[0]),
+          ),
           args
         ),
         args

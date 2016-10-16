@@ -5,10 +5,11 @@ import assert from 'assert';
 import {parse} from 'graphql';
 import {databaseInfoFromAST, relationshipFromPathString as r} from
   'gestalt-graphql';
+import {sqlStringFromQuery} from '../src/sqlStringFromQuery';
 import generateDatabaseInterface, {segmentDescriptionsFromPairs,
   segmentPairsFromRelationships} from '../src/generateDatabaseInterface';
 import {keyMap} from 'gestalt-utils';
-import {sqlStringFromQuery, queryFromRelationship} from
+import {queryFromRelationship, describeRelationship} from
   '../src/generateRelationshipResolver';
 
 import type {Relationship, RelationshipSegmentDescriptionMap,
@@ -38,14 +39,20 @@ function testRelationship(
   outRelationship && assert.equal(
     outSQL,
     sqlStringFromQuery(
-      queryFromRelationship(polymorphicTypes, descriptions, outRelationship),
-    )
+      queryFromRelationship(
+        polymorphicTypes,
+        describeRelationship(descriptions, outRelationship),
+      ),
+    ),
   );
   inRelationship && assert.equal(
     inSQL,
     sqlStringFromQuery(
-      queryFromRelationship(polymorphicTypes, descriptions, inRelationship)
-    )
+      queryFromRelationship(
+        polymorphicTypes,
+        describeRelationship(descriptions, inRelationship),
+      ),
+    ),
   );
 }
 
@@ -60,7 +67,7 @@ describe('sqlQueryFromRelationship', () => {
 
   it('generates SQL queries for fixture schema', () => {
     const polymorphicTypes = {};
-    const segmentDescriptionsBySignature = keyMap(
+    const descriptions = keyMap(
       segmentDescriptionsFromPairs(
         segmentPairsFromRelationships(relationships),
         {},
@@ -71,8 +78,7 @@ describe('sqlQueryFromRelationship', () => {
       relationship => sqlStringFromQuery(
         queryFromRelationship(
           polymorphicTypes,
-          segmentDescriptionsBySignature,
-          relationship
+          describeRelationship(descriptions, relationship),
         )
       )
     );

@@ -87,6 +87,7 @@ function mergePairs(polymorphicPair, homomorphicPair) {
 
   if (homomorphicPair.in != null) {
     if (polymorphicPair.in == null) {
+      invariant(polymorphicPair.out != null);
       mergedPair.in = {
         fromType: polymorphicPair.out.toType,
         toType: polymorphicPair.out.fromType,
@@ -113,6 +114,7 @@ function mergePairs(polymorphicPair, homomorphicPair) {
 
   if (homomorphicPair.out != null) {
     if (polymorphicPair.out == null) {
+      invariant(polymorphicPair.in != null);
       mergedPair.out = {
         fromType: polymorphicPair.in.toType,
         toType: polymorphicPair.in.fromType,

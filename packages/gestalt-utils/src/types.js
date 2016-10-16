@@ -197,6 +197,12 @@ export type Relationship = {
   path: RelationshipSegment[],
 };
 
+export type DescribedRelationship = {
+  fieldName: string,
+  cardinality: 'singular' | 'plural',
+  path: DescribedSegment[],
+};
+
 export type RelationshipSegment = {
   fromType: string,
   toType: string,
@@ -204,6 +210,16 @@ export type RelationshipSegment = {
   direction: 'in' | 'out',
   cardinality: 'singular' | 'plural',
   nonNull: boolean,
+};
+
+export type DescribedSegment = {
+  fromType: string,
+  toType: string,
+  label: string,
+  direction: 'in' | 'out',
+  cardinality: 'singular' | 'plural',
+  nonNull: boolean,
+  description: RelationshipSegmentDescription,
 };
 
 export type RelationshipSegmentPair = {
@@ -237,7 +253,7 @@ export type JoinTableDescriptionSide = {
   column: string,
 } | {
   isPolymorphic: true,
-  table: string,
+  tables: string[],
   column: string,
   typeColumn: string,
   typeColumnEnum: string,
@@ -254,7 +270,7 @@ export type ForeignKeyDescription = {
   isPolymorphic: true,
   direction: 'in' | 'out',
   table: string,
-  referencedTable: string,
+  referencedTables: string[],
   column: string,
   typeColumn: string,
   typeColumnEnum: string,
@@ -262,8 +278,9 @@ export type ForeignKeyDescription = {
   unique: boolean,
 };
 
-export type RelationshipSegmentDescriptionMap =
-  {[key: string]: RelationshipSegmentDescription};
+export type RelationshipSegmentDescriptionMap = {
+  [key: string]: RelationshipSegmentDescription
+};
 
 export type TypeMap = {[typeName: string]: GraphQLType};
 

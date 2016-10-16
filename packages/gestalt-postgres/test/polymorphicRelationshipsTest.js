@@ -10,7 +10,8 @@ import collapseRelationshipSegments from '../src/collapseRelationshipSegments';
 import generateDatabaseInterface, {segmentPairsFromRelationships,
   segmentDescriptionsFromPairs, mapSegmentDescriptionsBySignature} from
   '../src/generateDatabaseInterface';
-import {sqlStringFromQuery, queryFromRelationship} from
+import {sqlStringFromQuery} from '../src/sqlStringFromQuery';
+import {queryFromRelationship, describeRelationship} from
   '../src/generateRelationshipResolver';
 import generateDatabaseSchemaMigration from
   '../src/generateDatabaseSchemaMigration';
@@ -92,18 +93,20 @@ describe('polymorphic relationships', () => {
             return sqlStringFromQuery(
               queryFromRelationship(
                 polymorphicTypes,
-                segmentDescriptionsBySignature,
-                relationship,
+                describeRelationship(
+                  segmentDescriptionsBySignature,
+                  relationship,
+                ),
                 polyType && polyType[0],
               )
             );
           }
         );
 
-        // sqlQueries.forEach((query, i) => {
-        //   logQuery(query, cyan);
-        //   logQuery(expectedSQLQueries[i], magenta);
-        // });
+        sqlQueries.forEach((query, i) => {
+          logQuery(query, cyan);
+          logQuery(expectedSQLQueries[i], magenta);
+        });
 
         assert.deepEqual(
           sqlQueries,

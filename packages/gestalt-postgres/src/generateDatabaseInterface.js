@@ -282,8 +282,8 @@ export function segmentDescriptionsFromPairs(
   return pairs.map(pair => {
     if (segmentPairRequiresJoinTable(pair, polymorphicTypes)) {
       return {
-        pair,
         type: 'join',
+        pair,
         storage: joinTableDescriptionFromRelationshipSegmentPair(
           pair,
           polymorphicTypes,
@@ -291,8 +291,8 @@ export function segmentDescriptionsFromPairs(
       };
     } else {
       return {
-        pair,
         type: 'foreignKey',
+        pair,
         storage: foreignKeyDescriptionFromRelationshipSegmentPair(
           pair,
           polymorphicTypes,
@@ -300,7 +300,6 @@ export function segmentDescriptionsFromPairs(
       };
     }
   });
-
 }
 
 export function pairingSignatureFromRelationshipSegment(
@@ -376,7 +375,7 @@ export function joinTableDescriptionFromRelationshipSegmentPair(
       leftPolymorphic
       ? {
         isPolymorphic: true,
-        table: tableNameFromTypeName(left),
+        tables: polymorphicTypes[left].map(tableNameFromTypeName),
         column: `${snake(left)}_id`,
         typeColumn: `${snake(left)}_type`,
         typeColumnEnum: `_${snake(left)}_type`,
@@ -391,7 +390,7 @@ export function joinTableDescriptionFromRelationshipSegmentPair(
       rightPolymorphic
       ? {
         isPolymorphic: true,
-        table: tableNameFromTypeName(right),
+        tables: polymorphicTypes[right].map(tableNameFromTypeName),
         column: `${snake(label)}_${snake(right)}_id`,
         typeColumn: `${snake(label)}_${snake(right)}_type`,
         typeColumnEnum: `_${snake(right)}_type`,
@@ -559,7 +558,6 @@ export function foreignKeyDescriptionFromRelationshipSegmentPair(
       (pair.in != null && pair.in.nonNull)
     ),
     table: tableNameFromTypeName(referencingType),
-    referencedTable: tableNameFromTypeName(referencedType),
     column: (
       (direction === 'in')
       ? `${snake(label)}_${snake(referencedType)}_id`
@@ -582,11 +580,14 @@ export function foreignKeyDescriptionFromRelationshipSegmentPair(
         pair.out != null &&
         pair.out.cardinality === 'singular'
       ),
+      referencedTables:
+        polymorphicTypes[referencedType].map(tableNameFromTypeName),
       ...description,
     };
   } else {
     return {
       isPolymorphic: false,
+      referencedTable: tableNameFromTypeName(referencedType),
       ...description,
     };
   }

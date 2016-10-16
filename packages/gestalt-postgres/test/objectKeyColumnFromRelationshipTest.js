@@ -5,7 +5,7 @@ import {keyMap} from 'gestalt-utils';
 import {relationshipFromPathString as r} from 'gestalt-graphql';
 import {segmentPairsFromRelationships, segmentDescriptionsFromPairs} from
   '../src/generateDatabaseInterface';
-import {objectKeyColumnsFromRelationship} from
+import {objectKeyColumnsFromRelationship, describeRelationship} from
   '../src/generateRelationshipResolver';
 
 import type {Relationship} from 'gestalt-utils';
@@ -26,12 +26,16 @@ function testKeyColumns(
     segment => segment.pair.signature,
   );
   assert.equal(
-    objectKeyColumnsFromRelationship(descriptions, inRelationship).keyColumn,
-    inKeyColumn
+    objectKeyColumnsFromRelationship(
+      describeRelationship(descriptions, inRelationship)
+    ).keyColumn,
+    inKeyColumn,
   );
   assert.equal(
-    objectKeyColumnsFromRelationship(descriptions, outRelationship).keyColumn,
-    outKeyColumn
+    objectKeyColumnsFromRelationship(
+      describeRelationship(descriptions, outRelationship)
+    ).keyColumn,
+    outKeyColumn,
   );
 }
 
