@@ -1,4 +1,6 @@
 // @flow
+
+export {default as adjacentPairs} from './adjacentPairs';
 export {default as baseType} from './baseType';
 export {default as camelizeKeys} from './camelizeKeys';
 export {default as compact} from './compact';

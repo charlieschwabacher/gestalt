@@ -225,7 +225,6 @@ export function resolvedKeyColumnFromRelationship(
 
 // Work backwards along the path applying joins, stopping before the first
 // segment.
-
 export function queryFromRelationship(
   polymorphicTypes: PolymorphicTypeMap,
   relationship: DescribedRelationship,
@@ -258,7 +257,7 @@ export function queryFromRelationship(
       selection = `${table}.*`;
 
       // TODO: in the case of interfaces, we may be able to continue here, but
-      // at the moment don't allow additional joins after a polymorphic type
+      // at the moment we don't allow additional joins after a polymorphic type
       path = [];
 
     // if we have a join table, we need to select from the join table, and join
@@ -283,7 +282,7 @@ export function queryFromRelationship(
     }
   }
 
-  joins.push(...joinsFromPath(path));
+  joins.push(...joinsFromPath(path, finalSegment));
 
   joins = aliasJoins(table, compactJoins(joins));
 
@@ -456,50 +455,59 @@ function conditionsFromSegment(
 }
 
 function joinsFromPath(
-  segments: DescribedSegment[]
+  segments: DescribedSegment[],
+  finalSegment: DescribedSegment,
 ): Join[] {
   if (segments.length === 0) {
     return [];
   }
 
-  // console.log('JOINS FROM PATH');
-  // console.log('PATH');
-  // console.log(JSON.stringify(segments, null, 2));
-  // console.log('JOINS FROM SEGMENTS');
-  // console.log(JSON.stringify(joinsFromSegments(segments.slice(1)), null, 2));
-  // console.log('JOINS FROM INITIAL SEGMENT');
-  // console.log(JSON.stringify(joinsFromInitialSegment(segments[0]), null, 2));
+  console.log('JOINS FROM PATH');
+  console.log('FINAL SEGMENT');
+  console.log(JSON.stringify(finalSegment, null, 2));
+  console.log('PATH');
+  console.log(JSON.stringify(segments, null, 2));
+  console.log('JOINS FROM SEGMENTS');
+  console.log(JSON.stringify(joinsFromSegments(segments.slice(1), finalSegment), null, 2));
+  console.log('JOINS FROM INITIAL SEGMENT');
+  console.log(JSON.stringify(joinsFromInitialSegment(segments[0], segments[1] || finalSegment), null, 2));
 
-  return joinsFromSegments(segments.slice(1)).concat(
-    joinsFromInitialSegment(segments[0]),
+  return joinsFromSegments(segments.slice(1), finalSegment).concat(
+    joinsFromInitialSegment(segments[0], segments[1] || finalSegment),
   );
 }
 
 function joinsFromSegments(
-  segments: DescribedSegment[]
+  segments: DescribedSegment[],
+  finalSegment: DescribedSegment,
 ): Join[] {
   const joins = [];
-
+  let previousSegment = finalSegment;
   for (let i = segments.length - 1; i >= 0; i--) {
     const segment = segments[i];
-    joins.push(...joinsFromSegment(segment));
+    joins.push(...joinsFromSegment(segment, previousSegment));
+    previousSegment = segment;
   }
 
   return joins;
 }
 
-function joinsFromSegment(segment: DescribedSegment): Join[] {
+function joinsFromSegment(
+  segment: DescribedSegment,
+  previousSegment: DescribedSegment,
+): Join[] {
   if (segment.description.type === 'foreignKey') {
-    return joinsFromForeignKeySegment(segment, segment.description.storage);
+    return joinsFromForeignKeySegment(segment);
   } else {
-    return joinsFromJoinTableSegment(segment, segment.description.storage);
+    return joinsFromJoinTableSegment(segment, previousSegment);
   }
 }
 
 function joinsFromForeignKeySegment(
   segment: DescribedSegment,
-  storage: ForeignKeyDescription,
 ): Join[] {
+  invariant(segment.description.type === 'foreignKey');
+  const {storage} = segment.description;
   const {isPolymorphic, direction, table, column} = storage;
   const referencedTable = (
     storage.isPolymorphic
@@ -544,12 +552,14 @@ function joinsFromForeignKeySegment(
 
 function joinsFromJoinTableSegment(
   segment: DescribedSegment,
-  storage: JoinTableDescription,
+  previousSegment: DescribedSegment,
 ): Join[] {
-  const toTableName = tableNameFromTypeName(segment.toType);
+  invariant(segment.description.type === 'join');
+  const {storage} = segment.description;
   const {name, left, right} = storage;
   const leftTable = left.isPolymorphic ? '@@@@' : left.table;
   const rightTable = right.isPolymorphic ? '@@@@' : right.table;
+  const toTableName = tableNameFromTypeName(segment.toType);
 
   // console.log('JOINS FROM JOIN TABLE SEGMENT', {name, leftTable, rightTable});
 
@@ -615,56 +625,70 @@ function joinsFromJoinTableSegment(
       });
     }
 
-    const leftConditions = [{
-      left: {
-        type: 'reference',
-        table: leftTable,
-        column: 'id',
-      },
-      right: {
-        type: 'reference',
-        table: name,
-        column: left.column,
-      },
-    }];
-
-    if (storage.left.isPolymorphic) {
-      leftConditions.push({
-        left: {
-          type: 'reference',
-          table: leftTable,
-          column: '@@@@',
-        },
-        right: {
-          type: 'reference',
-          table: name,
-          column: storage.left.typeColumn,
-        },
-      });
-    }
+    // const leftConditions = [{
+    //   left: {
+    //     type: 'reference',
+    //     table: leftTable,
+    //     column: 'id',
+    //   },
+    //   right: {
+    //     type: 'reference',
+    //     table: name,
+    //     column: left.column,
+    //   },
+    // }];
+    //
+    // if (storage.left.isPolymorphic) {
+    //   leftConditions.push({
+    //     left: {
+    //       type: 'reference',
+    //       table: leftTable,
+    //       column: '@@@@',
+    //     },
+    //     right: {
+    //       type: 'reference',
+    //       table: name,
+    //       column: storage.left.typeColumn,
+    //     },
+    //   });
+    // }
 
     return [
       {
         table: name,
         conditions: rightConditions,
       },
-      {
-        table: leftTable,
-        conditions: leftConditions,
-      },
+      // {
+      //   table: leftTable,
+      //   conditions: leftConditions,
+      // },
     ];
   }
 }
 
 function joinsFromInitialSegment(
   segment: DescribedSegment,
+  previousSegment: DescribedSegment,
 ): Join[] {
-  const {description} = segment;
+  const description = segment.description;
+  const previousDescription = previousSegment.description;
 
   if (description.type === 'join') {
     const {name, left, right} = description.storage;
     const side = segment.direction === 'in' ? left : right;
-    const table = side.isPolymorphic ? '@@@@' : side.table;
+
+    const table = (
+      side.isPolymorphic
+      ? previousDescription.storage.name
+      : side.table
+    );
+    const previousSide = (
+      previousDescription.storage[
+        previousSegment.direction === 'in' ? 'right' : 'left'
+      ]
+    );
+    const column = side.isPolymorphic ? previousSide.column : 'id';
+    const typeColumn = side.isPolymorphic ? previousSide.typeColumn : '';
 
     const conditions = [{
       left: {
@@ -675,7 +699,7 @@ function joinsFromInitialSegment(
       right: {
         type: 'reference',
         table,
-        column: 'id',
+        column,
       },
     }];
 
@@ -689,7 +713,7 @@ function joinsFromInitialSegment(
         right: {
           type: 'reference',
           table,
-          column: '@@@@',
+          column: typeColumn,
         },
       });
     }
