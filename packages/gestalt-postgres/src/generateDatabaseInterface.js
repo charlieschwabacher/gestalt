@@ -512,15 +512,15 @@ function foreignKeyDirection(
   referencingType: string,
   referencedType: string,
 } {
-  if (pair.in == null) {
-    invariant(pair.out);
+  if (pair.in == null || pair.out == null) {
+    const existing = pair.in || pair.out;
+    invariant(existing);
     return {
-      direction: 'in',
-      referencingType: pair.out.fromType,
-      referencedType: pair.out.toType,
+      direction: existing.direction === 'in' ? 'out' : 'in',
+      referencingType: existing.fromType,
+      referencedType: existing.toType,
     };
   } else if (
-    (pair.out == null) ||
     (pair.in.cardinality === 'plural') ||
     (pair.out.nonNull && !pair.in.nonNull) ||
     (
