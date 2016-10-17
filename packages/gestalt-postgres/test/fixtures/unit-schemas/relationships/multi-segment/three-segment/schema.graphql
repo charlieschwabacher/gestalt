@@ -1,0 +1,14 @@
+type User implements Node {
+  id: ID!
+  feed: Comment @relationship(path: "=FOLLOWED=>Page=MADE=>Post=INSPIRED=>")
+}
+type Page implements Node {
+  id: ID!
+}
+type Post implements Node {
+  id: ID!
+}
+type Comment implements Node {
+  id: ID!
+  audience: User @relationship(path: "<-INSPIRED-Post<-MADE-Page<=FOLLOWED=")
+}

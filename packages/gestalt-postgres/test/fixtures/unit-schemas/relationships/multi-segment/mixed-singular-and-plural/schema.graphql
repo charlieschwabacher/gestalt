@@ -1,0 +1,11 @@
+type User implements Node {
+  id: ID!
+  images: Image @relationship(path: "-CREATED->PROFILE=UPLOADED=>")
+}
+type Profile implements Node {
+  id: ID!
+}
+type Image implements Node {
+  id: ID!
+  owner: User @relationship(path: "<-UPLOADED-PROFILE<-CREATED-")
+}

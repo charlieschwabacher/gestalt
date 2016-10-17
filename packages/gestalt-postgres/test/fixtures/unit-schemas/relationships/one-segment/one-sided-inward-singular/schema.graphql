@@ -1,0 +1,7 @@
+type User implements Node {
+  id: ID!
+}
+type Post implements Node {
+  id: ID!
+  author: User @relationship(path: "<-AUTHORED-")
+}

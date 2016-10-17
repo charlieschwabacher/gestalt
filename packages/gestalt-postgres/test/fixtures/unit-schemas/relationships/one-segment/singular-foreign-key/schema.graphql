@@ -1,0 +1,8 @@
+type User implements Node {
+  id: ID!
+  profile: Profile @relationship(path: "-CREATED->")
+}
+type Profile implements Node {
+  id: ID!
+  user: User @relationship(path: "<-CREATED-")
+}

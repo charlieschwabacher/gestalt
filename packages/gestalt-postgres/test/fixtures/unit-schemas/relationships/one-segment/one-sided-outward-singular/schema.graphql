@@ -1,0 +1,7 @@
+type User implements Node {
+  id: ID!
+  profile: Post @relationship(path: "-PINNED->")
+}
+type Post implements Node {
+  id: ID!
+}

@@ -1,0 +1,5 @@
+type Human implements Node {
+  id: ID!
+  grandfather: Human @relationship(path: "<-RAISED-Human<-RAISED-")
+  grandchildren: Human @relationship(path: "=RAISED=>Human=RAISED=>")
+}

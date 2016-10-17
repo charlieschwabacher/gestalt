@@ -1,0 +1,11 @@
+type User implements Node {
+  id: ID!
+  image: Image @relationship(path: "-CREATED->Profile<-DEPICTED-")
+}
+type Profile implements Node {
+  id: ID!
+}
+type Image implements Node {
+  id: ID!
+  user: User @relationship(path: "-DEPICTED->Profile<-CREATED-")
+}

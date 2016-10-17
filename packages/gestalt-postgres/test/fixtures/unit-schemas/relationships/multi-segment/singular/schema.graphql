@@ -1,0 +1,11 @@
+type User implements Node {
+  id: ID!
+  theme: Theme @relationship(path: "-CREATED->Profile-SELECTED->")
+}
+type Profile implements Node {
+  id: ID!
+}
+type Theme implements Node {
+  id: ID!
+  user: User @relationship(path: "<-SELECTED-Profile<-CREATED-")
+}

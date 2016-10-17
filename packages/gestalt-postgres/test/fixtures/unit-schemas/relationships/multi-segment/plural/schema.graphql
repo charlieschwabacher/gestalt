@@ -1,0 +1,8 @@
+type User implements Node {
+  id: ID!
+  feed: Post @relationship(path: "=FOLLOWED=>User=AUTHORED=>")
+}
+type Post implements Node {
+  id: ID!
+  audience: User @relationship(path: "<=AUTHORED=User<=FOLLOWED=")
+}
