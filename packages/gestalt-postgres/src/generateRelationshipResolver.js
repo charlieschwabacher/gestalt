@@ -71,7 +71,6 @@ export function generateRelationshipLoaders(
       generateRelationshipLoader(
         db,
         polymorphicTypes,
-        segmentDescriptionMap,
         describeRelationship(segmentDescriptionMap, relationship),
       ),
     );
