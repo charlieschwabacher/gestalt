@@ -1,22 +1,24 @@
 WORKING NOTES:
 
-  - Proposed query from relationship algorithm
-    - look at the to type of the final segment
-      - if it is homomorphic
-        - select from the table for the to type of the final segment
-        - use all segments as path
-      - if it is polymorphic
-        - if its storage uses a foreign key
-          - select from the table based on the type column on the parent object
-          - do not do any joins
-        - if its storage uses a join table
-          - select from the join table
-          - left join the table for each member of the polymorphic type
-          - use everything but the final segment as path
-    - take each pair of adjacent segments, starting at the end of path
-      - generate a join for each pair
-    - take the final segment, join
-
+  - Proposed query from relationship algorithm:
+    - this should clean up the awful collapse joins and '@@@@' placeholder
+      segments we do now
+    - algorithm:
+      - look at the to type of the final segment
+        - if it is homomorphic
+          - select from the table for the to type of the final segment
+          - use all segments as path
+        - if it is polymorphic
+          - if its storage uses a foreign key
+            - select from the table based on the type column on the parent object
+            - do not do any joins
+          - if its storage uses a join table
+            - select from the join table
+            - left join the table for each member of the polymorphic type
+            - use everything but the final segment as path
+      - take each pair of adjacent segments, starting at the end of path
+        - generate a join for each pair based on the two descriptions
+      - generate a condition from the final pair
 
   - we need to calculate query obj later once we have access to type (it becomes
     an argument to queryFromRelationship)

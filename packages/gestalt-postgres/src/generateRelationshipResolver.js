@@ -367,7 +367,7 @@ function conditionsFromSegment(
     const {table, column, direction} = description.storage;
     const referencedTable =
       description.storage.isPolymorphic
-      ? '!#@$'
+      ? '@@@@'
       : description.storage.referencedTable;
 
     if (segment.direction === direction) {
@@ -476,7 +476,7 @@ function joinsFromForeignKeySegment(
   storage: ForeignKeyDescription,
 ): Join[] {
   const {isPolymorphic, direction, table, column} = storage;
-  const referencedTable = storage.isPolymorphic ? '#!@$' : storage.referencedTable;
+  const referencedTable = storage.isPolymorphic ? '@@@@' : storage.referencedTable;
   // console.log('JOINS FROM FOREIGN KEY SEGMENT', {direction, table, referencedTable, column});
 
   if (segment.direction === direction) {
@@ -520,8 +520,8 @@ function joinsFromJoinTableSegment(
 ): Join[] {
   const toTableName = tableNameFromTypeName(segment.toType);
   const {name, left, right} = storage;
-  const leftTable = left.isPolymorphic ? '#!@$' : left.table;
-  const rightTable = right.isPolymorphic ? '#!@$' : right.table;
+  const leftTable = left.isPolymorphic ? '@@@@' : left.table;
+  const rightTable = right.isPolymorphic ? '@@@@' : right.table;
 
   // console.log('JOINS FROM JOIN TABLE SEGMENT', {name, leftTable, rightTable});
 
@@ -582,7 +582,7 @@ function joinsFromJoinTableSegment(
         right: {
           type: 'reference',
           table: toTableName,
-          column: '__type',
+          column: '@@@@',
         },
       });
     }
@@ -605,7 +605,7 @@ function joinsFromJoinTableSegment(
         left: {
           type: 'reference',
           table: leftTable,
-          column: '__type',
+          column: '@@@@',
         },
         right: {
           type: 'reference',
@@ -635,8 +635,8 @@ function joinsFromInitialSegment(
 
   if (description.type === 'join') {
     const {name, left, right} = description.storage;
-    const leftTable = left.isPolymorphic ? '!#$@' : left.table;
-    const rightTable = right.isPolymorphic ? '!#@$' : right.table;
+    const leftTable = left.isPolymorphic ? '@@@@' : left.table;
+    const rightTable = right.isPolymorphic ? '@@@@' : right.table;
 
     if (segment.direction === 'in') {
       const conditions = [{
@@ -662,7 +662,7 @@ function joinsFromInitialSegment(
           right: {
             type: 'reference',
             table: leftTable,
-            column: '__type',
+            column: '@@@@',
           },
         });
       }
@@ -695,7 +695,7 @@ function joinsFromInitialSegment(
           right: {
             type: 'reference',
             table: rightTable,
-            column: '#@!$',
+            column: '@@@@',
           },
         });
       }
@@ -720,7 +720,7 @@ function joinsFromInitialSegment(
 function compactJoins(joins: Join[]): Join[] {
   const compactJoins = [];
 
-  console.log('COMPACTING JOINS', joins.map(({table}) => table));
+  // console.log('COMPACTING JOINS', joins.map(({table}) => table));
 
   for (let i = 0; i < joins.length; i++) {
     const join = joins[i];
@@ -755,12 +755,12 @@ function compactJoins(joins: Join[]): Join[] {
         })
       });
       i += 1;
-    } else {
+    } else if (next != null || join.table !== '@@@@') {
       compactJoins.push(join);
     }
   }
 
-  console.log('COMPACTED', compactJoins.map(({table}) => table));
+  // console.log('COMPACTED', compactJoins.map(({table}) => table));
 
   return compactJoins;
 }
