@@ -501,7 +501,6 @@ export function indicesFromJoinTableDescription(
 // singular + singular:
 //   - if one segment is polymorphic and the other is homomorphic, add the
 //     column to the homorphic type
-//   - if one segment is non null, add the column to its fromType
 //   - otherwise add the column to the toType of the out segment
 
 function foreignKeyDirection(
@@ -522,11 +521,7 @@ function foreignKeyDirection(
     };
   } else if (
     (pair.in.cardinality === 'plural') ||
-    (pair.out.nonNull && !pair.in.nonNull) ||
-    (
-      polymorphicTypes[pair.in.toType] == null &&
-      polymorphicTypes[pair.out.toType] != null
-    )
+    (polymorphicTypes[pair.out.toType] != null)
   ) {
     return {
       direction: 'in',

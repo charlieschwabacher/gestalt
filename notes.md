@@ -36,8 +36,6 @@ WORKING NOTES:
 
 TODO:
   - DO NOT need type in joins / indices because ids are globally unique
-  - Required fields should NOT effect which side of a relationship gets a
-    foreign key (they do now in one to one relationships)
   - allow sorting of connections on multiple columns
   - allow filtering connections
   - better batching on connections
