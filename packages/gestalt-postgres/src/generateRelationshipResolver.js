@@ -625,43 +625,43 @@ function joinsFromJoinTableSegment(
       });
     }
 
-    // const leftConditions = [{
-    //   left: {
-    //     type: 'reference',
-    //     table: leftTable,
-    //     column: 'id',
-    //   },
-    //   right: {
-    //     type: 'reference',
-    //     table: name,
-    //     column: left.column,
-    //   },
-    // }];
-    //
-    // if (storage.left.isPolymorphic) {
-    //   leftConditions.push({
-    //     left: {
-    //       type: 'reference',
-    //       table: leftTable,
-    //       column: '@@@@',
-    //     },
-    //     right: {
-    //       type: 'reference',
-    //       table: name,
-    //       column: storage.left.typeColumn,
-    //     },
-    //   });
-    // }
+    const leftConditions = [{
+      left: {
+        type: 'reference',
+        table: leftTable,
+        column: 'id',
+      },
+      right: {
+        type: 'reference',
+        table: name,
+        column: left.column,
+      },
+    }];
+
+    if (storage.left.isPolymorphic) {
+      leftConditions.push({
+        left: {
+          type: 'reference',
+          table: leftTable,
+          column: '@@@@',
+        },
+        right: {
+          type: 'reference',
+          table: name,
+          column: storage.left.typeColumn,
+        },
+      });
+    }
 
     return [
       {
         table: name,
         conditions: rightConditions,
       },
-      // {
-      //   table: leftTable,
-      //   conditions: leftConditions,
-      // },
+      {
+        table: leftTable,
+        conditions: leftConditions,
+      },
     ];
   }
 }
