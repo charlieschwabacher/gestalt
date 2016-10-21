@@ -212,7 +212,13 @@ export type RelationshipSegment = {
   nonNull: boolean,
 };
 
-export type DescribedSegment = RelationshipSegment & {
+export type DescribedSegment = {
+  fromType: string,
+  toType: string,
+  label: string,
+  direction: 'in' | 'out',
+  cardinality: 'singular' | 'plural',
+  nonNull: boolean,
   description: RelationshipSegmentDescription,
 };
 

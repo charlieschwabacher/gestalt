@@ -78,7 +78,7 @@ testPaths.forEach(path => {
       );
     });
 
-    it('generates sql queries', async () => {
+    describe('generates sql query for', async () => {
       // generate sql queries for relationship resolution
       const {relationships, polymorphicTypes} =
         databaseInfoFromAST(graphQLSchema);
@@ -90,10 +90,10 @@ testPaths.forEach(path => {
       const segmentDescriptionsBySignature =
         mapSegmentDescriptionsBySignature(pairMapping, segmentDescriptions);
 
-      const sqlQueries = relationships.map(
-        relationship => {
+      relationships.forEach((relationship, i) => {
+        it(relationship.fieldName, () => {
           const polyType = polymorphicTypes[relationship.path[0].toType];
-          return sqlStringFromQuery(
+          const sql = sqlStringFromQuery(
             queryFromRelationship(
               polymorphicTypes,
               describeRelationship(
@@ -103,18 +103,13 @@ testPaths.forEach(path => {
               polyType && polyType[0],
             )
           );
-        }
-      );
 
-      sqlQueries.forEach((query, i) => {
-        logQuery(query, cyan);
-        logQuery(expectedSQLQueries[i], magenta);
+          logQuery(sql, cyan);
+          logQuery(expectedSQLQueries[i], magenta);
+
+          assert.equal(sql, expectedSQLQueries[i]);
+        });
       });
-
-      assert.deepEqual(
-        sqlQueries,
-        expectedSQLQueries,
-      );
     });
   });
 });
