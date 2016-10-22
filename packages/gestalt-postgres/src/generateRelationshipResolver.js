@@ -282,7 +282,7 @@ export function queryFromRelationship(
         side.typeColumn,
       ));
       column = oppositeSide.column;
-      typeColumn = oppositeSide.typeColumn;
+      typeColumn = oppositeSide.isPolymorphic ? oppositeSide.typeColumn : null;
       path = relationship.path.slice(0, relationship.path.length - 1);
     }
   }
@@ -343,7 +343,7 @@ function joinsFromPath(
       }];
 
       if (side.isPolymorphic) {
-        // invariant(lastTypeColumn);
+        invariant(lastTypeColumn);
         conditions.push({
           left: {
             type: 'reference',
@@ -373,25 +373,18 @@ function joinsFromPath(
       }
 
       const storage: ForeignKeyDescription = description.storage;
-      const {table, referencedTable, column, direction, isPolymorphic} = storage;
+      const {table, column, direction, isPolymorphic} = storage;
 
       // if a foreign key is followed by a join table referencing the same
       // table, we can skip it and join directly to the join table
       const nextSegment = segments[i - 1];
       const nextDescription = nextSegment && nextSegment.description;
-      const nextType = nextDescription && nextDescription.type;
-      const nextStorage = nextDescription && nextDescription.storage;
 
       if (direction === segment.direction) {
-
+        const referencedTable = storage.isPolymorphic ? null : storage.referencedTable;
         // make sure this segment should be included
-        if (
-          nextType === 'foreignKey' || (
-            nextStorage.left.table !== referencedTable &&
-            nextStorage.right.table !== referencedTable
-          )
-        ) {
-
+        if (!canSkipJoinToTable(referencedTable, nextDescription)) {
+          invariant(referencedTable);
           const conditions = [{
             left: {
               type: 'reference',
@@ -411,12 +404,7 @@ function joinsFromPath(
       } else {
 
         // make sure this segment should be included
-        if (
-          nextType === 'foreignKey' || (
-            nextStorage.left.table !== table &&
-            nextStorage.right.table !== table
-          )
-        ) {
+        if (!canSkipJoinToTable(table, nextDescription)) {
 
           const conditions = [{
             left: {
@@ -458,6 +446,22 @@ function joinsFromPath(
   }
 
   return joins;
+}
+
+function canSkipJoinToTable(
+  table: ?string,
+  nextDescription: RelationshipSegmentDescription
+): boolean {
+  if (nextDescription.type !== 'join') {
+    return false;
+  }
+
+  const {left, right} = nextDescription.storage;
+
+  return (
+    (!left.isPolymorphic && left.table === table) ||
+    (!right.isPolymorphic && right.table === table)
+  );
 }
 
 function leftJoinsFromTargetTypes(
@@ -525,8 +529,9 @@ function conditionsFromSegment(
   const value = 'ANY ($1)';
 
   if (description.type === 'foreignKey') {
-    const {table, column, direction} = description.storage;
-    const referencedTable = description.storage.referencedTable;
+    const storage: ForeignKeyDescription = description.storage;
+    const {table, column, direction} = storage;
+    const referencedTable = storage.isPolymorphic ? null : storage.referencedTable;
 
     if (segment.direction === direction) {
 
@@ -555,10 +560,13 @@ function conditionsFromSegment(
         } else {
           const previousDescription = previousSegment.description;
           if (previousDescription.type === 'join') {
-            const {direction, storage} = previousDescription;
+            const {storage} = previousDescription;
+            const {direction} = previousSegment;
             const side = storage[direction === 'in' ? 'right' : 'left'];
             fromTable = storage.name;
             column = side.column;
+
+            invariant(side.isPolymorphic);
 
             conditions.push({
               table: fromTable,
@@ -572,6 +580,8 @@ function conditionsFromSegment(
           }
         }
       }
+
+      invariant(fromTable);
 
       conditions.push({
         table: fromTable,
