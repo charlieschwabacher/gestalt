@@ -236,6 +236,7 @@ export function queryFromRelationship(
   let selection;
   let path;
   let column;
+  let typeColumn;
   let joins = [];
   const conditions = [];
 
@@ -282,12 +283,13 @@ export function queryFromRelationship(
         side.typeColumn,
       ));
       column = oppositeSide.column;
+      typeColumn = oppositeSide.typeColumn;
       path = relationship.path.slice(0, relationship.path.length - 1);
     }
   }
 
   console.log('PATH', JSON.stringify(path, null, 2));
-  joins.push(...joinsFromPath(path, table, column));
+  joins.push(...joinsFromPath(path, table, column, typeColumn));
   console.log('JOINS', joins);
 
   joins = aliasJoins(table, joins);
@@ -431,7 +433,6 @@ function joinsFromPath(
 
       lastTable = table;
       lastColumn = column;
-      lastTypeColumn = typeColumn;
     }
   }
 
