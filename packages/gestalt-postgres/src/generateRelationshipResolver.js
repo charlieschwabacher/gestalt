@@ -235,6 +235,7 @@ export function queryFromRelationship(
   let table;
   let selection;
   let path;
+  let column;
   let joins = [];
   const conditions = [];
 
@@ -243,6 +244,7 @@ export function queryFromRelationship(
   const targetTypes = polymorphicTypes[finalSegment.toType];
   if (targetTypes == null) {
     table = tableNameFromTypeName(finalSegment.toType);
+    column = 'id';
     selection = `${table}.*`;
     path = relationship.path;
   } else {
@@ -255,6 +257,7 @@ export function queryFromRelationship(
       invariant(type, 'type information is needed to generate this query');
       table = tableNameFromTypeName(type);
       selection = `${table}.*`;
+      column = 'id';
 
       // TODO: in the case of interfaces, we may be able to continue here, but
       // at the moment we don't allow additional joins after a polymorphic type
@@ -264,10 +267,10 @@ export function queryFromRelationship(
     // the tables for each member of the polymorphic type
     } else {
       const {storage} = description;
-      const side = storage[finalSegment.direction === 'out' ? 'right' : 'left'];
+      const {left, right} = storage;
+      const side = finalSegment.direction === 'out' ? right : left;
+      const oppositeSide = finalSegment.direction === 'out' ? left : right;
       invariant(side.isPolymorphic);
-
-      const {column, typeColumn} = side;
 
       table = storage.name;
       selection = targetTables.map(tableName => `${tableName}.*`).join(', ');
@@ -275,17 +278,17 @@ export function queryFromRelationship(
         targetTypes,
         targetTables,
         table,
-        column,
-        typeColumn,
+        side.column,
+        side.typeColumn,
       ));
+      column = oppositeSide.column;
       path = relationship.path.slice(0, relationship.path.length - 1);
     }
   }
 
-  console.log("PATH", path);
-  console.log(path[0].description.storage);
-  joins.push(...joinsFromPath(path, finalSegment));
-  console.log("JOINS", joins);
+  console.log('PATH', JSON.stringify(path, null, 2));
+  joins.push(...joinsFromPath(path, table, column));
+  console.log('JOINS', joins);
 
   joins = aliasJoins(table, joins);
 
@@ -304,185 +307,135 @@ export function queryFromRelationship(
 
 function joinsFromPath(
   segments: DescribedSegment[],
-  finalSegment: DescribedSegment,
+  table: string,
+  column: string,
+  typeColumn: ?string,
 ): Join[] {
   if (segments.length === 0) {
     return [];
   }
-  const reversedSegments = segments.slice(0).reverse();
+
   const joins = [];
+  let lastTable = table;
+  let lastColumn = column;
+  let lastTypeColumn = typeColumn;
 
-  // const firstSegment = reversedSegments[0];
-  // const firstDescription = firstSegment.description;
-  //
-  // console.log('FIRST DESCRIPTION', firstDescription);
-  //
-  // if (firstDescription.type === 'join') {
-  //   const firstSide = firstDescription.storage[
-  //     firstSegment.direction === 'in' ? 'left' : 'right'
-  //   ];
-  //   joins.push({
-  //     table: firstDescription.storage.name,
-  //     conditions: [{
-  //       left: {
-  //         type: 'reference',
-  //         table: firstDescription.storage.name,
-  //         column: firstSide.column,
-  //       },
-  //       right: {
-  //         type: 'reference',
-  //         table: firstSide.table,
-  //         column: 'id',
-  //       },
-  //     }],
-  //   });
-  // } else {
-  //   // if (firstSegment.direction === 'in') {
-  //   //
-  //   // } else {
-  //   //   joins.push({
-  //   //     table: firstDescription.storage.referencedTable,
-  //   //     conditions: [{
-  //   //       left: {
-  //   //         type: 'reference',
-  //   //         table: firstDescription.storage.referencedTable,
-  //   //         column: 'id',
-  //   //       },
-  //   //       right: {
-  //   //         type: 'reference',
-  //   //         table: firstDescription.storage.table,
-  //   //         column: firstDescription.storage.column,
-  //   //       },
-  //   //     }],
-  //   //   });
-  //   // }
-  // }
+  for (let i = segments.length - 1; i >= 0; i--) {
+    const segment = segments[i];
+    const {direction, description} = segment;
 
-  joins.push(...adjacentPairs(reversedSegments).map(([previousSegment, segment]) => {
-    const description = segment.description;
-    const previousDescription = previousSegment.description;
+    console.log('RUNNING JOINS FROM PATH', i, {table, column, typeColumn}, description.storage);
 
-    let table;
-    const conditions = [];
 
-    console.log("SEGMENT", segment.fromType, segment.toType, description.type, description.storage.name);
-    console.log(JSON.stringify(segment, null, 2));
-    console.log("PREVIOUS", previousSegment.fromType, previousSegment.toType, previousDescription.type, previousDescription.storage.name);
-    console.log(JSON.stringify(previousSegment, null, 2));
-
+    // handle segments using join tables
     if (description.type === 'join') {
-      if (previousDescription.type === 'join') {
-        if (segment.direction === 'in') {
-          if (previousSegment.direction === 'in') {
-            // join in to join in
-            console.log('join in to join in');
-          } else {
-            // join in to join out
-            console.log('join in to join out');
-          }
-        } else {
-          if (previousSegment.direction === 'in') {
-            // join out to join in
-            console.log('join out to join in');
-          } else {
-            // join out to join out
-            console.log('join out to join out');
-            table = description.storage.name;
-            conditions.push({
-              left: {
-                type: 'reference',
-                table,
-                column: description.storage.right.column,
-              },
-              right: {
-                type: 'reference',
-                table: previousDescription.storage.name,
-                column: previousDescription.storage.left.column,
-              },
-            });
+      const storage: JoinTableDescription = description.storage;
+      const { left, right, name: table } = storage;
+      const side = direction === 'out' ? right : left;
+      const oppositeSide = direction === 'out' ? left : right;
 
-            if (description.storage.right.isPolymorphic) {
-              conditions.push({
-                left: {
-                  type: 'reference',
-                  table,
-                  column: description.storage.right.typeColumn,
-                },
-                right: {
-                  type: 'reference',
-                  table: previousDescription.storage.name,
-                  column: previousDescription.storage.left.typeColumn,
-                },
-              });
-            }
-          }
-        }
-      } else {
-        if (segment.direction === 'in') {
-          if (previousSegment.direction === 'in') {
-            // join in to foreign key in
-            console.log('join in to foreign key in');
-          } else {
-            // join in to foreign key out
-            console.log('join in to foreign key out');
-          }
-        } else {
-          if (previousSegment.direction === 'in') {
-            // join out to foreign key in
-            console.log('join out to foreign key in');
-          } else {
-            // join out to foreign key out
-            console.log('join out to foreign key out');
-          }
-        }
-      }
-    } else {
-      // if (previousSegment.direction !== previousDescription.storage.direction) {
-        console.log('foreign key');
-        table = previousDescription.storage.table;
+      const conditions = [{
+        left: {
+          type: 'reference',
+          table,
+          column: side.column,
+        },
+        right: {
+          type: 'reference',
+          table: lastTable,
+          column: lastColumn,
+        },
+      }];
+
+      if (side.isPolymorphic) {
+        // invariant(lastTypeColumn);
         conditions.push({
           left: {
             type: 'reference',
             table,
-            column: previousDescription.storage.column,
+            column: side.typeColumn,
           },
           right: {
             type: 'reference',
-            table: previousDescription.storage.referencedTable,
-            column: 'id',
-          }
+            table: lastTable,
+            column: lastTypeColumn,
+          },
         });
-      // } else {
-      //   console.log('same direction foreign key');
-      //   table = previousDescription.storage.table;
-      //   conditions.push({
-      //     left: {
-      //       type: 'reference',
-      //       table,
-      //       column: previousDescription.storage.column,
-      //     },
-      //     right: {
-      //       type: 'reference',
-      //
-      //     }
-      //   });
-      // }
-    }
+      }
 
-    return {table, conditions};
-  }));
+      joins.push({table, conditions});
+
+      lastTable = table;
+      lastColumn = oppositeSide.column;
+      lastTypeColumn = oppositeSide.isPolymorphic ? oppositeSide.typeColumn : null;
+
+    // handle segments using foreign keys
+    } else {
+      if (i === 0) {
+        continue;
+      }
+
+      const storage: ForeignKeyDescription = description.storage;
+      const {table, referencedTable, column, direction, isPolymorphic} = storage;
+
+      if (direction === segment.direction) {
+
+        const conditions = [{
+          left: {
+            type: 'reference',
+            table: referencedTable,
+            column: 'id',
+          },
+          right: {
+            type: 'reference',
+            table: table,
+            column: column,
+          },
+        }];
+
+        joins.push({table: referencedTable, conditions});
+
+      } else {
+        const conditions = [{
+          left: {
+            type: 'reference',
+            table,
+            column,
+          },
+          right: {
+            type: 'reference',
+            table: lastTable,
+            column: lastColumn,
+          }
+        }];
+
+        if (isPolymorphic) {
+          invariant(lastTypeColumn && storage.typeColumn);
+          conditions.push({
+            left: {
+              type: 'reference',
+              table,
+              column,
+              typeColumn: storage.typeColumn,
+            },
+            right: {
+              type: 'reference',
+              table: lastTable,
+              column: lastTypeColumn,
+            },
+          });
+        }
+
+        joins.push({table, conditions});
+      }
+
+      lastTable = table;
+      lastColumn = column;
+      lastTypeColumn = typeColumn;
+    }
+  }
 
   return joins;
-}
-
-function aliasJoins(table: string, joins: Join[]): Join[] {
-  const usedTables = {[table]: 1};
-  return joins.map(join => {
-    const usage = usedTables[join.table];
-    const alias = usage && `${join.table}${usage + 1}`;
-    usedTables[join.table] = (usage || 0) + 1;
-    return {...join, alias};
-  });
 }
 
 function leftJoinsFromTargetTypes(
@@ -524,6 +477,16 @@ function leftJoinsFromTargetTypes(
         },
       ]
     };
+  });
+}
+
+function aliasJoins(table: string, joins: Join[]): Join[] {
+  const usedTables = {[table]: 1};
+  return joins.map(join => {
+    const usage = usedTables[join.table];
+    const alias = usage && `${join.table}${usage + 1}`;
+    usedTables[join.table] = (usage || 0) + 1;
+    return {...join, alias};
   });
 }
 
