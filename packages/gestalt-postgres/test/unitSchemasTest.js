@@ -104,8 +104,8 @@ testPaths.forEach(path => {
             )
           );
 
-          logQuery(sql, cyan);
-          logQuery(expectedSQLQueries[i], magenta);
+          // logQuery(sql, cyan);
+          // logQuery(expectedSQLQueries[i], magenta);
 
           assert.equal(sql, expectedSQLQueries[i]);
         });

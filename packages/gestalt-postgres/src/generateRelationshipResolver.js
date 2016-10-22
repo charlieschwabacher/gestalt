@@ -169,7 +169,6 @@ function generatePluralRelationshipLoader(
     polymorphicTypes,
     relationship,
   );
-  // console.log('GENERATING RELATIONSHIP LOADER', keyColumn, baseQuery);
   return new DataLoader(loadKeys =>
     Promise.all(loadKeys.map(({key, args, info}) =>
       resolveRelayConnection(db, baseQuery, key, args, info)
@@ -288,10 +287,7 @@ export function queryFromRelationship(
     }
   }
 
-  // console.log('PATH', JSON.stringify(path, null, 2));
   joins.push(...joinsFromPath(path, table, column, typeColumn));
-  // console.log('JOINS', joins);
-
   joins = aliasJoins(table, joins);
 
   conditions.push(
@@ -325,9 +321,6 @@ function joinsFromPath(
   for (let i = segments.length - 1; i >= 0; i--) {
     const segment = segments[i];
     const {direction, description} = segment;
-
-    console.log('RUNNING JOINS FROM PATH', i, {table, column, typeColumn}, description.storage);
-
 
     // handle segments using join tables
     if (description.type === 'join') {
@@ -391,7 +384,6 @@ function joinsFromPath(
 
       if (direction === segment.direction) {
 
-
         // make sure this segment should be included
         if (
           nextType === 'foreignKey' || (
@@ -413,9 +405,7 @@ function joinsFromPath(
             },
           }];
 
-          console.log('JOINING ', referencedTable);
           joins.push({table: referencedTable, conditions});
-
         }
 
       } else {
@@ -533,8 +523,6 @@ function conditionsFromSegment(
   const conditions = [];
   const operator = '=';
   const value = 'ANY ($1)';
-
-  // console.log('HERE', JSON.stringify({segment, previousSegment}, null, 2));
 
   if (description.type === 'foreignKey') {
     const {table, column, direction} = description.storage;
