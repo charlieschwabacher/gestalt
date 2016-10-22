@@ -200,7 +200,7 @@ export type Relationship = {
 export type DescribedRelationship = {
   fieldName: string,
   cardinality: 'singular' | 'plural',
-  path: DescribedSegment[],
+  describedPath: DescribedSegment[],
 };
 
 export type RelationshipSegment = {

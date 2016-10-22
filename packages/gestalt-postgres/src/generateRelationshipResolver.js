@@ -185,7 +185,7 @@ export function objectKeyColumnsFromRelationship(
   keyColumn: string,
   typeColumn: ?string,
 } {
-  const segment = relationship.path[0];
+  const segment = relationship.describedPath[0];
   if (segment.description.type === 'foreignKey') {
     const {storage} = segment.description;
     if (storage.direction !== segment.direction) {
@@ -209,7 +209,7 @@ export function objectKeyColumnsFromRelationship(
 export function resolvedKeyColumnFromRelationship(
   relationship: DescribedRelationship
 ): string {
-  const segment = relationship.path[0];
+  const segment = relationship.describedPath[0];
 
   if (segment.description.type === 'foreignKey') {
     const {storage} = segment.description;
@@ -229,7 +229,7 @@ export function queryFromRelationship(
   relationship: DescribedRelationship,
   type?: string,
 ): Query {
-  const finalSegment = relationship.path[relationship.path.length - 1];
+  const finalSegment = relationship.describedPath[relationship.describedPath.length - 1];
 
   let table;
   let selection;
@@ -246,7 +246,7 @@ export function queryFromRelationship(
     table = tableNameFromTypeName(finalSegment.toType);
     column = 'id';
     selection = `${table}.*`;
-    path = relationship.path;
+    path = relationship.describedPath;
   } else {
     const targetTables = targetTypes.map(tableNameFromTypeName);
     const {description} = finalSegment;
@@ -283,7 +283,7 @@ export function queryFromRelationship(
       ));
       column = oppositeSide.column;
       typeColumn = oppositeSide.isPolymorphic ? oppositeSide.typeColumn : null;
-      path = relationship.path.slice(0, relationship.path.length - 1);
+      path = relationship.describedPath.slice(0, relationship.describedPath.length - 1);
     }
   }
 
@@ -292,8 +292,8 @@ export function queryFromRelationship(
 
   conditions.push(
     ...conditionsFromSegment(
-      relationship.path[0],
-      relationship.path[1],
+      relationship.describedPath[0],
+      relationship.describedPath[1],
       joins[joins.length - 1],
       type,
     )
@@ -582,7 +582,6 @@ function conditionsFromSegment(
       }
 
       invariant(fromTable);
-
       conditions.push({
         table: fromTable,
         column,
@@ -625,7 +624,7 @@ export function describeRelationship(
 ): DescribedRelationship {
   return {
     ...relationship,
-    path: relationship.path.map(segment => {
+    describedPath: relationship.path.map(segment => {
       const signature = pairingSignatureFromRelationshipSegment(segment);
       return {
         ...segment,
