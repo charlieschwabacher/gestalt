@@ -400,8 +400,8 @@ function joinsFromPath(
             },
             right: {
               type: 'reference',
-              table: table,
-              column: column,
+              table,
+              column,
             },
           }];
 
