@@ -288,9 +288,9 @@ export function queryFromRelationship(
     }
   }
 
-  console.log('PATH', JSON.stringify(path, null, 2));
+  // console.log('PATH', JSON.stringify(path, null, 2));
   joins.push(...joinsFromPath(path, table, column, typeColumn));
-  console.log('JOINS', joins);
+  // console.log('JOINS', joins);
 
   joins = aliasJoins(table, joins);
 
@@ -373,6 +373,8 @@ function joinsFromPath(
 
     // handle segments using foreign keys
     } else {
+      // if a foreign key is the first segment, skip it - we selected directly
+      // from its table already
       if (i === 0) {
         continue;
       }
@@ -380,55 +382,84 @@ function joinsFromPath(
       const storage: ForeignKeyDescription = description.storage;
       const {table, referencedTable, column, direction, isPolymorphic} = storage;
 
+      // if a foreign key is followed by a join table referencing the same
+      // table, we can skip it and join directly to the join table
+      const nextSegment = segments[i - 1];
+      const nextDescription = nextSegment && nextSegment.description;
+      const nextType = nextDescription && nextDescription.type;
+      const nextStorage = nextDescription && nextDescription.storage;
+
       if (direction === segment.direction) {
 
-        const conditions = [{
-          left: {
-            type: 'reference',
-            table: referencedTable,
-            column: 'id',
-          },
-          right: {
-            type: 'reference',
-            table: table,
-            column: column,
-          },
-        }];
 
-        joins.push({table: referencedTable, conditions});
+        // make sure this segment should be included
+        if (
+          nextType === 'foreignKey' || (
+            nextStorage.left.table !== referencedTable &&
+            nextStorage.right.table !== referencedTable
+          )
+        ) {
+
+          const conditions = [{
+            left: {
+              type: 'reference',
+              table: referencedTable,
+              column: 'id',
+            },
+            right: {
+              type: 'reference',
+              table: table,
+              column: column,
+            },
+          }];
+
+          console.log('JOINING ', referencedTable);
+          joins.push({table: referencedTable, conditions});
+
+        }
 
       } else {
-        const conditions = [{
-          left: {
-            type: 'reference',
-            table,
-            column,
-          },
-          right: {
-            type: 'reference',
-            table: lastTable,
-            column: lastColumn,
-          }
-        }];
 
-        if (isPolymorphic) {
-          invariant(lastTypeColumn && storage.typeColumn);
-          conditions.push({
+        // make sure this segment should be included
+        if (
+          nextType === 'foreignKey' || (
+            nextStorage.left.table !== table &&
+            nextStorage.right.table !== table
+          )
+        ) {
+
+          const conditions = [{
             left: {
               type: 'reference',
               table,
               column,
-              typeColumn: storage.typeColumn,
             },
             right: {
               type: 'reference',
               table: lastTable,
-              column: lastTypeColumn,
-            },
-          });
-        }
+              column: lastColumn,
+            }
+          }];
 
-        joins.push({table, conditions});
+          if (isPolymorphic) {
+            invariant(lastTypeColumn && storage.typeColumn);
+            conditions.push({
+              left: {
+                type: 'reference',
+                table,
+                column,
+                typeColumn: storage.typeColumn,
+              },
+              right: {
+                type: 'reference',
+                table: lastTable,
+                column: lastTypeColumn,
+              },
+            });
+          }
+
+          joins.push({table, conditions});
+        }
       }
 
       lastTable = table;
@@ -540,8 +571,6 @@ function conditionsFromSegment(
             const side = storage[direction === 'in' ? 'right' : 'left'];
             fromTable = storage.name;
             column = side.column;
-
-            console.log('HERE', previousSegment, fromTable, column);
 
             conditions.push({
               table: fromTable,
