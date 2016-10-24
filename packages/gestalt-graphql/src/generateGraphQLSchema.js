@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import camel from 'camel-case';
 import {parse, buildASTSchema, concatAST, printSchema, GraphQLObjectType,
-  getNamedType, GraphQLSchema} from 'graphql';
+  getNamedType, GraphQLSchema, isAbstractType} from 'graphql';
 import {mutationWithClientMutationId} from 'graphql-relay';
 import {insertConnectionTypes, removeHiddenNodes} from './ASTTransforms';
 import databaseInfoFromAST from './databaseInfoFromAST';
@@ -47,6 +47,7 @@ export default function generateGraphQLSchema(
   defineBaseSchemaResolution(schema, databaseInterface);
   defineRelationshipResolution(schema, relationships, databaseInterface);
   defineNodeIDResolution(schema);
+  defineUnionAndInterfaceTypeResolution(schema);
   attachObjectTypeFieldResolution(schema, objects);
 
   return {schema, databaseInterface};
@@ -124,6 +125,18 @@ function defineNodeIDResolution(schema: GraphQLSchema): void {
         'id',
         obj => `${type.name}:${obj.id}`,
       );
+    }
+  });
+}
+
+// define resolve type on polymorphic types
+function defineUnionAndInterfaceTypeResolution(schema: GraphQLSchema): void {
+  const types = schema.getTypeMap();
+  const resolveType = getResolveType(types);
+  Object.keys(types).forEach(typeName => {
+    const type = types[typeName];
+    if (isAbstractType(type)) {
+      type.resolveType = resolveType;
     }
   });
 }
@@ -234,4 +247,16 @@ function resolveSession(
   context: Object
 ): Object {
   return context.session;
+}
+
+// TODO: this is a dummy implementation to get the blogs example working,
+// we need to read this from ID.
+function getResolveType(types: TypeMap): (obj: Object) => GraphQLObjectType {
+  return function(object: Object): GraphQLObjectType {
+    if (object.url) {
+      return types.Link;
+    } else if (object.text) {
+      return types.TextPost;
+    }
+  };
 }

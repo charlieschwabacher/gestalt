@@ -35,6 +35,20 @@ function prepareValueForSQL(value: mixed): mixed {
   return value;
 }
 
+function objectsFromRowsArray(result: Object): Object {
+  return {
+    ...result,
+    rows: result.rows.map(row => {
+      return result.fields.reduce((memo, field, i) => {
+        if (row[i] != null) {
+          memo[result.fields[i].name] = row[i];
+        }
+        return memo;
+      }, {});
+    }),
+  };
+}
+
 // executes a SQL query and returns the result directly from pg
 export default class DB {
   url: string;
@@ -65,11 +79,16 @@ export default class DB {
         if (err) {
           reject(err);
         }
-        client.query(query, escapes, (err, result) => {
+        client.query({
+          text: query,
+          values: escapes,
+          rowMode: 'array',
+        }, (err, result) => {
           if (err) {
             reject(err);
           }
-          resolve(result);
+          // console.log('DB LOADED: ', red(JSON.stringify(result, null, 2)));
+          resolve(objectsFromRowsArray(result));
           done();
         });
       });
