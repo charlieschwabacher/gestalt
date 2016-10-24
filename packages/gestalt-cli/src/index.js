@@ -33,6 +33,7 @@ commander
   .option('-d, --mutations-directory <path>', 'the directory of your mutation files')
   .option('-g, --mutations-glob <pattern>', 'a glob pattern for selecting mutation files')
   .option('-u, --url <path>', 'the url to your local database')
+  .option('-y, --yes', 'if included, run migrations without confirmation')
   .action(async options => {
     await migrate(options);
     process.exit(0);

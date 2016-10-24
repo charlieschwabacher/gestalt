@@ -12,7 +12,11 @@ export default function insertConnectionTypes(ast: Document): void {
 
   const typeMap = keyMap(
     ast.definitions.filter(
-      definition => definition.kind === 'ObjectTypeDefinition'
+      definition => (
+        definition.kind === 'ObjectTypeDefinition' ||
+        definition.kind === 'UnionTypeDefinition' ||
+        definition.kind === 'InterfaceTypeDefinition'
+      )
     ),
     definition => definition.name.value
   );
@@ -225,18 +229,20 @@ export function generateConnectionTypeDefintions(
 }
 
 export function orderEnumValuesFromType(
-  type: ObjectTypeDefinition,
+  type: TypeDefinition,
 ): string[] {
   // take order enum types from fields that have the @index directive and are
   // not @hidden
   const values = [];
-  type.fields.forEach(({name, directives}) => {
-    const directiveNames = setMap(
-      directives, directive => directive.name.value
-    );
-    if (directiveNames.has('index') && !directiveNames.has('hidden')) {
-      values.push(constantCase(name.value));
-    }
-  });
+  if (type.fields) {
+    type.fields.forEach(({name, directives}) => {
+      const directiveNames = setMap(
+        directives, directive => directive.name.value
+      );
+      if (directiveNames.has('index') && !directiveNames.has('hidden')) {
+        values.push(constantCase(name.value));
+      }
+    });
+  }
   return values;
 }

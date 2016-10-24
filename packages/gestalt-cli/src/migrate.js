@@ -22,11 +22,13 @@ import 'babel-register';
 export default async function migrate({
   mutationsDirectory = 'mutations',
   mutationsGlob,
-  url
+  url,
+  yes,
 }: {
   mutationsDirectory: string,
   mutationsGlob: string,
-  url: string
+  url: string,
+  yes: boolean,
 }) {
   prompt.start();
   try {
@@ -53,11 +55,12 @@ export default async function migrate({
     console.log('migrating..');
 
     await updateJSONSchema(localPackage, schemaText, { mutationsDirectory, mutationsGlob });
-    await updateDatabaseSchema(localPackage, schemaText, { url });
+    await updateDatabaseSchema(localPackage, schemaText, { url, yes });
 
   } catch (err) {
 
     console.log('migration failed with the error:', err);
+    console.log(err.stack);
     throw err;
 
   }
@@ -93,7 +96,7 @@ async function updateJSONSchema(
 async function updateDatabaseSchema(
   localPackage: Object,
   schemaText: string,
-  {url}: {url: string}
+  {url, yes}: {url: string, yes: boolean}
 ): Promise<void> {
   let databaseUrl;
 
@@ -111,40 +114,47 @@ async function updateDatabaseSchema(
   const existingSchema = await readExistingDatabaseSchema(databaseUrl);
 
   const ast = parse(schemaText);
-  const {objectDefinitions, relationships} = databaseInfoFromAST(ast);
   const {db, schema} = generateDatabaseInterface(
     databaseUrl,
-    objectDefinitions,
-    relationships
+    databaseInfoFromAST(ast),
   );
 
   const {sql} = generateDatabaseSchemaMigration(schema, existingSchema);
 
   console.log(`Generated SQL migration:\n\n${blue(sql)}\n`);
 
-  const {runMigration, writeFile} = await get({
-    properties: {
-      runMigration: {
-        message: 'Run migration? [yes/no]',
-        validator: /^(y(es)?|no?)$/i,
-        warning: 'Must respond yes or no',
-        default: 'no',
+  let runMigration;
+  let writeFile;
+  if (yes) {
+    runMigration = true;
+    writeFile = false;
+  } else {
+    const confirmation = await get({
+      properties: {
+        runMigration: {
+          message: 'Run migration? [yes/no]',
+          validator: /^(y(es)?|no?)$/i,
+          warning: 'Must respond yes or no',
+          default: 'no',
+        },
+        writeFile: {
+          message: 'Write migration to file? [yes/no]',
+          validator: /^(y(es)?|no?)$/i,
+          warning: 'Must respond yes or no',
+          default: 'no',
+        },
       },
-      writeFile: {
-        message: 'Write migration to file? [yes/no]',
-        validator: /^(y(es)?|no?)$/i,
-        warning: 'Must respond yes or no',
-        default: 'no',
-      },
-    },
-  });
+    });
+    runMigration = confirmation.runMigration[0] === 'y';
+    writeFile = confirmation.writeFile[0] === 'y';
+  }
 
-  if (runMigration[0] === 'y') {
+  if (runMigration) {
     await db.exec(sql);
     console.log('Ran migration');
   }
 
-  if (writeFile[0] === 'y') {
+  if (writeFile) {
     const hash = crypto.createHash('md5').update(sql).digest('hex');
     if (!fs.existsSync('migrations')) {
       fs.mkdirSync('migrations');
