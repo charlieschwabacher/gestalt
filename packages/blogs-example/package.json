@@ -4,7 +4,9 @@
   "description": "An example blogging app using Gestalt and Relay",
   "scripts": {
     "start": "babel-node server.js",
-    "build": "NODE_ENV=production webpack --config ./webpack.config.js --progress --profile --colors"
+    "build": "NODE_ENV=production webpack --config ./webpack.config.js --progress --profile --colors",
+    "migrate": "gestalt migrate",
+    "reset": "dropdb blogs_example && createdb blogs_example && gestalt migrate -u postgres://localhost/blogs_example --yes && psql -d blogs_example -f seeds.sql"
   },
   "devDependencies": {
     "babel-cli": "^6.9.0",
@@ -26,7 +28,8 @@
     "import-all": "^1.0.1",
     "webpack": "^1.13.1",
     "gestalt-server": "^0.0.17",
-    "gestalt-postgres": "^0.0.17"
+    "gestalt-postgres": "^0.0.17",
+    "gestalt-cli": "^0.0.17"
   },
   "metadata": {
     "graphql": {

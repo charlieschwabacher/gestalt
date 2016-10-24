@@ -12,15 +12,15 @@
         {
           "kind": "OBJECT",
           "name": "QueryRoot",
-          "description": null,
+          "description": "",
           "fields": [
             {
               "name": "node",
-              "description": null,
+              "description": "",
               "args": [
                 {
                   "name": "id",
-                  "description": null,
+                  "description": "",
                   "type": {
                     "kind": "NON_NULL",
                     "name": null,
@@ -43,7 +43,7 @@
             },
             {
               "name": "session",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "OBJECT",
@@ -72,11 +72,11 @@
         {
           "kind": "INTERFACE",
           "name": "Node",
-          "description": null,
+          "description": "",
           "fields": [
             {
               "name": "id",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "NON_NULL",
@@ -107,7 +107,12 @@
             },
             {
               "kind": "OBJECT",
-              "name": "Post",
+              "name": "Link",
+              "ofType": null
+            },
+            {
+              "kind": "OBJECT",
+              "name": "TextPost",
               "ofType": null
             }
           ]
@@ -115,11 +120,11 @@
         {
           "kind": "OBJECT",
           "name": "Session",
-          "description": null,
+          "description": "",
           "fields": [
             {
               "name": "id",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "NON_NULL",
@@ -135,7 +140,7 @@
             },
             {
               "name": "currentUser",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "OBJECT",
@@ -147,7 +152,7 @@
             },
             {
               "name": "suggestedUsers",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "LIST",
@@ -176,11 +181,11 @@
         {
           "kind": "OBJECT",
           "name": "User",
-          "description": null,
+          "description": "users of our app",
           "fields": [
             {
               "name": "id",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "NON_NULL",
@@ -196,7 +201,7 @@
             },
             {
               "name": "firstName",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "SCALAR",
@@ -208,7 +213,7 @@
             },
             {
               "name": "lastName",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "SCALAR",
@@ -220,7 +225,7 @@
             },
             {
               "name": "fullName",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "SCALAR",
@@ -232,11 +237,11 @@
             },
             {
               "name": "profileImage",
-              "description": null,
+              "description": "",
               "args": [
                 {
                   "name": "size",
-                  "description": null,
+                  "description": "",
                   "type": {
                     "kind": "SCALAR",
                     "name": "Int",
@@ -259,7 +264,7 @@
             },
             {
               "name": "following",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "NON_NULL",
@@ -275,7 +280,7 @@
             },
             {
               "name": "followedUsers",
-              "description": null,
+              "description": "",
               "args": [
                 {
                   "name": "first",
@@ -338,7 +343,7 @@
             },
             {
               "name": "followers",
-              "description": null,
+              "description": "",
               "args": [
                 {
                   "name": "first",
@@ -401,7 +406,7 @@
             },
             {
               "name": "posts",
-              "description": null,
+              "description": "",
               "args": [
                 {
                   "name": "first",
@@ -464,7 +469,7 @@
             },
             {
               "name": "feed",
-              "description": null,
+              "description": "",
               "args": [
                 {
                   "name": "first",
@@ -679,11 +684,11 @@
         {
           "kind": "OBJECT",
           "name": "PageInfo",
-          "description": null,
+          "description": "",
           "fields": [
             {
               "name": "hasNextPage",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "NON_NULL",
@@ -699,7 +704,7 @@
             },
             {
               "name": "hasPreviousPage",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "NON_NULL",
@@ -715,7 +720,7 @@
             },
             {
               "name": "startCursor",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "SCALAR",
@@ -727,7 +732,7 @@
             },
             {
               "name": "endCursor",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "SCALAR",
@@ -759,18 +764,6 @@
             },
             {
               "name": "DESC",
-              "description": null,
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "TITLE_ASC",
-              "description": null,
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "TITLE_DESC",
               "description": null,
               "isDeprecated": false,
               "deprecationReason": null
@@ -839,7 +832,7 @@
               "description": null,
               "args": [],
               "type": {
-                "kind": "OBJECT",
+                "kind": "UNION",
                 "name": "Post",
                 "ofType": null
               },
@@ -865,13 +858,34 @@
           "possibleTypes": null
         },
         {
-          "kind": "OBJECT",
+          "kind": "UNION",
           "name": "Post",
-          "description": null,
+          "description": "union of all content posted by users",
+          "fields": null,
+          "inputFields": null,
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": [
+            {
+              "kind": "OBJECT",
+              "name": "Link",
+              "ofType": null
+            },
+            {
+              "kind": "OBJECT",
+              "name": "TextPost",
+              "ofType": null
+            }
+          ]
+        },
+        {
+          "kind": "OBJECT",
+          "name": "Link",
+          "description": "links submitted by users",
           "fields": [
             {
               "name": "id",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "NON_NULL",
@@ -887,7 +901,7 @@
             },
             {
               "name": "title",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "NON_NULL",
@@ -902,8 +916,8 @@
               "deprecationReason": null
             },
             {
-              "name": "text",
-              "description": null,
+              "name": "url",
+              "description": "",
               "args": [],
               "type": {
                 "kind": "NON_NULL",
@@ -919,7 +933,7 @@
             },
             {
               "name": "createdAt",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "NON_NULL",
@@ -935,7 +949,7 @@
             },
             {
               "name": "author",
-              "description": null,
+              "description": "",
               "args": [],
               "type": {
                 "kind": "OBJECT",
@@ -960,10 +974,103 @@
         {
           "kind": "SCALAR",
           "name": "Date",
-          "description": null,
+          "description": "",
           "fields": null,
           "inputFields": null,
           "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "OBJECT",
+          "name": "TextPost",
+          "description": "text posts written by users",
+          "fields": [
+            {
+              "name": "id",
+              "description": "",
+              "args": [],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "title",
+              "description": "",
+              "args": [],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "text",
+              "description": "",
+              "args": [],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "createdAt",
+              "description": "",
+              "args": [],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "Date",
+                  "ofType": null
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "author",
+              "description": "",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "User",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "inputFields": null,
+          "interfaces": [
+            {
+              "kind": "INTERFACE",
+              "name": "Node",
+              "ofType": null
+            }
+          ],
           "enumValues": null,
           "possibleTypes": null
         },
@@ -1554,7 +1661,7 @@
         {
           "kind": "OBJECT",
           "name": "__Directive",
-          "description": "A Directive provides a way to describe alternate runtime execution and type validation behavior in a GraphQL document.\n\nIn some cases, you need to provide options to alter GraphQL’s execution behavior in ways field arguments will not suffice, such as conditionally including or skipping a field. Directives provide this by describing additional information to the executor.",
+          "description": "A Directive provides a way to describe alternate runtime execution and type validation behavior in a GraphQL document.\n\nIn some cases, you need to provide options to alter GraphQL's execution behavior in ways field arguments will not suffice, such as conditionally including or skipping a field. Directives provide this by describing additional information to the executor.",
           "fields": [
             {
               "name": "name",
@@ -1808,7 +1915,7 @@
         {
           "kind": "SCALAR",
           "name": "Money",
-          "description": null,
+          "description": "",
           "fields": null,
           "inputFields": null,
           "interfaces": null,
@@ -2010,13 +2117,9 @@
               "description": null,
               "args": [],
               "type": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "SCALAR",
-                  "name": "String",
-                  "ofType": null
-                }
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               },
               "isDeprecated": false,
               "deprecationReason": null
@@ -2057,13 +2160,9 @@
               "name": "clientMutationId",
               "description": null,
               "type": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "SCALAR",
-                  "name": "String",
-                  "ofType": null
-                }
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               },
               "defaultValue": null
             }
@@ -2106,13 +2205,9 @@
               "description": null,
               "args": [],
               "type": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "SCALAR",
-                  "name": "String",
-                  "ofType": null
-                }
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               },
               "isDeprecated": false,
               "deprecationReason": null
@@ -2143,13 +2238,9 @@
               "name": "clientMutationId",
               "description": null,
               "type": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "SCALAR",
-                  "name": "String",
-                  "ofType": null
-                }
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               },
               "defaultValue": null
             }
@@ -2180,13 +2271,9 @@
               "description": null,
               "args": [],
               "type": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "SCALAR",
-                  "name": "String",
-                  "ofType": null
-                }
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               },
               "isDeprecated": false,
               "deprecationReason": null
@@ -2227,13 +2314,9 @@
               "name": "clientMutationId",
               "description": null,
               "type": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "SCALAR",
-                  "name": "String",
-                  "ofType": null
-                }
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               },
               "defaultValue": null
             }
@@ -2264,13 +2347,9 @@
               "description": null,
               "args": [],
               "type": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "SCALAR",
-                  "name": "String",
-                  "ofType": null
-                }
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               },
               "isDeprecated": false,
               "deprecationReason": null
@@ -2291,13 +2370,9 @@
               "name": "clientMutationId",
               "description": null,
               "type": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "SCALAR",
-                  "name": "String",
-                  "ofType": null
-                }
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               },
               "defaultValue": null
             }
@@ -2328,13 +2403,9 @@
               "description": null,
               "args": [],
               "type": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "SCALAR",
-                  "name": "String",
-                  "ofType": null
-                }
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               },
               "isDeprecated": false,
               "deprecationReason": null
@@ -2395,13 +2466,9 @@
               "name": "clientMutationId",
               "description": null,
               "type": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "SCALAR",
-                  "name": "String",
-                  "ofType": null
-                }
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               },
               "defaultValue": null
             }
@@ -2444,13 +2511,9 @@
               "description": null,
               "args": [],
               "type": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "SCALAR",
-                  "name": "String",
-                  "ofType": null
-                }
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               },
               "isDeprecated": false,
               "deprecationReason": null
@@ -2491,13 +2554,9 @@
               "name": "clientMutationId",
               "description": null,
               "type": {
-                "kind": "NON_NULL",
-                "name": null,
-                "ofType": {
-                  "kind": "SCALAR",
-                  "name": "String",
-                  "ofType": null
-                }
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               },
               "defaultValue": null
             }
@@ -2568,7 +2627,7 @@
           "args": [
             {
               "name": "reason",
-              "description": "Explains why this element was deprecated, usually also including a suggestion for how to access supported similar data. Formattedin [Markdown](https://daringfireball.net/projects/markdown/).",
+              "description": "Explains why this element was deprecated, usually also including a suggestion for how to access supported similar data. Formatted in [Markdown](https://daringfireball.net/projects/markdown/).",
               "type": {
                 "kind": "SCALAR",
                 "name": "String",

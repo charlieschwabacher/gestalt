@@ -4,6 +4,7 @@ type Session implements Node {
   suggestedUsers: [User]
 }
 
+# users of our app
 type User implements Node {
   id: ID!
   email: String! @hidden @index
@@ -19,10 +20,23 @@ type User implements Node {
   feed: Post @relationship(path: "=FOLLOWED=>User=AUTHORED=>")
 }
 
-type Post implements Node {
+# text posts written by users
+type TextPost implements Node {
   id: ID!
   title: String! @index
   text: String!
   createdAt: Date!
   author: User @relationship(path: "<-AUTHORED-")
 }
+
+# links submitted by users
+type Link implements Node {
+  id: ID!
+  title: String! @index
+  url: String! @index
+  createdAt: Date!
+  author: User @relationship(path: "<-AUTHORED-")
+}
+
+# union of all content posted by users
+union Post = Link | TextPost

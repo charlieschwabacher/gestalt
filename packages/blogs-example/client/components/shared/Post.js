@@ -31,11 +31,18 @@ export default Relay.createContainer(
     fragments: {
       post: () => Relay.QL`
         fragment on Post {
-          id
-          title
-          text
-          author {
-            ${User.getFragment('user')}
+          ...fragment on Text {
+            id
+            title
+            text
+            author {
+              ${User.getFragment('user')}
+            }
+          }
+          ...fragment on Link {
+            id
+            title
+            url
           }
         }
       `
