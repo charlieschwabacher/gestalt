@@ -186,6 +186,31 @@ user' and does not.  Following these two rules will lead to a semantic database
 schema, and readable code in `schema.graphql`.
 
 
+Polymorphic Relationships
+-------------------------
+In addition to relationships with other nodes, nodes can have relationships with
+unions and interfaces, with the constraint that all members of the polymorphic
+type are also nodes.
+
+```GraphQL
+type Post implements Node {
+  id: ID!
+  text: String!
+  comments: Comment @relationship(path: "=INSPIRED=>")
+}
+type Photo implements Node {
+  id: ID!
+  url: String!
+  comments: Comment @relationship(path: "=INSPIRED=>")
+}
+type Comment implements Node {
+  id: ID!
+  subject: Content @relationship(path: "<-INSPIRED-")
+}
+union Content = Post | Photo
+```
+
+
 Other directives
 ----------------
 There are a few more directives used by Gestalt to provide extra information
@@ -349,7 +374,7 @@ Should I use Gestalt?
 Yes! Gestalt is cool 😀
 
 If you are trying to add an API to a big existing app, or if you have
-non-standard storage requirements, Gestalt might not be the best choice for you.
+non-standard storage requirements, Gestalt may not be the best choice for you.
 
 If you are starting a new Relay app from scratch, Gestalt should save you a lot
 of time and make your schema easier to work with.

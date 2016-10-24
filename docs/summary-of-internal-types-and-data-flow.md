@@ -20,7 +20,6 @@ the graphql language AST and schema objects.
   - `RelationshipSegment`
   - `RelationshipSegmentPair`
 
-
 ### Gestalt Postgres Types
 
 - `DatabaseSchema`
@@ -55,7 +54,7 @@ the graphql language AST and schema objects.
     interface to define resolvers and attach them to the `GraphQLSchema`.
   - we attach user defined resolvers to the `GraphQLSchema`
 
-- when we generate a database interface
+- when we generate a PostgreSQL database interface
   - we start with our `DatabaseReleventSchemaInfo` object
   - we take the `Relationship` objects in our `DatabaseReleventSchemaInfo` and
     generate a `RelationshipSegmentDescriptionMap` which includes information on
@@ -71,14 +70,17 @@ the graphql language AST and schema objects.
     `RelationshipSegmentDescriptionMap`.  These let us batch requests to load
     data from the database.
     - we generate a `Query` object for each relationship using the
-      `Relationship` and `RelationshipSegmentDescriptionMap` objects.  The
-    - when using connection arguments we have methods that modify the `Query` to
-      order and page through data
-    - to load data, we generate a SQL strings from our `Query` object
+      `Relationship` and `RelationshipSegmentDescriptionMap` objects.  The Query
+      object describes a SQL query that can be used to resolve the relationship.
+    - when using connection arguments we have functions that modify the `Query`
+      to order and page through data
+    - to load data, we generate a SQL strings from our `Query` object.
   - we generate simple relationship resolvers that load data through their
     `DataLoader`
   - we use our `DatabaseReleventSchemaInfo` and `RelationshipSegmentDescription`
-    objects to generate a `DatabaseSchema`
+    objects to generate a `DatabaseSchema` - it describes the tables, columns,
+    and indices used to store our data, and can be used to generate schema
+    migrations.
 
 - when we generate a schema migration
   - we create a `DatabaseSchema` object from our GraphQL IDL schema
