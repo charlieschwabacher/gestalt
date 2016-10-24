@@ -236,6 +236,7 @@ export function queryFromRelationship(
   let path;
   let column;
   let typeColumn;
+  let defaultOrder;
   let joins = [];
   const conditions = [];
 
@@ -247,6 +248,7 @@ export function queryFromRelationship(
     column = 'id';
     selection = `${table}.*`;
     path = relationship.describedPath;
+    defaultOrder = 'seq';
   } else {
     const targetTables = targetTypes.map(tableNameFromTypeName);
     const {description} = finalSegment;
@@ -258,6 +260,7 @@ export function queryFromRelationship(
       table = tableNameFromTypeName(type);
       selection = `${table}.*`;
       column = 'id';
+      defaultOrder = 'seq';
 
       // TODO: in the case of interfaces, we may be able to continue here, but
       // at the moment we don't allow additional joins after a polymorphic type
@@ -284,6 +287,7 @@ export function queryFromRelationship(
       column = oppositeSide.column;
       typeColumn = oppositeSide.isPolymorphic ? oppositeSide.typeColumn : null;
       path = relationship.describedPath.slice(0, relationship.describedPath.length - 1);
+      defaultOrder = side.column;
     }
   }
 
@@ -299,7 +303,16 @@ export function queryFromRelationship(
     )
   );
 
-  return {selection, table, joins, conditions};
+  return {
+    selection,
+    table,
+    joins,
+    conditions,
+    defaultOrder: {
+      column: defaultOrder,
+      direction: 'ASC',
+    }
+  };
 }
 
 

@@ -148,7 +148,7 @@ export function applyCursorsToQuery(
   args: ConnectionArguments
 ): Query {
   const {before, after, first, last} = args;
-  const order = orderFromOrderArgument(args.order);
+  const order = orderFromOrderArgument(query.defaultOrder, args.order);
 
   // for reverse pagination, we need to flip the ordering in order to use LIMIT,
   // and then reverse the results
@@ -181,11 +181,15 @@ export function applyCursorsToQuery(
   };
 }
 
-export function orderFromOrderArgument(order: ?string): Order {
+export function orderFromOrderArgument(defaultOrder: Order, order: ?string): Order {
+  if (order == null) {
+    return defaultOrder;
+  }
+
   return {
     column: (
-      order == null || order === 'ASC' || order === 'DESC'
-      ? 'seq'
+      order === 'ASC' || order === 'DESC'
+      ? defaultOrder.column
       : snake(order.replace(/_ASC$|_DESC$/, ''))
     ),
     direction: order && order.match(/DESC$/) ? 'DESC' : 'ASC',
@@ -211,5 +215,6 @@ export function countQuery(query: Query): Query {
     order: null,
     reverseResults: false,
     selection: `COUNT(${query.table}.*)`,
+    joins: query.joins.filter(join => join.type !== 'LEFT'),
   };
 }

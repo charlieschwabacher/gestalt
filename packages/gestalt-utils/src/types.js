@@ -314,6 +314,7 @@ export type Query = {
   selection: string,
   joins: Join[],
   conditions: QueryCondition[],
+  defaultOrder: Order,
   order?: ?Order,
   limit?: ?number,
   reverseResults?: boolean,
