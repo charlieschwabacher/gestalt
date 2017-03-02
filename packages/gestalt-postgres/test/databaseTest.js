@@ -153,7 +153,7 @@ describe('postgres database interface', () => {
 
   describe('queryBy', async () => {
     const id = '00000000-0000-0000-0000-000000000001';
-    const result = await db.findBy('users', {lastName: 'Tester'});
+    const result = await db.queryBy('users', {lastName: 'Tester'});
     assert.equal(result.length, 3);
     assert.deepEqual(
       result.map(row => row.id),
