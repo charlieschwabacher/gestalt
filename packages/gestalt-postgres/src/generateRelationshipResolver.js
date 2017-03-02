@@ -54,7 +54,7 @@ export function generateRelationshipLoaders(
   db: DB,
   segmentDescriptionMap: RelationshipSegmentDescriptionMap,
   relationships: Relationship[],
-): Map<Relationship, DataLoader> {
+): Map<Relationship, DataLoader<*, Object>> {
   // TODO: we should be able to pregenerate and store SQL queries so that they
   // are only calculated once, not re-calcualted on every request.
 
@@ -107,7 +107,7 @@ function generateSingularRelationshipLoader(
   relationship: Relationship,
   keyColumn: string,
   sql: string
-): DataLoader {
+): DataLoader<*, Object> {
   return new DataLoader(async keys => {
     const results = await db.query(sql, [keys]);
     const resultsByKey = keyMap(results, result => result[keyColumn]);
@@ -120,7 +120,7 @@ function generatePluralRelationshipLoader(
   relationship: Relationship,
   keyColumn: string,
   baseQuery: Query,
-): DataLoader {
+): DataLoader<*, Object> {
   return new DataLoader(loadKeys => {
     return Promise.all(loadKeys.map(async ({key, args, info}) => {
 
