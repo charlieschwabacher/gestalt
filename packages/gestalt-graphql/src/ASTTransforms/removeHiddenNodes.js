@@ -1,6 +1,6 @@
 // @flow
 
-import type {Document} from 'gestalt-utils';
+import type {Document, Node} from 'gestalt-utils';
 
 export default function removeHiddenNodes(ast: Document): void {
   // remove hidden types
@@ -15,7 +15,7 @@ export default function removeHiddenNodes(ast: Document): void {
 }
 
 function visible(node: Node): boolean {
-  return node.directives && !node.directives.some(
+  return node.directives != null && !node.directives.some(
     directive => directive.name.value === 'hidden'
   );
 }

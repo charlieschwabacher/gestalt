@@ -112,8 +112,8 @@ export default class DB {
     object: Object,
   ): Promise<Object> {
     const escapes = Object.values(object).map(prepareValueForSQL);
-    const columns = Object.keys(object).map(snake);
-    const values = escapes.map((v, i) => `$${i + 1}`);
+    const columns = Object.keys(object).map(snake).join(', ');
+    const values = escapes.map((v, i) => `$${i + 1}`).join(', ');
     const result = await this.exec(
       `INSERT INTO ${table} (${columns}) VALUES (${values}) RETURNING *;`,
       escapes

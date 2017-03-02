@@ -205,7 +205,7 @@ export function indicesFromObjectTypeDefinition(
 
 export function relationshipsFromObjectTypeDefinition(
   definition: ObjectTypeDefinition,
-): [Relationship] {
+): Relationship[] {
   const fromType = definition.name.value;
   const relationships = [];
 
@@ -328,7 +328,7 @@ export function relationshipSegmentFromParts(
 }
 
 export function segmentDescriptionsFromRelationships(
-  relationships: [Relationship]
+  relationships: Relationship[]
 ): RelationshipSegmentDescription[] {
   const segments = flattenedUniqueSegmentsFromRelationships(relationships);
 
