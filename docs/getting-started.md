@@ -368,7 +368,8 @@ If the db threw an error because no row matched `email`, or if `bcrypt` threw
 one because the passwords didn't match, we catch the error and rethrow with a
 descriptive message.
 
-Create a file `SignIn.js` in the `mutations` directory, and add the following code
+Create a file `SignIn.js` in the `mutations` directory, and add the following
+code
 
 
 ```javascript
@@ -400,7 +401,8 @@ export default types => ({
 ```
 
 To sign out, we don't need any input, and will just set the session ID to null
-in `mutateAndGetPayload`. Create a file `SignOut.js` in the `mutations` directory, then add the following.
+in `mutateAndGetPayload`. Create a file `SignOut.js` in the `mutations`
+directory, then add the following.
 
 ```javascript
 export default types => ({
@@ -420,7 +422,8 @@ export default types => ({
 
 #### 10) create a `SignUp` mutation
 
-To create users, we need another mutation.  Follow the pattern above and create a file `SignUp.js` in the `mutations` directory.  We can use `assert` to do some
+To create users, we need another mutation.  Follow the pattern above and create
+a file `SignUp.js` in the `mutations` directory.  We can use `assert` to do some
 validation of our inputs, and then hash the password with `bcrypt` and insert
 the user into our database using `context.db.insert`.
 
@@ -458,7 +461,8 @@ export default types => ({
 
 #### 11) Create `FollowUser`, `UnfollowUser`, and `CreatePost` mutations
 
-Finally, we need mutations to follow and unfollow users, and to create posts. Create the corresponding files in the `mutations` directory.
+Finally, we need mutations to follow and unfollow users, and to create posts.
+Create the corresponding files in the `mutations` directory.
 
 ```javascript
 export default types => ({
