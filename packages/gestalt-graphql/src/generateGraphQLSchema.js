@@ -64,10 +64,26 @@ export function generateGraphQLSchemaWithoutResolution(
   // generate GraphQLSchema
   const schema = buildASTSchema(modifiedAST);
 
+  const defaultMutatations = generateDefaultMutations(schema);
+
   // create and attach mutations
-  defineMutations(schema, mutations);
+  defineMutations(schema, mutations.concat(defaultMutatations));
 
   return schema;
+}
+
+function generateDefaultMutations(schema: GraphQLSchema): MutationDefinitionFn[] {
+  const typeMap = schema.getTypeMap();
+
+  Object.values(typeMap).map((type: GraphQLType): MutationDefinitionFn => {
+    if (
+      type.getInterfaces &&
+      type.getInterfaces().includes(nodeInterface) &&
+      type.name !== 'Session'
+    ) {
+      return defineCreateMutationDefinition(schema, type.name);
+    }
+  })
 }
 
 // attach serialization and parsing functions to scalar types defined by
@@ -218,6 +234,28 @@ function newTypesFromMutationType(
     )
   , [mutationType]);
 }
+
+function defineCreateMutationDefinition(
+  schema: GraphQLSchema,
+  typeName: string
+): MutationDefinitionFn {
+  const tableName = tableNameFromTypeName(typeName);
+  const type = schema.getType(typeName);
+  const fields = type.getFields();
+  return (types) => ({
+    name: `Create${typeName}`,
+    inputFields: fields,
+    outputFields: {
+      [typeName]: type
+    },
+    mutateAndGetPayload: async (input, context) => {
+      const { db } = context;
+
+      const payload = await db.insert(tableName, input);
+      return { typeName: payload };
+    }
+  });
+};
 
 function defineFieldResolve(
   schema: GraphQLSchema,
