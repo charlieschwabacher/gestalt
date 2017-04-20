@@ -17,9 +17,11 @@
   "dependencies": {
     "camel-case": "^3.0.0",
     "constant-case": "^2.0.0",
+    "gestalt-utils": "^0.0.17",
     "graphql": "^0.6.0",
     "graphql-relay": "^0.4.2",
-    "gestalt-utils": "^0.0.17"
+    "pluralize": "^4.0.0",
+    "snake-case": "^2.1.0"
   },
   "devDependencies": {
     "babel-cli": "^6.10.1",
