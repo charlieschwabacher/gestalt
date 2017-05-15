@@ -36,7 +36,7 @@ export default function gestaltServer(
 
   invariant(
     secret != null,
-    'Gestalt server requries \'secret\' to be provided in outs configuration ' +
+    'Gestalt server requries \'secret\' to be provided in its configuration ' +
     'for secure sessions'
   );
 
