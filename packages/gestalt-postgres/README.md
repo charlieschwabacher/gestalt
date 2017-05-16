@@ -31,7 +31,7 @@ This helper has the following API:
   result directly with no formatting.
 
 
-- `count(query: string, escapes?): Promise<number>` runs the query, pareses the
+- `count(query: string, escapes?): Promise<number>` runs the query, parses the
   result and returns a promised number.
 
 
