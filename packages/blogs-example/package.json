@@ -1,6 +1,6 @@
 {
   "name": "blogs-example",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "An example blogging app using Gestalt and Relay",
   "scripts": {
     "start": "babel-node server.js",
@@ -25,8 +25,8 @@
     "express": "^4.13.4",
     "import-all": "^1.0.1",
     "webpack": "^1.13.1",
-    "gestalt-server": "^0.0.17",
-    "gestalt-postgres": "^0.0.17"
+    "gestalt-server": "^0.0.18",
+    "gestalt-postgres": "^0.0.18"
   },
   "metadata": {
     "graphql": {
