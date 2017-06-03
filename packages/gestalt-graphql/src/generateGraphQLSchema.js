@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import camel from 'camel-case';
 import {parse, buildASTSchema, concatAST, printSchema, GraphQLObjectType,
-  getNamedType, GraphQLSchema} from 'graphql';
+  getNamedType, GraphQLSchema, GraphQLScalarType} from 'graphql';
 import {mutationWithClientMutationId} from 'graphql-relay';
 import {insertConnectionTypes, removeHiddenNodes} from './ASTTransforms';
 import databaseInfoFromAST from './databaseInfoFromAST';
@@ -16,6 +16,15 @@ import type {Document, ObjectTypeDefinition, GraphQLField,
   DatabaseInterface, DatabaseInterfaceDefinitionFn,
   ObjectTypeFieldResolutionDefinition, GraphQLType, TypeMap, Relationship,
   GestaltServerConfig} from 'gestalt-utils';
+
+import {plural} from 'pluralize';
+import snake from 'snake-case';
+
+//TODO: move to utils?
+function tableNameFromTypeName(typeName: string): string {
+  return snake(plural(typeName));
+}
+
 
 // generate a graphql schema given object types,
 export default function generateGraphQLSchema(
@@ -64,10 +73,31 @@ export function generateGraphQLSchemaWithoutResolution(
   // generate GraphQLSchema
   const schema = buildASTSchema(modifiedAST);
 
+  const defaultMutatations = generateDefaultMutations(schema);
+
   // create and attach mutations
-  defineMutations(schema, mutations);
+  defineMutations(schema, mutations.concat(defaultMutatations));
 
   return schema;
+}
+
+function generateDefaultMutations(schema: GraphQLSchema): MutationDefinitionFn[] {
+  const typeMap = schema.getTypeMap();
+  const nodeInterface = typeMap.Node;
+
+  const definitions = Object.values(typeMap).map((type: GraphQLType): MutationDefinitionFn => {
+    if (
+      type.getInterfaces &&
+      type.getInterfaces().includes(nodeInterface) &&
+      type.name !== 'Session'
+    ) {
+      return [
+        defineUpdateMutationDefinition(schema, type.name),
+        defineCreateMutationDefinition(schema, type.name)
+      ];
+    }
+  }).filter(i => !!i);
+  return [].concat.apply([], definitions);
 }
 
 // attach serialization and parsing functions to scalar types defined by
@@ -175,13 +205,13 @@ function defineMutations(
 function transformSimpleMutationDefinition(
   definition: MutationDefinition,
 ): MutationDefinition {
-  Object.values(definition.inputFields).forEach(key => {
+  Object.keys(definition.inputFields).forEach(key => {
     const field = definition.inputFields[key];
     if (field.type == null) {
       definition.inputFields[key] = {type: field};
     }
   });
-  Object.values(definition.outputFields).forEach(key => {
+  Object.keys(definition.outputFields).forEach(key => {
     const field = definition.outputFields[key];
     if (field.type == null) {
       definition.outputFields[key] = {type: field};
@@ -217,6 +247,72 @@ function newTypesFromMutationType(
       getNamedType(field.args[0].type),
     )
   , [mutationType]);
+}
+
+function defineUpdateMutationDefinition(
+  schema: GraphQLSchema,
+  typeName: string
+): MutationDefinitionFn {
+  const tableName = tableNameFromTypeName(typeName);
+  const type = schema.getType(typeName);
+  const fields = type.getFields();
+  const getInputFields = types => {
+    const inputFields = {};
+    Object.keys(fields).forEach(key => {
+      if (fields[key].type.ofType instanceof GraphQLScalarType) {
+        const typeKey = fields[key].type.ofType.name;
+        inputFields[key] = types[typeKey];
+      }
+    });
+    return inputFields;
+  };
+  return types => ({
+    name: `Update${typeName}`,
+    inputFields: getInputFields(types),
+    outputFields: {
+      updateId: types.ID
+    },
+    mutateAndGetPayload: async (input, context) => {
+      const { id } = input;
+      delete input.id;
+      const { db } = context;
+
+      await db.update(tableName, {id}, input);
+      return {updateId: id};
+    }
+  });
+}
+
+
+function defineCreateMutationDefinition(
+  schema: GraphQLSchema,
+  typeName: string
+): MutationDefinitionFn {
+  const tableName = tableNameFromTypeName(typeName);
+  const type = schema.getType(typeName);
+  const fields = type.getFields();
+  const inputFields = {};
+  Object.keys(fields).forEach(key => {
+    const field = fields[key];
+    if (field.type.ofType instanceof GraphQLScalarType &&
+        field.name.toLowerCase() !== 'id'
+    ) {
+      inputFields[key] = fields[key];
+    }
+  });
+  return types => ({
+    name: `Create${typeName}`,
+    inputFields,
+    outputFields: {
+      createId: types.ID
+    },
+    mutateAndGetPayload: async (input, context) => {
+      const { db } = context;
+
+      const payload = await db.insert(tableName, input);
+      return {createId: payload.id};
+    }
+  });
 }
 
 function defineFieldResolve(
