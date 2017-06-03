@@ -93,7 +93,7 @@ export default async function(name: string): Promise<*> {
       [
         '.babelrc',
         'schema.graphql',
-        'objects/Session.js',
+        'objects/session.js',
         'mutations/.gitkeep',
       ].map(
         fileName => copy(
