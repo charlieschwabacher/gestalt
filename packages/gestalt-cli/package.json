@@ -18,24 +18,24 @@
   "author": "Charlie Schwabacher",
   "license": "MIT",
   "dependencies": {
-    "babel-polyfill": "^6.9.1",
-    "babel-register": "^6.9.0",
+    "babel-polyfill": "^6.26.0",
+    "babel-register": "^6.26.0",
     "camel-case": "^3.0.0",
     "colors": "^1.1.2",
-    "commander": "^2.9.0",
-    "ejs": "^2.4.2",
+    "commander": "^2.11.0",
+    "ejs": "^2.5.7",
     "gestalt-graphql": "^0.0.19",
     "gestalt-postgres": "^0.0.19",
     "gestalt-utils": "^0.0.19",
-    "glob": "^7.0.5",
+    "glob": "^7.1.2",
     "graphql": "^0.6.0",
     "import-all": "^1.0.1",
     "prompt": "^1.0.0",
-    "rimraf": "^2.5.2",
-    "semver": "^5.1.0",
+    "rimraf": "^2.6.1",
+    "semver": "^5.4.1",
     "snake-case": "^2.1.0"
   },
   "devDependencies": {
-    "babel-cli": "^6.10.1"
+    "babel-cli": "^6.26.0"
   }
 }

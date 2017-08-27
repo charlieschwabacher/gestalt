@@ -17,14 +17,14 @@
   "dependencies": {
     "camel-case": "^3.0.0",
     "constant-case": "^2.0.0",
+    "gestalt-utils": "^0.0.19",
     "graphql": "^0.6.0",
-    "graphql-relay": "^0.4.2",
-    "gestalt-utils": "^0.0.19"
+    "graphql-relay": "^0.4.4"
   },
   "devDependencies": {
-    "babel-cli": "^6.10.1",
-    "babel-polyfill": "^6.7.2",
-    "babel-register": "^6.7.2",
+    "babel-cli": "^6.26.0",
+    "babel-polyfill": "^6.26.0",
+    "babel-register": "^6.26.0",
     "mocha": "^2.5.3"
   }
 }
