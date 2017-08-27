@@ -175,13 +175,13 @@ function defineMutations(
 function transformSimpleMutationDefinition(
   definition: MutationDefinition,
 ): MutationDefinition {
-  Object.values(definition.inputFields).forEach(key => {
+  Object.keys(definition.inputFields).forEach(key => {
     const field = definition.inputFields[key];
     if (field.type == null) {
       definition.inputFields[key] = {type: field};
     }
   });
-  Object.values(definition.outputFields).forEach(key => {
+  Object.keys(definition.outputFields).forEach(key => {
     const field = definition.outputFields[key];
     if (field.type == null) {
       definition.outputFields[key] = {type: field};
