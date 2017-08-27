@@ -1,6 +1,6 @@
 {
   "name": "blogs-example",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "description": "An example blogging app using Gestalt and Relay",
   "scripts": {
     "start": "babel-node server.js",
@@ -23,8 +23,8 @@
     "babel-loader": "^6.4.1",
     "bcrypt-as-promised": "^1.1.0",
     "express": "^4.15.4",
-    "gestalt-postgres": "^0.0.19",
-    "gestalt-server": "^0.0.19",
+    "gestalt-postgres": "^0.0.20",
+    "gestalt-server": "^0.0.20",
     "import-all": "^1.0.1",
     "webpack": "^1.15.0"
   },

@@ -1,6 +1,6 @@
 {
   "name": "gestalt-cli",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "description": "command line tools for the gestalt framework",
   "main": "lib/index.js",
   "repository": {
@@ -24,9 +24,9 @@
     "colors": "^1.1.2",
     "commander": "^2.11.0",
     "ejs": "^2.5.7",
-    "gestalt-graphql": "^0.0.19",
-    "gestalt-postgres": "^0.0.19",
-    "gestalt-utils": "^0.0.19",
+    "gestalt-graphql": "^0.0.20",
+    "gestalt-postgres": "^0.0.20",
+    "gestalt-utils": "^0.0.20",
     "glob": "^7.1.2",
     "graphql": "^0.6.0",
     "import-all": "^1.0.1",
