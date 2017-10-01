@@ -69,7 +69,7 @@ This helper has the following API:
   `{camelCaseColumnName: value}`.
 
 
-- `queryBy(table: string, conditionsL Object): Promise<Object[]>`  converts
+- `queryBy(table: string, conditions: Object): Promise<Object[]>`  converts
   camel case keys in the `conditions` argument to column names, and runs a query
   selecting matching rows.  Returns the result as a promised array of objects
   formatted `{camelCaseColumnName: value}`.
