@@ -95,7 +95,9 @@ migration will add any new tables or columns (it avoids dropping anything for
 safety), and you can have the cli run it directly or write it to a file.
 
 After our additions to `schema.graphql`, `gestalt migrate` will ask to confirm
-our database url, and then generate and print the following SQL migration:
+our database url (you might need to set the correct username and password to
+your database like this `'postgres://username:password@localhost/blogs'`),
+and then generate and print the following SQL migration:
 
 ```SQL
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
